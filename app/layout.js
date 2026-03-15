@@ -33,7 +33,7 @@ export default function RootLayout({ children }) {
               </nav>
               <p className="text-[11px] text-[#3D3D3D]/60 text-center sm:text-right">
                 Vous êtes commerçant ?{" "}
-                <Link href="/commercant" className="font-semibold text-[#FF6B00] hover:text-[#CC5500] transition-colors">
+                <Link href="/commercant/inscription" className="font-semibold text-[#FF6B00] hover:text-[#CC5500] transition-colors">
                   Rejoignez BONMOMENT
                 </Link>
               </p>
