@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useAuth } from '@/app/context/AuthContext'
 
-// SVG Google — inline pour éviter une dépendance image
+/* ── Icônes SVG inline ──────────────────────────────────────────────────── */
+
 function GoogleIcon() {
   return (
     <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden>
@@ -15,67 +16,138 @@ function GoogleIcon() {
   )
 }
 
-/**
- * Bouton(s) de connexion OAuth.
- * Pour l'instant : Google uniquement.
- * Les autres providers (Facebook, Apple, Microsoft) seront ajoutés progressivement.
- *
- * @param {string} redirectAfter - chemin vers lequel revenir après connexion
- * @param {string} [context]     - 'reserver' → message contextuel "pour réserver ton bon"
- */
-export default function SignInPanel({ redirectAfter = '/', context = null }) {
-  const { signIn } = useAuth()
-  const [loading, setLoading] = useState(false)
+function FacebookIcon() {
+  return (
+    <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden>
+      <path
+        fill="white"
+        d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953h-1.514c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"
+      />
+    </svg>
+  )
+}
 
-  async function handleGoogle() {
-    setLoading(true)
-    await signIn('google', redirectAfter)
-    // signIn déclenche une redirection — setLoading(false) ne sera
-    // pas atteint en pratique, mais sécurise les cas d'erreur réseau
-    setLoading(false)
+/* ── Spinner ────────────────────────────────────────────────────────────── */
+
+function Spinner() {
+  return (
+    <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
+  )
+}
+
+/* ── Définition des providers actifs ────────────────────────────────────── */
+// Pour ajouter Microsoft plus tard : décommenter l'entrée 'azure' ci-dessous.
+
+const PROVIDERS = [
+  {
+    id: 'google',
+    label: 'Continuer avec Google',
+    icon: <GoogleIcon />,
+    className: 'bg-white border-2 border-[#E0E0E0] hover:border-[#FF6B00] hover:bg-[#FFFBF8] text-[#0A0A0A]',
+  },
+  {
+    id: 'facebook',
+    label: 'Continuer avec Facebook',
+    icon: <FacebookIcon />,
+    className: 'bg-[#1877F2] hover:bg-[#166FE5] border-2 border-transparent text-white',
+  },
+  // {
+  //   id: 'azure',
+  //   label: 'Continuer avec Microsoft',
+  //   icon: <MicrosoftIcon />,
+  //   className: 'bg-[#2F2F2F] hover:bg-[#1a1a1a] border-2 border-transparent text-white',
+  // },
+]
+
+/* ── Composant principal ────────────────────────────────────────────────── */
+
+/**
+ * @param {string}  redirectAfter - chemin de retour après connexion
+ * @param {string}  [context]     - 'reserver' → affiche un message contextuel
+ * @param {boolean} [showLegal]   - affiche le texte légal (défaut: true)
+ */
+export default function SignInPanel({
+  redirectAfter = '/',
+  context = null,
+  showLegal = true,
+}) {
+  const { signIn } = useAuth()
+  const [loadingId, setLoadingId] = useState(null)
+
+  async function handleSignIn(providerId) {
+    setLoadingId(providerId)
+    await signIn(providerId, redirectAfter)
+    // La redirection OAuth est déclenchée — cette ligne n'est atteinte
+    // qu'en cas d'erreur réseau (le provider ne répond pas).
+    setLoadingId(null)
   }
 
   return (
     <div className="flex flex-col gap-3">
 
-      {/* Message contextuel optionnel */}
+      {/* Message contextuel */}
       {context === 'reserver' && (
-        <p className="text-center text-xs text-[#3D3D3D]/60 -mb-1">
+        <p className="text-center text-xs text-[#3D3D3D]/60 mb-1">
           Connecte-toi pour réserver ton bon gratuitement.
         </p>
       )}
 
-      {/* Bouton Google */}
-      <button
-        onClick={handleGoogle}
-        disabled={loading}
-        className="w-full flex items-center justify-center gap-3 px-4 py-4 rounded-2xl bg-white border-2 border-[#E0E0E0] hover:border-[#FF6B00] hover:bg-[#FFFBF8] font-bold text-[#0A0A0A] text-sm transition-all disabled:opacity-60 min-h-[52px] shadow-sm"
-      >
-        {loading ? (
-          <span className="flex items-center gap-2">
-            <span className="w-4 h-4 border-2 border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
-            Connexion en cours...
-          </span>
-        ) : (
-          <>
-            <GoogleIcon />
-            Continuer avec Google
-          </>
-        )}
-      </button>
+      {/* Boutons providers */}
+      {PROVIDERS.map(({ id, label, icon, className }) => {
+        const isLoading = loadingId === id
+        const isDisabled = loadingId !== null
 
-      {/* Annonce des futurs providers */}
-      <p className="text-center text-[10px] text-[#3D3D3D]/40 leading-snug">
-        Facebook, Apple et Microsoft arriveront bientôt.
-      </p>
+        return (
+          <button
+            key={id}
+            onClick={() => handleSignIn(id)}
+            disabled={isDisabled}
+            className={`
+              w-full flex items-center justify-center gap-3
+              px-4 py-4 rounded-2xl font-bold text-sm
+              transition-all duration-150 min-h-[52px] shadow-sm
+              disabled:opacity-60 disabled:cursor-not-allowed
+              ${className}
+            `}
+          >
+            {isLoading ? (
+              <>
+                <Spinner />
+                <span>Connexion en cours...</span>
+              </>
+            ) : (
+              <>
+                {icon}
+                <span>{label}</span>
+              </>
+            )}
+          </button>
+        )
+      })}
 
-      {/* Lien légal */}
-      <p className="text-center text-[10px] text-[#3D3D3D]/30 leading-snug">
-        En continuant, tu acceptes nos{' '}
-        <a href="/cgu" target="_blank" className="underline hover:text-[#FF6B00]">CGU</a>
-        {' '}et notre{' '}
-        <a href="/confidentialite" target="_blank" className="underline hover:text-[#FF6B00]">politique de confidentialité</a>.
-      </p>
+      {/* Mention légale */}
+      {showLegal && (
+        <p className="text-center text-[10px] text-[#3D3D3D]/40 leading-relaxed mt-1">
+          En te connectant, tu acceptes nos{' '}
+          <a
+            href="/cgu"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 hover:text-[#FF6B00] transition-colors"
+          >
+            CGU
+          </a>{' '}
+          et notre{' '}
+          <a
+            href="/confidentialite"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 hover:text-[#FF6B00] transition-colors"
+          >
+            Politique de confidentialité
+          </a>.
+        </p>
+      )}
 
     </div>
   )

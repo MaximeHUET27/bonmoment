@@ -7,43 +7,37 @@ import Image from 'next/image'
 import { useAuth } from '@/app/context/AuthContext'
 import SignInPanel from '@/app/components/SignInPanel'
 
-// Les avantages affichés sur la page (arguments pour se connecter)
-const AVANTAGES = [
-  { icon: '🎫', label: 'Réserve des bons plans en 30 secondes' },
-  { icon: '🏘️', label: 'Suis les commerçants de ta ville' },
-  { icon: '🔔', label: 'Reçois les alertes avant tout le monde' },
-  { icon: '🏅', label: 'Gagne des badges Habitant, Bon habitant...' },
-  { icon: '🔒', label: 'Sans mot de passe · 100 % gratuit' },
-]
-
 function ConnexionContent() {
   const { user, loading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const next = searchParams.get('next') ?? '/'
 
-  // Si déjà connecté → redirection immédiate
+  // Sanitise : accepte uniquement un chemin local
+  const rawNext = searchParams.get('next') ?? '/'
+  const next = rawNext.startsWith('/') ? rawNext : '/'
+
+  // Déjà connecté → redirection immédiate vers la page d'origine
   useEffect(() => {
     if (!loading && user) {
-      router.replace(next.startsWith('/') ? next : '/')
+      router.replace(next)
     }
   }, [user, loading, router, next])
 
+  // Spinner pendant la vérification de session ou la redirection
   if (loading || user) {
-    // Écran de chargement pendant la vérification / redirection
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="w-8 h-8 border-3 border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
+        <span className="w-8 h-8 border-[3px] border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   return (
-    <main className="min-h-screen bg-white flex flex-col">
+    <main className="min-h-screen bg-white flex flex-col items-center">
 
-      {/* Header */}
-      <header className="px-6 pt-10 pb-0 flex flex-col items-center">
-        <Link href="/">
+      {/* ── Logo ──────────────────────────────────────────────────────────── */}
+      <header className="w-full flex justify-center pt-12 pb-2 px-6">
+        <Link href="/" aria-label="Accueil BONMOMENT">
           <Image
             src="/LOGO.png"
             alt="BONMOMENT"
@@ -51,47 +45,58 @@ function ConnexionContent() {
             height={300}
             unoptimized
             priority
-            className="w-[140px] h-auto"
+            className="w-[150px] h-auto"
           />
         </Link>
       </header>
 
-      {/* Corps */}
-      <section className="flex-1 flex flex-col items-center justify-center px-6 py-10 max-w-sm mx-auto w-full">
+      {/* ── Corps centré ──────────────────────────────────────────────────── */}
+      <section className="flex-1 flex flex-col items-center justify-center w-full px-6 py-10">
+        <div className="w-full max-w-[340px] flex flex-col gap-8">
 
-        {/* Accroche */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl sm:text-3xl font-black text-[#0A0A0A] leading-tight mb-2">
-            Soyez là<br />au bon moment
-          </h1>
-          <p className="text-sm text-[#3D3D3D]/70">
-            Rejoins ta ville et ne rate plus aucun bon plan.
+          {/* Titre */}
+          <div className="text-center">
+            <h1 className="text-[28px] font-black text-[#0A0A0A] leading-tight tracking-tight">
+              Connecte-toi pour<br />rejoindre ta ville
+            </h1>
+            <p className="text-sm text-[#3D3D3D]/60 mt-2">
+              Gratuit · Sans mot de passe · 10 secondes
+            </p>
+          </div>
+
+          {/* Boutons OAuth — Google + Facebook */}
+          <SignInPanel redirectAfter={next} showLegal={false} />
+
+          {/* Mention légale */}
+          <p className="text-center text-[11px] text-[#3D3D3D]/40 leading-relaxed -mt-4">
+            En te connectant, tu acceptes nos{' '}
+            <Link
+              href="/cgu"
+              target="_blank"
+              className="underline underline-offset-2 hover:text-[#FF6B00] transition-colors"
+            >
+              CGU
+            </Link>{' '}
+            et notre{' '}
+            <Link
+              href="/confidentialite"
+              target="_blank"
+              className="underline underline-offset-2 hover:text-[#FF6B00] transition-colors"
+            >
+              Politique de confidentialité
+            </Link>.
           </p>
+
         </div>
-
-        {/* Liste des avantages */}
-        <ul className="w-full flex flex-col gap-3 mb-8">
-          {AVANTAGES.map(({ icon, label }) => (
-            <li key={label} className="flex items-center gap-3 text-sm text-[#3D3D3D]">
-              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-[#FFF0E0] flex items-center justify-center text-base">
-                {icon}
-              </span>
-              {label}
-            </li>
-          ))}
-        </ul>
-
-        {/* Panel de connexion */}
-        <div className="w-full">
-          <SignInPanel redirectAfter={next} />
-        </div>
-
       </section>
 
-      {/* Footer minimal */}
-      <footer className="px-6 py-6 text-center">
-        <Link href="/" className="text-xs text-[#3D3D3D]/40 hover:text-[#FF6B00] transition-colors">
-          ← Retour à l'accueil sans connexion
+      {/* ── Footer ────────────────────────────────────────────────────────── */}
+      <footer className="w-full px-6 pb-8 text-center">
+        <Link
+          href="/"
+          className="text-xs text-[#3D3D3D]/40 hover:text-[#FF6B00] transition-colors"
+        >
+          ← Retour à l'accueil
         </Link>
       </footer>
 
@@ -99,7 +104,7 @@ function ConnexionContent() {
   )
 }
 
-// Suspense requis par useSearchParams dans Next.js App Router
+// Suspense obligatoire : useSearchParams() est asynchrone dans App Router
 export default function ConnexionPage() {
   return (
     <Suspense>
