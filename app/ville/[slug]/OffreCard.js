@@ -26,20 +26,20 @@ function useCountdown(dateFin) {
 
 function formatBadge(offre) {
   if (offre.type_remise === 'pourcentage') return `−${offre.valeur}%`
-  if (offre.type_remise === 'montant') return `−${offre.valeur}€`
-  if (offre.type_remise === 'offert') return 'Offert'
+  if (offre.type_remise === 'montant')     return `−${offre.valeur}€`
+  if (offre.type_remise === 'offert')      return 'Offert'
   return offre.type_remise || 'Offre'
 }
 
 export default function OffreCard({ offre }) {
-  const timeLeft = useCountdown(offre.date_fin)
-  const commerce = offre.commerces
-  const urgent = timeLeft && timeLeft.diff < 3600000
-  const expired = !timeLeft
-  const epuise = offre.nb_bons_restants <= 0
-  const { user } = useAuth()
+  const timeLeft  = useCountdown(offre.date_fin)
+  const commerce  = offre.commerces
+  const urgent    = timeLeft && timeLeft.diff < 3600000
+  const expired   = !timeLeft
+  const epuise    = offre.nb_bons_restants <= 0
+  const { user }  = useAuth()
   const [showAuth, setShowAuth] = useState(false)
-  const pathname = usePathname()
+  const pathname  = usePathname()
 
   function handleReserver() {
     if (!user) { setShowAuth(true); return }
@@ -60,7 +60,7 @@ export default function OffreCard({ offre }) {
                 {String(timeLeft.h).padStart(2, '0')}h {String(timeLeft.m).padStart(2, '0')}m {String(timeLeft.s).padStart(2, '0')}s
               </span>
             ) : (
-              <span className="text-sm font-bold text-red-500">Expirée</span>
+              <span className="text-sm font-bold text-red-500">C&apos;est parti&nbsp;!</span>
             )}
           </div>
           <span className={`text-xs font-bold ${offre.nb_bons_restants <= 5 ? 'text-red-500' : 'text-[#3D3D3D]'}`}>
@@ -70,14 +70,14 @@ export default function OffreCard({ offre }) {
 
         <div className="px-4 py-5 flex flex-col gap-3">
 
-          {/* 2. Badge remise — accroche visuelle forte */}
+          {/* 2. Badge remise */}
           <div className="flex items-center justify-center bg-[#FFF0E0] rounded-2xl py-5">
             <span className="text-4xl font-black text-[#FF6B00] tracking-tight">
               {formatBadge(offre)}
             </span>
           </div>
 
-          {/* 3. Titre — contexte uniquement */}
+          {/* 3. Titre */}
           <p className="text-base font-bold text-[#0A0A0A] text-center leading-snug">
             {offre.titre}
           </p>
@@ -94,18 +94,16 @@ export default function OffreCard({ offre }) {
 
           {/* 5. Ville */}
           {commerce?.ville && (
-            <p className="text-xs text-[#3D3D3D]/60 text-center">
-              📍 {commerce.ville}
-            </p>
+            <p className="text-xs text-[#3D3D3D]/60 text-center">📍 {commerce.ville}</p>
           )}
 
           {/* 6. CTA */}
           <button
             onClick={handleReserver}
             disabled={expired || epuise}
-            className="w-full mt-1 bg-[#FF6B00] hover:bg-[#CC5500] disabled:bg-[#ccc] text-white font-bold text-sm py-3.5 rounded-full transition-colors duration-200"
+            className="w-full mt-1 bg-[#FF6B00] hover:bg-[#CC5500] disabled:bg-[#ccc] text-white font-bold text-sm py-3.5 rounded-full transition-colors duration-200 min-h-[48px]"
           >
-            {epuise ? 'Épuisé' : expired ? 'Expirée' : 'Réserver mon bon'}
+            {epuise ? "C\u2019est parti\u00a0!" : expired ? "C\u2019est parti\u00a0!" : 'Réserver mon bon'}
           </button>
 
           {!user && !expired && !epuise && (
@@ -117,14 +115,29 @@ export default function OffreCard({ offre }) {
         </div>
       </div>
 
+      {/* Modale connexion */}
       {showAuth && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowAuth(false)} />
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowAuth(false)}
+          />
           <div className="relative w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl px-6 pt-6 pb-10 sm:pb-6 shadow-2xl">
             <div className="w-10 h-1 bg-[#E0E0E0] rounded-full mx-auto mb-6 sm:hidden" />
-            <h2 className="text-lg font-black text-[#0A0A0A] text-center mb-1">Connecte-toi</h2>
-            <p className="text-xs text-[#3D3D3D] text-center mb-6">Connecte-toi pour réserver ton bon</p>
-            <SignInPanel redirectAfter={pathname} />
+            <div className="text-center mb-6">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00] mb-1">BONMOMENT</p>
+              <h2 className="text-xl font-black text-[#0A0A0A]">Connecte-toi</h2>
+              <p className="text-xs text-[#3D3D3D]/60 mt-1">
+                Connecte-toi pour réserver ton bon
+              </p>
+            </div>
+            <SignInPanel redirectAfter={pathname} context="reserver" />
+            <button
+              onClick={() => setShowAuth(false)}
+              className="mt-4 w-full text-center text-xs text-[#3D3D3D]/40 hover:text-[#3D3D3D] transition-colors py-1"
+            >
+              Pas maintenant
+            </button>
           </div>
         </div>
       )}

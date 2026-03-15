@@ -16,7 +16,7 @@ function getTimeLeft(dateFin) {
 
 export default function UrgencyAndCTA({ offre }) {
   const [timeLeft, setTimeLeft] = useState(null)
-  const [showAuth, setShowAuth] = useState(false)
+  const [showAuth, setShowAuth]  = useState(false)
   const { user } = useAuth()
   const pathname = usePathname()
 
@@ -26,29 +26,32 @@ export default function UrgencyAndCTA({ offre }) {
     return () => clearInterval(timer)
   }, [offre.date_fin])
 
-  const expired = !timeLeft
-  const epuise = offre.nb_bons_restants <= 0
-  const urgentTime = timeLeft && timeLeft.diff < 30 * 60 * 1000   // < 30 min
-  const urgentStock = offre.nb_bons_restants <= 5
-  const urgent = urgentTime || urgentStock
+  const expired      = !timeLeft
+  const epuise       = offre.nb_bons_restants <= 0
+  const urgentTime   = timeLeft && timeLeft.diff < 30 * 60 * 1000   // < 30 min
+  const urgentStock  = offre.nb_bons_restants <= 5
+  const urgent       = urgentTime || urgentStock
   const dejaReserves = (offre.nb_bons_total || 0) - (offre.nb_bons_restants || 0)
 
   function handleReserver() {
     if (!user) { setShowAuth(true); return }
-    // TODO : logique de réservation
+    // TODO : logique de réservation (décrémente nb_bons_restants, crée reservation)
   }
 
   return (
     <>
       {/* Barre d'urgence */}
-      <div className={`flex items-center justify-between px-4 py-3 rounded-2xl ${urgent ? 'animate-pulse-orange' : 'bg-[#F5F5F5]'}`}
-        style={urgent ? { backgroundColor: '#FF6B00', color: 'white' } : {}}>
-
-        {/* Countdown */}
+      <div
+        className={`flex items-center justify-between px-4 py-3 rounded-2xl ${urgent ? 'animate-pulse-orange' : 'bg-[#F5F5F5]'}`}
+        style={urgent ? { backgroundColor: '#FF6B00', color: 'white' } : {}}
+      >
+        {/* Compte à rebours */}
         <div className="flex items-center gap-2">
           <span className="text-lg">⏱</span>
           {expired ? (
-            <span className={`text-sm font-bold ${urgent ? 'text-white' : 'text-red-500'}`}>Expirée</span>
+            <span className={`text-sm font-bold ${urgent ? 'text-white' : 'text-red-500'}`}>
+              C&apos;est parti&nbsp;!
+            </span>
           ) : (
             <span className={`text-base font-black tabular-nums tracking-tight ${urgent ? 'text-white' : 'text-[#0A0A0A]'}`}>
               {String(timeLeft.h).padStart(2, '0')}h {String(timeLeft.m).padStart(2, '0')}m {String(timeLeft.s).padStart(2, '0')}s
@@ -73,9 +76,9 @@ export default function UrgencyAndCTA({ offre }) {
       <button
         onClick={handleReserver}
         disabled={expired || epuise}
-        className="w-full bg-[#FF6B00] hover:bg-[#CC5500] disabled:bg-[#ccc] text-white font-black text-lg py-4 rounded-2xl transition-colors duration-200 shadow-lg shadow-orange-200"
+        className="w-full bg-[#FF6B00] hover:bg-[#CC5500] disabled:bg-[#ccc] text-white font-black text-lg py-4 rounded-2xl transition-colors duration-200 shadow-lg shadow-orange-200 min-h-[56px]"
       >
-        {epuise ? 'Épuisé' : expired ? 'Offre expirée' : 'Réserver mon bon'}
+        {epuise ? "C\u2019est parti\u00a0!" : expired ? "C\u2019est parti\u00a0!" : 'Réserver mon bon'}
       </button>
 
       {/* Preuve sociale */}
@@ -84,6 +87,8 @@ export default function UrgencyAndCTA({ offre }) {
           🔥 {dejaReserves} personne{dejaReserves > 1 ? 's ont' : ' a'} déjà réservé
         </p>
       )}
+
+      {/* Invitation à se connecter */}
       {!user && !expired && !epuise && (
         <p className="text-center text-[10px] text-[#3D3D3D]/40">
           Connecte-toi pour réserver ton bon
@@ -93,12 +98,26 @@ export default function UrgencyAndCTA({ offre }) {
       {/* Modale connexion */}
       {showAuth && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowAuth(false)} />
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowAuth(false)}
+          />
           <div className="relative w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl px-6 pt-6 pb-10 sm:pb-6 shadow-2xl">
             <div className="w-10 h-1 bg-[#E0E0E0] rounded-full mx-auto mb-6 sm:hidden" />
-            <h2 className="text-lg font-black text-[#0A0A0A] text-center mb-1">Connecte-toi</h2>
-            <p className="text-xs text-[#3D3D3D] text-center mb-6">Connecte-toi pour réserver ton bon</p>
-            <SignInPanel redirectAfter={pathname} />
+            <div className="text-center mb-6">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00] mb-1">BONMOMENT</p>
+              <h2 className="text-xl font-black text-[#0A0A0A]">Connecte-toi</h2>
+              <p className="text-xs text-[#3D3D3D]/60 mt-1">
+                Connecte-toi pour réserver ton bon
+              </p>
+            </div>
+            <SignInPanel redirectAfter={pathname} context="reserver" />
+            <button
+              onClick={() => setShowAuth(false)}
+              className="mt-4 w-full text-center text-xs text-[#3D3D3D]/40 hover:text-[#3D3D3D] transition-colors py-1"
+            >
+              Pas maintenant
+            </button>
           </div>
         </div>
       )}
