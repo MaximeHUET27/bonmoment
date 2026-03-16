@@ -1,167 +1,274 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/app/context/AuthContext'
 import AuthBottomSheet from '@/app/components/AuthBottomSheet'
+import FullScreenBon from '@/app/components/FullScreenBon'
+import { useReservation } from '@/app/hooks/useReservation'
 
-/* ── Mapping catégorie Google → filtre ─────────────────────────────────── */
+/* ── Mapping catégorie Google → filtre ───────────────────────────────────── */
 
 const CATEGORIE_MAP = {
-  restaurant: 'resto',
-  cafe: 'resto',
-  bar: 'resto',
-  bakery: 'resto',
-  hair_care: 'beaute',
-  beauty_salon: 'beaute',
-  spa: 'beaute',
+  restaurant:     'resto',
+  cafe:           'resto',
+  bar:            'resto',
+  bakery:         'resto',
+  hair_care:      'beaute',
+  beauty_salon:   'beaute',
+  spa:            'beaute',
   clothing_store: 'shopping',
-  florist: 'shopping',
-  jewelry_store: 'shopping',
-  gym: 'loisirs',
-  bowling_alley: 'loisirs',
-  movie_theater: 'loisirs',
+  florist:        'shopping',
+  jewelry_store:  'shopping',
+  gym:            'loisirs',
+  bowling_alley:  'loisirs',
+  movie_theater:  'loisirs',
 }
 
-export function getCategorieFiltre(categorieGoogle) {
-  return CATEGORIE_MAP[categorieGoogle?.toLowerCase()] || null
+export function getCategorieFiltre(cat) {
+  return CATEGORIE_MAP[cat?.toLowerCase()] || null
 }
 
-/* ── Helpers ────────────────────────────────────────────────────────────── */
+/* ── Helpers ─────────────────────────────────────────────────────────────── */
 
 function getTimeLeft(dateFin) {
   const diff = new Date(dateFin) - new Date()
   if (diff <= 0) return null
-  const h = Math.floor(diff / 3600000)
-  const m = Math.floor((diff % 3600000) / 60000)
-  const s = Math.floor((diff % 60000) / 1000)
-  return { h, m, s, diff }
+  return {
+    h: Math.floor(diff / 3_600_000),
+    m: Math.floor((diff % 3_600_000) / 60_000),
+    s: Math.floor((diff % 60_000) / 1_000),
+    diff,
+  }
 }
 
 function useCountdown(dateFin) {
-  const [timeLeft, setTimeLeft] = useState(null)
+  const [tl, setTl] = useState(null)
   useEffect(() => {
-    setTimeLeft(getTimeLeft(dateFin))
-    const timer = setInterval(() => setTimeLeft(getTimeLeft(dateFin)), 1000)
-    return () => clearInterval(timer)
+    setTl(getTimeLeft(dateFin))
+    const t = setInterval(() => setTl(getTimeLeft(dateFin)), 1_000)
+    return () => clearInterval(t)
   }, [dateFin])
-  return timeLeft
+  return tl
 }
 
 function formatBadge(offre) {
-  if (offre.type_remise === 'pourcentage')  return `−${offre.valeur}%`
-  if (offre.type_remise === 'montant_fixe') return `−${offre.valeur}€`
-  if (offre.type_remise === 'montant')      return `−${offre.valeur}€`   // rétrocompat
-  if (offre.type_remise === 'cadeau')       return '🎁 Cadeau'
+  if (offre.type_remise === 'pourcentage')    return `−${offre.valeur}%`
+  if (offre.type_remise === 'montant_fixe')   return `−${offre.valeur}€`
+  if (offre.type_remise === 'montant')        return `−${offre.valeur}€`   // rétrocompat
+  if (offre.type_remise === 'cadeau')         return '🎁 Cadeau'
   if (offre.type_remise === 'produit_offert') return '📦 Offert'
   if (offre.type_remise === 'service_offert') return '✂️ Offert'
-  if (offre.type_remise === 'offert')       return 'Offert'              // rétrocompat
-  if (offre.type_remise === 'concours')     return '🎰 Concours'
-  if (offre.type_remise === 'atelier')      return '🎨 Atelier'
+  if (offre.type_remise === 'offert')         return 'Offert'               // rétrocompat
+  if (offre.type_remise === 'concours')       return '🎰 Concours'
+  if (offre.type_remise === 'atelier')        return '🎨 Atelier'
   return offre.type_remise || 'Offre'
 }
 
-/* ── Composant ──────────────────────────────────────────────────────────── */
+/* ── Composant ───────────────────────────────────────────────────────────── */
 
 export default function OffreCard({ offre }) {
   const timeLeft = useCountdown(offre.date_fin)
   const commerce = offre.commerces
-  const urgent   = timeLeft && timeLeft.diff < 3600000
   const expired  = !timeLeft
-  const epuise   = offre.nb_bons_restants <= 0
+  const epuise   = offre.nb_bons_restants !== null &&
+                   offre.nb_bons_restants !== 9999 &&
+                   offre.nb_bons_restants <= 0
+  const fini     = expired || epuise
 
-  const { user }    = useAuth()
-  const pathname    = usePathname()
+  const urgent   = timeLeft && (
+    timeLeft.diff < 3_600_000 ||
+    (offre.nb_bons_restants !== null && offre.nb_bons_restants < 5)
+  )
+
+  const { user }  = useAuth()
+  const pathname  = usePathname()
   const [showAuth, setShowAuth] = useState(false)
+  const [showBon,  setShowBon]  = useState(false)
+  const [abonne,   setAbonne]   = useState(false)
 
-  function handleReserver() {
+  const { reserver, status, reservation, reset } = useReservation()
+
+  /* ── Auto-pending : réservation déclenché après retour OAuth ── */
+  useEffect(() => {
+    if (!user) return
+    const pendingId = sessionStorage.getItem('pendingReservation')
+    if (pendingId === offre.id) {
+      sessionStorage.removeItem('pendingReservation')
+      reserver(offre)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
+  /* ── Affichage FullScreenBon après succès (1s de feedback vert) ── */
+  useEffect(() => {
+    if (status === 'already_reserved') { setShowBon(true); return }
+    if (status === 'success') {
+      const t = setTimeout(() => setShowBon(true), 900)
+      return () => clearTimeout(t)
+    }
+  }, [status])
+
+  async function handleReserver(e) {
+    e.preventDefault()  // empêche navigation si dans un Link
+    e.stopPropagation()
+    if (fini) return
     if (!user) {
+      sessionStorage.setItem('pendingReservation', offre.id)
       setShowAuth(true)
       return
     }
-    // TODO : logique de réservation (crée reservation, décrémente stock)
+    await reserver(offre)
   }
 
-  const ctaLabel = epuise || expired
-    ? 'C\u2019est parti\u00a0!'
-    : 'Réserver mon bon'
+  /* ── Libellé et style du bouton selon l'état ── */
+  const btnLabel = (() => {
+    if (fini)                        return "C'est parti !"
+    if (status === 'loading')        return null                  // spinner
+    if (status === 'success')        return '✓ Bon réservé !'
+    if (status === 'already_reserved') return '🎟️ Déjà réservé'
+    if (status === 'no_stock')       return 'Plus de bons…'
+    if (status === 'error')          return '✗ Erreur — réessaie'
+    return 'Réserver mon bon'
+  })()
+
+  const btnColor = fini                         ? 'bg-[#D0D0D0] cursor-not-allowed'
+    : status === 'success'                      ? 'bg-green-500'
+    : status === 'error'                        ? 'bg-red-500'
+    : (status === 'already_reserved' || status === 'no_stock') ? 'bg-[#FF6B00]'
+    : 'bg-[#FF6B00] hover:bg-[#CC5500] active:scale-[0.97]'
+
+  /* ── Pulse sur le compteur de bons si < 5 ── */
+  const nbPulse = !fini && offre.nb_bons_restants !== null &&
+                  offre.nb_bons_restants !== 9999 &&
+                  offre.nb_bons_restants <= 5
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-[#F0F0F0] shadow-sm overflow-hidden">
+      <div className={`bg-white rounded-2xl border border-[#F0F0F0] shadow-sm overflow-hidden flex flex-col ${fini ? 'opacity-60 grayscale' : ''}`}>
 
-        {/* 1. Compte à rebours + bons restants */}
-        <div className={`flex items-center justify-between px-4 py-3 ${urgent ? 'bg-red-50' : 'bg-[#F5F5F5]'}`}>
-          <div className="flex items-center gap-2">
-            <span className="text-base">⏱</span>
-            {timeLeft ? (
-              <span className={`text-sm font-black tabular-nums ${urgent ? 'text-red-500' : 'text-[#0A0A0A]'}`}>
-                {urgent && <span className="text-xs font-semibold mr-1">Urgent —</span>}
-                {String(timeLeft.h).padStart(2, '0')}h {String(timeLeft.m).padStart(2, '0')}m {String(timeLeft.s).padStart(2, '0')}s
-              </span>
-            ) : (
-              <span className="text-sm font-bold text-red-500">C&apos;est parti&nbsp;!</span>
-            )}
+        {/* ── Header : countdown + bons restants (cliquable → détail) ── */}
+        <Link href={`/offre/${offre.id}`} className="block">
+          <div className={`flex items-center justify-between px-3 py-2.5 ${
+            urgent && !fini ? 'bg-red-50' : 'bg-[#F5F5F5]'
+          }`}>
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm">⏱</span>
+              {timeLeft ? (
+                <span className={`text-xs font-black tabular-nums ${
+                  urgent && !fini ? 'text-red-500' : 'text-[#0A0A0A]'
+                }`}>
+                  {urgent && !fini && <span className="font-semibold mr-1 text-[10px]">Urgent —</span>}
+                  {String(timeLeft.h).padStart(2, '0')}h{' '}
+                  {String(timeLeft.m).padStart(2, '0')}m{' '}
+                  {String(timeLeft.s).padStart(2, '0')}s
+                </span>
+              ) : (
+                <span className="text-xs font-black text-[#3D3D3D]/60">C'est parti !</span>
+              )}
+            </div>
+            <span className={`text-[11px] font-bold ${nbPulse ? 'text-red-500 animate-pulse' : 'text-[#3D3D3D]'}`}>
+              {offre.nb_bons_restants === null || offre.nb_bons_restants === 9999
+                ? '∞ bons'
+                : `🎫 ${offre.nb_bons_restants}`}
+            </span>
           </div>
-          <span className={`text-xs font-bold ${offre.nb_bons_restants <= 5 ? 'text-red-500' : 'text-[#3D3D3D]'}`}>
-            🎫 {offre.nb_bons_restants} restant{offre.nb_bons_restants > 1 ? 's' : ''}
-          </span>
-        </div>
+        </Link>
 
-        <div className="px-4 py-5 flex flex-col gap-3">
+        {/* ── Corps : cliquable → détail ── */}
+        <Link href={`/offre/${offre.id}`} className="block flex-1 px-3 py-4 flex flex-col gap-2.5">
 
-          {/* 2. Badge remise */}
-          <div className="flex items-center justify-center bg-[#FFF0E0] rounded-2xl py-5">
-            <span className="text-4xl font-black text-[#FF6B00] tracking-tight">
+          {/* Badge remise */}
+          <div className="flex items-center justify-center bg-[#FFF0E0] rounded-xl py-4">
+            <span className="text-2xl font-black text-[#FF6B00] tracking-tight leading-none">
               {formatBadge(offre)}
             </span>
           </div>
 
-          {/* 3. Titre */}
-          <p className="text-base font-bold text-[#0A0A0A] text-center leading-snug">
+          {/* Titre */}
+          <p className="text-xs font-bold text-[#0A0A0A] text-center leading-snug line-clamp-2">
             {offre.titre}
           </p>
 
-          {/* 4. Commerce + catégorie */}
-          <div className="flex items-center justify-center gap-2 flex-wrap">
+          {/* Commerce + catégorie */}
+          <div className="flex items-center justify-center gap-1.5 flex-wrap">
             {commerce?.categorie && (
-              <span className="text-[10px] font-semibold text-[#FF6B00] uppercase tracking-widest bg-[#FFF0E0] px-2 py-0.5 rounded-full">
+              <span className="text-[9px] font-semibold text-[#FF6B00] uppercase tracking-wider bg-[#FFF0E0] px-1.5 py-0.5 rounded-full">
                 {getCategorieFiltre(commerce.categorie) || commerce.categorie}
               </span>
             )}
-            <span className="text-sm font-semibold text-[#1A1A1A]">{commerce?.nom}</span>
+            <span className="text-xs font-semibold text-[#1A1A1A] truncate max-w-[110px]">{commerce?.nom}</span>
           </div>
 
-          {/* 5. Ville */}
+          {/* Ville */}
           {commerce?.ville && (
-            <p className="text-xs text-[#3D3D3D]/60 text-center">📍 {commerce.ville}</p>
+            <p className="text-[10px] text-[#3D3D3D]/50 text-center">📍 {commerce.ville}</p>
           )}
 
-          {/* 6. CTA */}
-          <button
-            onClick={handleReserver}
-            disabled={expired || epuise}
-            className="w-full mt-1 bg-[#FF6B00] hover:bg-[#CC5500] disabled:bg-[#D0D0D0] disabled:cursor-not-allowed text-white font-bold text-sm py-3.5 rounded-full transition-colors duration-200 min-h-[48px]"
-          >
-            {ctaLabel}
-          </button>
+        </Link>
 
-          {/* Invitation discrète à se connecter */}
-          {!user && !expired && !epuise && (
-            <p className="text-center text-[10px] text-[#3D3D3D]/50 -mt-1">
+        {/* ── CTA — bouton non-navigable ── */}
+        <div className="px-3 pb-3">
+          {fini ? (
+            <div className="flex flex-col gap-1.5">
+              <button disabled className="w-full bg-[#D0D0D0] text-white font-bold text-xs py-2.5 rounded-full cursor-not-allowed min-h-[40px]">
+                C'est parti !
+              </button>
+              <button
+                onClick={() => setAbonne(v => !v)}
+                className={`w-full text-[10px] font-bold py-2 rounded-full border transition-colors min-h-[36px] ${
+                  abonne
+                    ? 'bg-[#FF6B00] border-[#FF6B00] text-white'
+                    : 'border-[#FF6B00] text-[#FF6B00] hover:bg-[#FFF0E0]'
+                }`}
+              >
+                {abonne ? '✓ Abonné pour la prochaine' : 'S\'abonner pour la prochaine'}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleReserver}
+              disabled={status === 'loading'}
+              className={`w-full text-white font-bold text-xs py-2.5 rounded-full transition-all duration-200 min-h-[40px] flex items-center justify-center gap-1.5 ${btnColor}`}
+            >
+              {status === 'loading' ? (
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : btnLabel}
+            </button>
+          )}
+
+          {/* Invitation connexion */}
+          {!user && !fini && status === 'idle' && (
+            <p className="text-center text-[9px] text-[#3D3D3D]/40 mt-1.5">
               Connecte-toi pour réserver ton bon
             </p>
           )}
 
+          {/* Erreur */}
+          {status === 'error' && (
+            <p className="text-[10px] text-red-500 text-center mt-1 font-semibold">Réessaie dans quelques secondes.</p>
+          )}
         </div>
+
       </div>
 
-      {/* Bottom sheet auth */}
+      {/* ── Bottom sheet auth ── */}
       <AuthBottomSheet
         isOpen={showAuth}
         onClose={() => setShowAuth(false)}
         redirectAfter={pathname}
       />
+
+      {/* ── Bon plein écran ── */}
+      {showBon && reservation && (
+        <FullScreenBon
+          reservation={reservation}
+          offre={offre}
+          commerce={commerce}
+          onClose={() => { setShowBon(false); reset() }}
+        />
+      )}
     </>
   )
 }

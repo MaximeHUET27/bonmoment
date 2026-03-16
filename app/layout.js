@@ -2,6 +2,7 @@ import { Montserrat } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { AuthProvider } from "@/app/context/AuthContext";
+import FloatingBonButton from "@/app/components/FloatingBonButton";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -20,6 +21,7 @@ export default function RootLayout({ children }) {
       <body className={`${montserrat.variable} antialiased`}>
         <AuthProvider>
           {children}
+          <FloatingBonButton />
           <footer className="w-full bg-[#F5F5F5] border-t border-[#EBEBEB] px-6 py-5 mt-auto">
             <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
               <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-[#3D3D3D]/70">
