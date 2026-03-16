@@ -49,9 +49,15 @@ function useCountdown(dateFin) {
 }
 
 function formatBadge(offre) {
-  if (offre.type_remise === 'pourcentage') return `−${offre.valeur}%`
-  if (offre.type_remise === 'montant')     return `−${offre.valeur}€`
-  if (offre.type_remise === 'offert')      return 'Offert'
+  if (offre.type_remise === 'pourcentage')  return `−${offre.valeur}%`
+  if (offre.type_remise === 'montant_fixe') return `−${offre.valeur}€`
+  if (offre.type_remise === 'montant')      return `−${offre.valeur}€`   // rétrocompat
+  if (offre.type_remise === 'cadeau')       return '🎁 Cadeau'
+  if (offre.type_remise === 'produit_offert') return '📦 Offert'
+  if (offre.type_remise === 'service_offert') return '✂️ Offert'
+  if (offre.type_remise === 'offert')       return 'Offert'              // rétrocompat
+  if (offre.type_remise === 'concours')     return '🎰 Concours'
+  if (offre.type_remise === 'atelier')      return '🎨 Atelier'
   return offre.type_remise || 'Offre'
 }
 

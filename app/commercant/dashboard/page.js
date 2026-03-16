@@ -145,7 +145,7 @@ export default function DashboardPage() {
         {/* CTA — Créer ma première offre */}
         {commerce && (
           <Link
-            href={`/commercant/${commerce.id}/offre/nouvelle`}
+            href="/commercant/offre/nouvelle"
             className="w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-base py-4 rounded-2xl transition-colors duration-200 shadow-lg shadow-orange-200 min-h-[56px] flex items-center justify-center text-center"
           >
             ✨ Créer ma première offre
