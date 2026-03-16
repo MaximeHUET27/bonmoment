@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useAuth } from '@/app/context/AuthContext'
+import AuthBottomSheet from '@/app/components/AuthBottomSheet'
 
 function getTimeLeft(dateFin) {
   const diff = new Date(dateFin) - new Date()
@@ -15,8 +16,8 @@ function getTimeLeft(dateFin) {
 
 export default function UrgencyAndCTA({ offre }) {
   const [timeLeft, setTimeLeft] = useState(null)
+  const [showAuth, setShowAuth] = useState(false)
   const { user }  = useAuth()
-  const router    = useRouter()
   const pathname  = usePathname()
 
   useEffect(() => {
@@ -34,8 +35,7 @@ export default function UrgencyAndCTA({ offre }) {
 
   function handleReserver() {
     if (!user) {
-      // Redirige vers la page de connexion en mémorisant l'offre en cours
-      router.push(`/connexion?next=${encodeURIComponent(pathname)}`)
+      setShowAuth(true)
       return
     }
     // TODO : logique de réservation (crée reservation, décrémente stock)
@@ -105,6 +105,13 @@ export default function UrgencyAndCTA({ offre }) {
           Connecte-toi pour réserver ton bon
         </p>
       )}
+
+      {/* Bottom sheet auth */}
+      <AuthBottomSheet
+        isOpen={showAuth}
+        onClose={() => setShowAuth(false)}
+        redirectAfter={pathname}
+      />
     </>
   )
 }

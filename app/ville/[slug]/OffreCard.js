@@ -1,8 +1,33 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useAuth } from '@/app/context/AuthContext'
+import AuthBottomSheet from '@/app/components/AuthBottomSheet'
+
+/* ── Mapping catégorie Google → filtre ─────────────────────────────────── */
+
+const CATEGORIE_MAP = {
+  restaurant: 'resto',
+  cafe: 'resto',
+  bar: 'resto',
+  bakery: 'resto',
+  hair_care: 'beaute',
+  beauty_salon: 'beaute',
+  spa: 'beaute',
+  clothing_store: 'shopping',
+  florist: 'shopping',
+  jewelry_store: 'shopping',
+  gym: 'loisirs',
+  bowling_alley: 'loisirs',
+  movie_theater: 'loisirs',
+}
+
+export function getCategorieFiltre(categorieGoogle) {
+  return CATEGORIE_MAP[categorieGoogle?.toLowerCase()] || null
+}
+
+/* ── Helpers ────────────────────────────────────────────────────────────── */
 
 function getTimeLeft(dateFin) {
   const diff = new Date(dateFin) - new Date()
@@ -30,6 +55,8 @@ function formatBadge(offre) {
   return offre.type_remise || 'Offre'
 }
 
+/* ── Composant ──────────────────────────────────────────────────────────── */
+
 export default function OffreCard({ offre }) {
   const timeLeft = useCountdown(offre.date_fin)
   const commerce = offre.commerces
@@ -37,14 +64,13 @@ export default function OffreCard({ offre }) {
   const expired  = !timeLeft
   const epuise   = offre.nb_bons_restants <= 0
 
-  const { user }  = useAuth()
-  const router    = useRouter()
-  const pathname  = usePathname()
+  const { user }    = useAuth()
+  const pathname    = usePathname()
+  const [showAuth, setShowAuth] = useState(false)
 
   function handleReserver() {
     if (!user) {
-      // Redirige vers la page de connexion en mémorisant la page actuelle
-      router.push(`/connexion?next=${encodeURIComponent(pathname)}`)
+      setShowAuth(true)
       return
     }
     // TODO : logique de réservation (crée reservation, décrémente stock)
@@ -55,72 +81,81 @@ export default function OffreCard({ offre }) {
     : 'Réserver mon bon'
 
   return (
-    <div className="bg-white rounded-2xl border border-[#F0F0F0] shadow-sm overflow-hidden">
+    <>
+      <div className="bg-white rounded-2xl border border-[#F0F0F0] shadow-sm overflow-hidden">
 
-      {/* 1. Compte à rebours + bons restants */}
-      <div className={`flex items-center justify-between px-4 py-3 ${urgent ? 'bg-red-50' : 'bg-[#F5F5F5]'}`}>
-        <div className="flex items-center gap-2">
-          <span className="text-base">⏱</span>
-          {timeLeft ? (
-            <span className={`text-sm font-black tabular-nums ${urgent ? 'text-red-500' : 'text-[#0A0A0A]'}`}>
-              {urgent && <span className="text-xs font-semibold mr-1">Urgent —</span>}
-              {String(timeLeft.h).padStart(2, '0')}h {String(timeLeft.m).padStart(2, '0')}m {String(timeLeft.s).padStart(2, '0')}s
-            </span>
-          ) : (
-            <span className="text-sm font-bold text-red-500">C&apos;est parti&nbsp;!</span>
-          )}
-        </div>
-        <span className={`text-xs font-bold ${offre.nb_bons_restants <= 5 ? 'text-red-500' : 'text-[#3D3D3D]'}`}>
-          🎫 {offre.nb_bons_restants} restant{offre.nb_bons_restants > 1 ? 's' : ''}
-        </span>
-      </div>
-
-      <div className="px-4 py-5 flex flex-col gap-3">
-
-        {/* 2. Badge remise */}
-        <div className="flex items-center justify-center bg-[#FFF0E0] rounded-2xl py-5">
-          <span className="text-4xl font-black text-[#FF6B00] tracking-tight">
-            {formatBadge(offre)}
+        {/* 1. Compte à rebours + bons restants */}
+        <div className={`flex items-center justify-between px-4 py-3 ${urgent ? 'bg-red-50' : 'bg-[#F5F5F5]'}`}>
+          <div className="flex items-center gap-2">
+            <span className="text-base">⏱</span>
+            {timeLeft ? (
+              <span className={`text-sm font-black tabular-nums ${urgent ? 'text-red-500' : 'text-[#0A0A0A]'}`}>
+                {urgent && <span className="text-xs font-semibold mr-1">Urgent —</span>}
+                {String(timeLeft.h).padStart(2, '0')}h {String(timeLeft.m).padStart(2, '0')}m {String(timeLeft.s).padStart(2, '0')}s
+              </span>
+            ) : (
+              <span className="text-sm font-bold text-red-500">C&apos;est parti&nbsp;!</span>
+            )}
+          </div>
+          <span className={`text-xs font-bold ${offre.nb_bons_restants <= 5 ? 'text-red-500' : 'text-[#3D3D3D]'}`}>
+            🎫 {offre.nb_bons_restants} restant{offre.nb_bons_restants > 1 ? 's' : ''}
           </span>
         </div>
 
-        {/* 3. Titre */}
-        <p className="text-base font-bold text-[#0A0A0A] text-center leading-snug">
-          {offre.titre}
-        </p>
+        <div className="px-4 py-5 flex flex-col gap-3">
 
-        {/* 4. Commerce */}
-        <div className="flex items-center justify-center gap-2 flex-wrap">
-          {commerce?.categorie && (
-            <span className="text-[10px] font-semibold text-[#FF6B00] uppercase tracking-widest bg-[#FFF0E0] px-2 py-0.5 rounded-full">
-              {commerce.categorie}
+          {/* 2. Badge remise */}
+          <div className="flex items-center justify-center bg-[#FFF0E0] rounded-2xl py-5">
+            <span className="text-4xl font-black text-[#FF6B00] tracking-tight">
+              {formatBadge(offre)}
             </span>
-          )}
-          <span className="text-sm font-semibold text-[#1A1A1A]">{commerce?.nom}</span>
-        </div>
+          </div>
 
-        {/* 5. Ville */}
-        {commerce?.ville && (
-          <p className="text-xs text-[#3D3D3D]/60 text-center">📍 {commerce.ville}</p>
-        )}
-
-        {/* 6. CTA */}
-        <button
-          onClick={handleReserver}
-          disabled={expired || epuise}
-          className="w-full mt-1 bg-[#FF6B00] hover:bg-[#CC5500] disabled:bg-[#D0D0D0] disabled:cursor-not-allowed text-white font-bold text-sm py-3.5 rounded-full transition-colors duration-200 min-h-[48px]"
-        >
-          {ctaLabel}
-        </button>
-
-        {/* Invitation discrète à se connecter */}
-        {!user && !expired && !epuise && (
-          <p className="text-center text-[10px] text-[#3D3D3D]/50 -mt-1">
-            Connecte-toi pour réserver ton bon
+          {/* 3. Titre */}
+          <p className="text-base font-bold text-[#0A0A0A] text-center leading-snug">
+            {offre.titre}
           </p>
-        )}
 
+          {/* 4. Commerce + catégorie */}
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            {commerce?.categorie && (
+              <span className="text-[10px] font-semibold text-[#FF6B00] uppercase tracking-widest bg-[#FFF0E0] px-2 py-0.5 rounded-full">
+                {getCategorieFiltre(commerce.categorie) || commerce.categorie}
+              </span>
+            )}
+            <span className="text-sm font-semibold text-[#1A1A1A]">{commerce?.nom}</span>
+          </div>
+
+          {/* 5. Ville */}
+          {commerce?.ville && (
+            <p className="text-xs text-[#3D3D3D]/60 text-center">📍 {commerce.ville}</p>
+          )}
+
+          {/* 6. CTA */}
+          <button
+            onClick={handleReserver}
+            disabled={expired || epuise}
+            className="w-full mt-1 bg-[#FF6B00] hover:bg-[#CC5500] disabled:bg-[#D0D0D0] disabled:cursor-not-allowed text-white font-bold text-sm py-3.5 rounded-full transition-colors duration-200 min-h-[48px]"
+          >
+            {ctaLabel}
+          </button>
+
+          {/* Invitation discrète à se connecter */}
+          {!user && !expired && !epuise && (
+            <p className="text-center text-[10px] text-[#3D3D3D]/50 -mt-1">
+              Connecte-toi pour réserver ton bon
+            </p>
+          )}
+
+        </div>
       </div>
-    </div>
+
+      {/* Bottom sheet auth */}
+      <AuthBottomSheet
+        isOpen={showAuth}
+        onClose={() => setShowAuth(false)}
+        redirectAfter={pathname}
+      />
+    </>
   )
 }

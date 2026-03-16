@@ -15,7 +15,7 @@ export default function DashboardPage() {
   // Auth guard
   useEffect(() => {
     if (!loading && !user) {
-      router.replace('/connexion?next=/commercant/dashboard')
+      router.replace('/')
     }
   }, [user, loading, router])
 

@@ -91,7 +91,7 @@ export default function InscriptionCommercant() {
   // Redirection si non connecté
   useEffect(() => {
     if (!loading && !user) {
-      router.replace('/connexion?next=/commercant/inscription')
+      router.replace('/')
     }
   }, [user, loading, router])
 

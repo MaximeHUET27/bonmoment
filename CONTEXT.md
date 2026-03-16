@@ -68,3 +68,12 @@ CTA principal : "Réserver mon bon" → orange #FF6B00 fond plein blanc texte
 Secondaire : "Voir les offres" → contour orange
 Désactivé : "C'est parti !" → grisé pour offres expirées
 Spécial : "Tirer au sort 🎰" → fond sombre
+
+Architecture UX
+
+Connexion : bottom sheet (panneau coulissant depuis le bas), PAS une page séparée. Se déclenche uniquement au clic sur "Réserver mon bon" pour les non-connectés.
+Après réservation : QR code plein écran (fond blanc, QR 250px min, code 6 chiffres Courier New 32px).
+Page d'accueil : zone urgence en haut (offres < 2h OU < 5 bons restants) en carrousel horizontal + liste filtrée par catégorie en dessous.
+Bandeau ville : affiche toujours "📍 [Ville] [Changer ▼]" + bouton "S'abonner".
+Abonnements : le client peut s'abonner à plusieurs communes (stocké localement).
+Lexique corrigé : "Bons plans de ta ville" (pas "du quartier").
