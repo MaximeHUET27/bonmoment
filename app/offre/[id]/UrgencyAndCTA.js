@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/app/context/AuthContext'
 import AuthBottomSheet from '@/app/components/AuthBottomSheet'
 import FullScreenBon from '@/app/components/FullScreenBon'
 import FavoriButton from '@/app/components/FavoriButton'
 import { useReservation } from '@/app/hooks/useReservation'
+
+const PENDING_KEY = 'bonmoment_pending_reservation'
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
 
@@ -29,11 +31,12 @@ function getTimeLeft(dateFin) {
  */
 export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
   const [timeLeft, setTimeLeft] = useState(null)
-  const { user }   = useAuth()
+  const { user, supabase } = useAuth()
   const pathname   = usePathname()
 
   const [showAuth, setShowAuth] = useState(false)
   const [showBon,  setShowBon]  = useState(false)
+  const [toast,    setToast]    = useState(null)
 
   const { reserver, status, reservation, reset } = useReservation()
 
@@ -46,14 +49,52 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
 
   /* ── Auto-pending : réservation déclenchée après retour OAuth ── */
   useEffect(() => {
-    if (!user) return
-    const pendingId = sessionStorage.getItem('pendingReservation')
-    if (pendingId === offre.id) {
-      sessionStorage.removeItem('pendingReservation')
-      reserver(offre)
+    if (!user || !supabase) return
+    const pendingId = sessionStorage.getItem(PENDING_KEY)
+    if (pendingId !== offre.id) return
+    sessionStorage.removeItem(PENDING_KEY)
+
+    // Abonnement silencieux à la ville du commerce
+    const ville = offre.commerces?.ville
+    if (ville) {
+      supabase
+        .from('users')
+        .select('villes_abonnees, notif_email')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (!data) return
+          const villes = data.villes_abonnees || []
+          const isNew  = !villes.includes(ville)
+          const updates = {}
+          if (isNew) updates.villes_abonnees = [...villes, ville]
+          if (!data.notif_email) updates.notif_email = true
+          if (Object.keys(updates).length > 0) {
+            supabase.from('users').update(updates).eq('id', user.id).then(() => {
+              if (isNew) {
+                setToast(`🎉 Bienvenue à ${ville} ! Tu recevras les bons plans chaque soir à 21h.`)
+              }
+            })
+          }
+        })
     }
+
+    reserver(offre)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
+
+  /* ── Toast auto-dismiss ── */
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 4_000)
+    return () => clearTimeout(t)
+  }, [toast])
+
+  /* ── Toast sur erreurs métier ── */
+  useEffect(() => {
+    if (status === 'no_stock') setToast('😔 Plus de bons disponibles pour cette offre.')
+    if (status === 'error')    setToast('⚠️ Une erreur est survenue. Réessaie dans quelques secondes.')
+  }, [status])
 
   /* ── Show FullScreenBon après succès (1s de feedback ✓) ── */
   useEffect(() => {
@@ -66,7 +107,7 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
 
   async function handleReserver() {
     if (!user) {
-      sessionStorage.setItem('pendingReservation', offre.id)
+      sessionStorage.setItem(PENDING_KEY, offre.id)
       setShowAuth(true)
       return
     }
@@ -220,6 +261,17 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
           commerce={offre.commerces}
           onClose={() => { setShowBon(false); reset() }}
         />
+      )}
+
+      {/* ── Toast onboarding / erreur ── */}
+      {toast && (
+        <div
+          className="fixed bottom-24 left-4 right-4 z-50 bg-[#0A0A0A] text-white text-sm font-semibold px-4 py-3 rounded-2xl shadow-xl text-center"
+          style={{ animation: 'fadeSlideUp 0.3s ease' }}
+        >
+          {toast}
+          <style>{`@keyframes fadeSlideUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }`}</style>
+        </div>
       )}
     </>
   )
