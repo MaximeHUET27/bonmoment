@@ -1,9 +1,10 @@
 import Image from 'next/image'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import AuthButton from '@/app/components/AuthButton'
 import HomeClient from '@/app/components/HomeClient'
 
 export default async function Home() {
+  const supabase = await createClient()
   const [
     { data: villes },
     { data: offres },

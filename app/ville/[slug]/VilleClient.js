@@ -43,7 +43,7 @@ export default function VilleClient({ offres, villeNom }) {
 
   /* Filtrage */
   const offresActives  = (offres || []).filter(isActive)
-  const offresUrgentes = offresActives.filter(isUrgent)
+  const offresUrgentes = offresActives.filter(isUrgent).slice(0, 3)
 
   const offresAffichees = (offres || [])
     .filter(o => {

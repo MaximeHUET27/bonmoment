@@ -66,7 +66,7 @@ export default function HomeClient({ offres, villes }) {
   const offresUrgentes = (offres || []).filter(o => {
     if (ville && o.commerces?.ville !== ville) return false
     return isUrgent(o)
-  })
+  }).slice(0, 3)
 
   /* ── Skeleton pendant hydratation ────────────────────────────────────── */
   if (isLoading) {

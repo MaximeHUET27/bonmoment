@@ -1,12 +1,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import { toSlug } from '@/lib/utils'
 import AuthButton from '@/app/components/AuthButton'
 import VilleClient from './VilleClient'
 
 export default async function VillePage({ params }) {
   const { slug } = await params
+  const supabase = await createClient()
 
   /* ── Résolution de la ville depuis son slug ── */
   const { data: villes } = await supabase
