@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/app/context/AuthContext'
+import VilleSearchOverlay from '@/app/components/VilleSearchOverlay'
 
 /* ── Helpers badges ────────────────────────────────────────────────────────── */
 
@@ -49,14 +50,16 @@ export default function ProfilPage() {
   const { user, loading, supabase, signOut } = useAuth()
   const router = useRouter()
 
-  const [profile,         setProfile]         = useState(null)
-  const [reservations,    setReservations]     = useState([])
-  const [favorisDetails,  setFavorisDetails]   = useState([])
-  const [villeCounts,     setVilleCounts]      = useState({})
-  const [fetching,        setFetching]         = useState(true)
-  const [confirmDelete,   setConfirmDelete]    = useState(false)
-  const [deleting,        setDeleting]         = useState(false)
-  const [toast,           setToast]            = useState(null)
+  const [profile,            setProfile]            = useState(null)
+  const [reservations,       setReservations]        = useState([])
+  const [favorisDetails,     setFavorisDetails]      = useState([])
+  const [villeCounts,        setVilleCounts]         = useState({})
+  const [villesBonmoment,    setVillesBonmoment]     = useState([])
+  const [fetching,           setFetching]            = useState(true)
+  const [confirmDelete,      setConfirmDelete]       = useState(false)
+  const [deleting,           setDeleting]            = useState(false)
+  const [toast,              setToast]               = useState(null)
+  const [showVilleOverlay,   setShowVilleOverlay]    = useState(false)
 
   /* Auth guard */
   useEffect(() => {
@@ -71,6 +74,7 @@ export default function ProfilPage() {
       const [
         { data: prof },
         { data: resa },
+        { data: villesActives },
       ] = await Promise.all([
         supabase
           .from('users')
@@ -82,7 +86,14 @@ export default function ProfilPage() {
           .select('id, statut, created_at, offres(titre, date_fin, commerces(nom, ville))')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false }),
+        supabase
+          .from('villes')
+          .select('id, nom')
+          .eq('active', true)
+          .order('nom'),
       ])
+
+      setVillesBonmoment(villesActives || [])
 
       setProfile(prof)
       setReservations(resa || [])
@@ -164,6 +175,22 @@ export default function ProfilPage() {
         .eq('id', user.id)
     }
     setProfile(p => ({ ...p, notifications_push: !p.notifications_push }))
+  }
+
+  async function abonnerVille(villeNom) {
+    const existant = profile.villes_abonnees || []
+    if (existant.includes(villeNom)) return
+    const next = [...existant, villeNom]
+    await supabase.from('users').update({ villes_abonnees: next }).eq('id', user.id)
+    setProfile(p => ({ ...p, villes_abonnees: next }))
+    afficherToast(`🎉 Tu es abonné à ${villeNom} !`)
+    // Charger le nb d'offres pour la nouvelle ville
+    const { count } = await supabase
+      .from('offres')
+      .select('id', { count: 'exact', head: true })
+      .eq('statut', 'active')
+      .gt('date_fin', new Date().toISOString())
+    setVilleCounts(prev => ({ ...prev, [villeNom]: count || 0 }))
   }
 
   async function desabonnerVille(villeNom) {
@@ -270,12 +297,12 @@ export default function ProfilPage() {
         <section className="bg-white rounded-3xl px-5 py-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00]">Mes villes</p>
-            <Link
-              href="/"
-              className="text-xs font-bold text-[#FF6B00] border border-[#FF6B00] px-3 py-1 rounded-full hover:bg-[#FFF0E0] transition-colors"
+            <button
+              onClick={() => setShowVilleOverlay(true)}
+              className="text-xs font-bold text-[#FF6B00] border border-[#FF6B00] px-3 py-1 rounded-full hover:bg-[#FFF0E0] transition-colors min-h-[32px]"
             >
               + Ajouter une ville
-            </Link>
+            </button>
           </div>
 
           {(!profile.villes_abonnees || profile.villes_abonnees.length === 0) ? (
@@ -455,6 +482,15 @@ export default function ProfilPage() {
           {toast}
         </div>
       )}
+
+      {/* Overlay ajout de ville */}
+      <VilleSearchOverlay
+        isOpen={showVilleOverlay}
+        onClose={() => setShowVilleOverlay(false)}
+        villesBonmoment={villesBonmoment}
+        onSelectActive={abonnerVille}
+        onSubscribed={abonnerVille}
+      />
     </main>
   )
 }

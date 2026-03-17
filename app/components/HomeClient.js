@@ -1,11 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import SkeletonCard from './SkeletonCard'
 import OffreCard, { getCategorieFiltre } from '@/app/ville/[slug]/OffreCard'
 import VilleAbonnement from './VilleAbonnement'
+import VilleSearchOverlay from './VilleSearchOverlay'
+import { useAuth } from '@/app/context/AuthContext'
+import { toSlug } from '@/lib/utils'
 
-/* ── Barre de filtres ───────────────────────────────────────────────────── */
+/* ── Barre de filtres catégorie ─────────────────────────────────────────── */
 
 const FILTERS = [
   { id: 'tous',     label: '🔥 Tous' },
@@ -25,16 +29,21 @@ function getOffreFiltre(offre) {
 
 function isUrgent(offre) {
   const diff = new Date(offre.date_fin) - new Date()
-  return diff > 0 && (diff < 7200000 || offre.nb_bons_restants < 5)
+  return diff > 0 && (diff < 7_200_000 || offre.nb_bons_restants < 5)
 }
 
 /* ── Composant principal ────────────────────────────────────────────────── */
 
 export default function HomeClient({ offres, villes }) {
-  const [ville, setVille]                   = useState(null)
-  const [filtre, setFiltre]                 = useState('tous')
-  const [isLoading, setIsLoading]           = useState(true)
-  const [showVilleDropdown, setShowVilleDropdown] = useState(false)
+  const { user, supabase }  = useAuth()
+  const router              = useRouter()
+
+  const [ville,           setVille]           = useState(null)
+  const [filtre,          setFiltre]          = useState('tous')
+  const [isLoading,       setIsLoading]       = useState(true)
+  const [showOverlay,     setShowOverlay]     = useState(false)
+  const [villesAbonnees,  setVillesAbonnees]  = useState([])
+  const [villeFiltre,     setVilleFiltre]     = useState(null) // null = toutes mes villes
 
   /* Lecture localStorage côté client uniquement */
   useEffect(() => {
@@ -43,15 +52,35 @@ export default function HomeClient({ offres, villes }) {
     setIsLoading(false)
   }, [])
 
-  function selectVille(nom) {
-    setVille(nom)
-    localStorage.setItem('bonmoment_ville', nom)
-    setShowVilleDropdown(false)
+  /* Chargement villes_abonnees quand user change */
+  useEffect(() => {
+    if (!user || !supabase) { setVillesAbonnees([]); return }
+    supabase
+      .from('users')
+      .select('villes_abonnees')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => setVillesAbonnees(data?.villes_abonnees || []))
+  }, [user, supabase])
+
+  /* Quand l'utilisateur sélectionne une ville active dans l'overlay */
+  function handleVilleSelect(nomVille) {
+    setVille(nomVille)
+    localStorage.setItem('bonmoment_ville', nomVille)
+    router.push(`/ville/${toSlug(nomVille)}`)
   }
 
-  /* Filtrage + tri par urgence décroissante */
+  /* Multi-city filter visible si user abonné à 2+ villes */
+  const showMultiCityFilter = villesAbonnees.length >= 2
+
+  /* ── Filtrage ── */
   const offresFiltrees = (offres || [])
     .filter(o => {
+      if (showMultiCityFilter) {
+        const villeOffre = o.commerces?.ville
+        if (villeFiltre) return villeOffre === villeFiltre
+        return villesAbonnees.includes(villeOffre)
+      }
       if (ville && o.commerces?.ville !== ville) return false
       if (filtre === 'tous') return true
       return getOffreFiltre(o) === filtre
@@ -64,11 +93,16 @@ export default function HomeClient({ offres, villes }) {
     })
 
   const offresUrgentes = (offres || []).filter(o => {
-    if (ville && o.commerces?.ville !== ville) return false
+    const villeOffre = o.commerces?.ville
+    if (showMultiCityFilter) {
+      if (villeFiltre) return villeOffre === villeFiltre && isUrgent(o)
+      return villesAbonnees.includes(villeOffre) && isUrgent(o)
+    }
+    if (ville && villeOffre !== ville) return false
     return isUrgent(o)
   }).slice(0, 3)
 
-  /* ── Skeleton pendant hydratation ────────────────────────────────────── */
+  /* ── Skeleton pendant hydratation ── */
   if (isLoading) {
     return (
       <div className="w-full px-4 py-4">
@@ -85,40 +119,48 @@ export default function HomeClient({ offres, villes }) {
 
       {/* ── Bandeau ville ─────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#F0F0F0] bg-white sticky top-0 z-30">
+        <button
+          onClick={() => setShowOverlay(true)}
+          className="flex items-center gap-1.5 text-sm font-bold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors min-h-[44px]"
+        >
+          <span>📍 {ville || 'Ta ville'}</span>
+          <span className="text-[#FF6B00] text-xs font-semibold">Changer ▼</span>
+        </button>
 
-        {/* Sélecteur de ville */}
-        <div className="relative">
-          <button
-            onClick={() => setShowVilleDropdown(v => !v)}
-            className="flex items-center gap-1.5 text-sm font-bold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors min-h-[44px]"
-          >
-            <span>📍 {ville || 'Ta ville'}</span>
-            <span className="text-[#FF6B00] text-xs font-semibold">Changer ▼</span>
-          </button>
-
-          {showVilleDropdown && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowVilleDropdown(false)} />
-              <div className="absolute left-0 top-full mt-2 z-50 bg-white rounded-2xl shadow-xl border border-[#F0F0F0] py-2 min-w-[200px] max-h-64 overflow-y-auto">
-                {(villes || []).map(v => (
-                  <button
-                    key={v.id}
-                    onClick={() => selectVille(v.nom)}
-                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[#FFF0E0] transition-colors min-h-[44px] ${
-                      ville === v.nom ? 'font-bold text-[#FF6B00]' : 'text-[#0A0A0A]'
-                    }`}
-                  >
-                    {v.nom}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Bouton abonnement */}
         {ville && <VilleAbonnement villeNom={ville} />}
       </div>
+
+      {/* ── Filtre multi-villes (si abonné à 2+) ─────────────────────────── */}
+      {showMultiCityFilter && (
+        <div
+          className="flex gap-2 overflow-x-auto px-4 py-2.5 border-b border-[#F0F0F0] bg-[#FAFAFA]"
+          style={{ scrollbarWidth: 'none' }}
+        >
+          <button
+            onClick={() => setVilleFiltre(null)}
+            className={`shrink-0 text-xs font-bold px-3 py-1.5 rounded-full transition-colors whitespace-nowrap min-h-[32px] ${
+              villeFiltre === null
+                ? 'bg-[#FF6B00] text-white'
+                : 'bg-[#F0F0F0] text-[#3D3D3D] hover:bg-[#FFF0E0] hover:text-[#FF6B00]'
+            }`}
+          >
+            🏠 Toutes mes villes
+          </button>
+          {villesAbonnees.map(v => (
+            <button
+              key={v}
+              onClick={() => setVilleFiltre(v)}
+              className={`shrink-0 text-xs font-bold px-3 py-1.5 rounded-full transition-colors whitespace-nowrap min-h-[32px] ${
+                villeFiltre === v
+                  ? 'bg-[#FF6B00] text-white'
+                  : 'bg-[#F0F0F0] text-[#3D3D3D] hover:bg-[#FFF0E0] hover:text-[#FF6B00]'
+              }`}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ── Zone urgence ─────────────────────────────────────────────────── */}
       {offresUrgentes.length > 0 && (
@@ -139,7 +181,7 @@ export default function HomeClient({ offres, villes }) {
         </div>
       )}
 
-      {/* ── Barre de filtres ─────────────────────────────────────────────── */}
+      {/* ── Barre de filtres catégorie ────────────────────────────────────── */}
       <div
         className="flex gap-2 overflow-x-auto px-4 py-3 border-b border-[#F0F0F0]"
         style={{ scrollbarWidth: 'none' }}
@@ -177,6 +219,14 @@ export default function HomeClient({ offres, villes }) {
           </div>
         )}
       </div>
+
+      {/* ── Overlay sélecteur de ville ───────────────────────────────────── */}
+      <VilleSearchOverlay
+        isOpen={showOverlay}
+        onClose={() => setShowOverlay(false)}
+        villesBonmoment={villes}
+        onSelectActive={handleVilleSelect}
+      />
 
     </div>
   )
