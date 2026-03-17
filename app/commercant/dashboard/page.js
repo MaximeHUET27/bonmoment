@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { QRCodeCanvas } from 'qrcode.react'
 import { useAuth } from '@/app/context/AuthContext'
 import { toSlug } from '@/lib/utils'
+import TirageAuSort from '@/app/commercant/components/TirageAuSort'
 
 export default function DashboardPage() {
   const { user, loading, supabase, signOut } = useAuth()
@@ -15,15 +16,15 @@ export default function DashboardPage() {
   const [commerce,      setCommerce]      = useState(null)
   const [fetching,      setFetching]      = useState(true)
   const [qrToast,       setQrToast]       = useState(null)
+  const [offres,        setOffres]        = useState([])
+  const [nbParticipants, setNbParticipants] = useState({}) // offre_id → count
 
-  // Auth guard
+  /* ── Auth guard ─────────────────────────────────────────────────────────── */
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace('/')
-    }
+    if (!loading && !user) router.replace('/')
   }, [user, loading, router])
 
-  // Fetch commerce du commerçant connecté
+  /* ── Fetch commerce ─────────────────────────────────────────────────────── */
   useEffect(() => {
     if (!user) return
     supabase
@@ -36,6 +37,38 @@ export default function DashboardPage() {
         setFetching(false)
       })
   }, [user, supabase])
+
+  /* ── Fetch offres (actives + expirées) ──────────────────────────────────── */
+  useEffect(() => {
+    if (!commerce) return
+    supabase
+      .from('offres')
+      .select('id, titre, type_remise, valeur, statut, date_fin, nb_bons_restants, nb_bons_total, gagnant_id')
+      .eq('commerce_id', commerce.id)
+      .in('statut', ['active', 'expiree'])
+      .order('date_fin', { ascending: false })
+      .limit(20)
+      .then(({ data }) => {
+        setOffres(data || [])
+
+        // Compter les participants validés pour chaque concours expiré
+        const concours = (data || []).filter(o => o.type_remise === 'concours' && o.statut === 'expiree')
+        if (!concours.length) return
+
+        Promise.all(
+          concours.map(o =>
+            supabase
+              .from('reservations')
+              .select('id', { count: 'exact', head: true })
+              .eq('offre_id', o.id)
+              .eq('statut', 'utilisee')
+              .then(({ count }) => [o.id, count ?? 0])
+          )
+        ).then(entries => {
+          setNbParticipants(Object.fromEntries(entries))
+        })
+      })
+  }, [commerce, supabase])
 
   if (loading || fetching) {
     return (
@@ -50,6 +83,9 @@ export default function DashboardPage() {
   const prenom = user.user_metadata?.full_name?.split(' ')[0]
     ?? user.user_metadata?.name?.split(' ')[0]
     ?? 'commerçant'
+
+  const offresActives  = offres.filter(o => o.statut === 'active')
+  const offresExpirees = offres.filter(o => o.statut === 'expiree')
 
   return (
     <main className="min-h-screen bg-[#F5F5F5] flex flex-col">
@@ -76,9 +112,23 @@ export default function DashboardPage() {
       </header>
 
       {/* ── Corps ────────────────────────────────────────────────────────── */}
-      <div className="flex-1 w-full max-w-xl mx-auto px-5 py-10 flex flex-col gap-6">
+      <div className="flex-1 w-full max-w-xl mx-auto px-5 py-6 flex flex-col gap-5">
 
-        {/* Message de bienvenue */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* ✅ BOUTON VÉRIFIER UN BON — Priorité absolue, toujours visible */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {commerce && (
+          <Link
+            href="/commercant/valider"
+            className="w-full bg-[#FF6B00] hover:bg-[#CC5500] active:bg-[#CC5500] text-white font-black text-xl py-5 rounded-3xl transition-colors duration-200 shadow-xl shadow-orange-300/50 min-h-[72px] flex items-center justify-center text-center gap-3"
+            style={{ fontFamily: 'Montserrat, sans-serif' }}
+          >
+            <span className="text-2xl">✅</span>
+            Vérifier un bon
+          </Link>
+        )}
+
+        {/* ── Message de bienvenue ──────────────────────────────────────── */}
         <div className="bg-white rounded-3xl px-6 py-8 flex flex-col gap-2 shadow-sm">
           <p className="text-xs font-semibold text-[#FF6B00] uppercase tracking-widest">Mon commerce</p>
           <h1 className="text-2xl font-black text-[#0A0A0A] leading-tight">
@@ -96,7 +146,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Infos commerce */}
+        {/* ── Infos commerce ───────────────────────────────────────────── */}
         {commerce && (
           <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
             <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">Ton établissement</h2>
@@ -132,9 +182,7 @@ export default function DashboardPage() {
                   <p className="text-[10px] text-[#3D3D3D]/50">
                     Valable jusqu&apos;au{' '}
                     {new Date(commerce.code_parrainage_expire_at).toLocaleDateString('fr-FR', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
+                      day: 'numeric', month: 'long', year: 'numeric',
                     })}
                   </p>
                 )}
@@ -146,23 +194,111 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* CTA — Créer ma première offre */}
+        {/* ── CTA créer une offre ───────────────────────────────────────── */}
         {commerce && (
           <Link
             href="/commercant/offre/nouvelle"
-            className="w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-base py-4 rounded-2xl transition-colors duration-200 shadow-lg shadow-orange-200 min-h-[56px] flex items-center justify-center text-center"
+            className="w-full bg-[#0A0A0A] hover:bg-[#1A1A1A] text-white font-black text-base py-4 rounded-2xl transition-colors duration-200 min-h-[56px] flex items-center justify-center text-center"
           >
-            ✨ Créer ma première offre
+            ✨ Créer une offre
           </Link>
         )}
 
-        {/* ── QR code vitrine ── */}
+        {/* ── Offres actives ────────────────────────────────────────────── */}
+        {offresActives.length > 0 && (
+          <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
+            <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">
+              Offres en cours · {offresActives.length}
+            </h2>
+            {offresActives.map(o => (
+              <OffreRow key={o.id} offre={o} />
+            ))}
+          </div>
+        )}
+
+        {/* ── Concours expirés à tirer au sort ─────────────────────────── */}
+        {offresExpirees.some(o => o.type_remise === 'concours') && (
+          <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-5 shadow-sm">
+            <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">
+              🎰 Concours terminés
+            </h2>
+            {offresExpirees
+              .filter(o => o.type_remise === 'concours')
+              .map(o => (
+                <div key={o.id} className="border border-[#F0F0F0] rounded-2xl px-4 py-4">
+                  <p className="text-sm font-bold text-[#0A0A0A] mb-0.5">{o.titre}</p>
+                  <p className="text-[11px] text-[#3D3D3D]/50">
+                    Terminé le {new Date(o.date_fin).toLocaleDateString('fr-FR', {
+                      day: 'numeric', month: 'long',
+                    })}
+                  </p>
+                  <TirageAuSort
+                    offre={o}
+                    nbParticipants={nbParticipants[o.id] ?? null}
+                  />
+                </div>
+              ))
+            }
+          </div>
+        )}
+
+        {/* ── Offres expirées récentes (non-concours) ───────────────────── */}
+        {offresExpirees.filter(o => o.type_remise !== 'concours').length > 0 && (
+          <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-3 shadow-sm">
+            <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">
+              Offres récentes terminées
+            </h2>
+            {offresExpirees
+              .filter(o => o.type_remise !== 'concours')
+              .slice(0, 5)
+              .map(o => (
+                <OffreRow key={o.id} offre={o} expired />
+              ))}
+          </div>
+        )}
+
+        {/* ── QR code vitrine ──────────────────────────────────────────── */}
         {commerce?.ville && (
-          <QRVitrine commerce={commerce} qrRef={qrRef} toast={qrToast} setToast={setQrToast} />
+          <QRVitrine commerce={commerce} toast={qrToast} setToast={setQrToast} />
         )}
 
       </div>
     </main>
+  )
+}
+
+/* ── Ligne d'offre ───────────────────────────────────────────────────────── */
+
+function OffreRow({ offre, expired = false }) {
+  const labels = {
+    pourcentage:    `${offre.valeur}%`,
+    montant_fixe:   `${offre.valeur}€`,
+    cadeau:         '🎁',
+    produit_offert: '📦',
+    service_offert: '✂️',
+    concours:       '🎰',
+    atelier:        '🎨',
+  }
+
+  return (
+    <div className={`flex items-center justify-between gap-3 py-1 ${expired ? 'opacity-50' : ''}`}>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-bold text-[#0A0A0A] truncate">{offre.titre}</p>
+        <p className="text-[11px] text-[#3D3D3D]/50">
+          {expired ? 'Terminée' : (
+            new Date(offre.date_fin) > new Date()
+              ? `Jusqu'à ${new Date(offre.date_fin).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
+              : 'Expirée'
+          )}
+          {offre.nb_bons_restants != null && offre.nb_bons_restants !== 9999 && (
+            ` · ${offre.nb_bons_restants} bons restants`
+          )}
+        </p>
+      </div>
+      <span className="text-sm font-black text-[#FF6B00] shrink-0">
+        {labels[offre.type_remise] ?? offre.type_remise}
+      </span>
+    </div>
   )
 }
 
@@ -179,11 +315,9 @@ function QRVitrine({ commerce, toast, setToast }) {
   }
 
   function telechargerQR() {
-    // On cherche le canvas rendu par QRCodeCanvas
     const canvas = document.getElementById('qr-vitrine-canvas')
     if (!canvas) return
 
-    // Créer un canvas A5 (595×842 px ≈ A5 à 72dpi, ou 1240×1754 à 150dpi)
     const W = 1240
     const H = 1754
     const out = document.createElement('canvas')
@@ -191,15 +325,12 @@ function QRVitrine({ commerce, toast, setToast }) {
     out.height = H
     const ctx = out.getContext('2d')
 
-    // Fond blanc
     ctx.fillStyle = '#FFFFFF'
     ctx.fillRect(0, 0, W, H)
 
-    // Header orange
     ctx.fillStyle = '#FF6B00'
     ctx.fillRect(0, 0, W, 220)
 
-    // Texte BONMOMENT dans le header
     ctx.fillStyle = '#FFFFFF'
     ctx.font = 'bold 48px Arial'
     ctx.textAlign = 'center'
@@ -207,13 +338,11 @@ function QRVitrine({ commerce, toast, setToast }) {
     ctx.font = '28px Arial'
     ctx.fillText('Soyez là au bon moment', W / 2, 165)
 
-    // QR code centré
     const qrSize = 600
     const qrX    = (W - qrSize) / 2
     const qrY    = 300
     ctx.drawImage(canvas, qrX, qrY, qrSize, qrSize)
 
-    // Texte sous le QR
     ctx.fillStyle = '#0A0A0A'
     ctx.font = 'bold 36px Arial'
     ctx.textAlign = 'center'
@@ -223,12 +352,10 @@ function QRVitrine({ commerce, toast, setToast }) {
     ctx.fillStyle = '#9CA3AF'
     ctx.fillText('sur BONMOMENT', W / 2, qrY + qrSize + 170)
 
-    // Lien en bas
     ctx.fillStyle = '#FF6B00'
     ctx.font = '24px Arial'
     ctx.fillText(qrUrl, W / 2, H - 80)
 
-    // Téléchargement
     const link    = document.createElement('a')
     link.download = `qr-vitrine-${villeSlug}.png`
     link.href     = out.toDataURL('image/png')
@@ -244,7 +371,6 @@ function QRVitrine({ commerce, toast, setToast }) {
         <span className="font-bold text-[#0A0A0A]">{commerce.ville}</span>.
       </p>
 
-      {/* Aperçu QR */}
       <div className="flex flex-col items-center gap-3">
         <div className="bg-white border-2 border-[#F0F0F0] rounded-2xl p-4 flex flex-col items-center gap-2">
           <QRCodeCanvas
@@ -275,7 +401,6 @@ function QRVitrine({ commerce, toast, setToast }) {
         </p>
       </div>
 
-      {/* Toast */}
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-[#0A0A0A] text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-2xl max-w-[90vw] text-center">
           {toast}
