@@ -72,9 +72,65 @@ export default function DashboardPage() {
 
   if (loading || fetching) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <span className="w-8 h-8 border-[3px] border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
-      </div>
+      <main className="min-h-screen bg-[#F5F5F5] flex flex-col">
+        {/* Header */}
+        <header className="w-full bg-white border-b border-[#EBEBEB] px-6 py-4 flex items-center justify-between">
+          <div className="w-[120px] h-8 bg-[#E0E0E0] rounded-xl animate-pulse" />
+        </header>
+
+        <div className="flex-1 w-full max-w-xl mx-auto px-5 py-6 flex flex-col gap-5 animate-pulse">
+
+          {/* Bouton vérifier (placeholder) */}
+          <div className="w-full h-[72px] bg-[#FFD9B8] rounded-3xl" />
+
+          {/* Bloc bienvenue */}
+          <div className="bg-white rounded-3xl px-6 py-8 flex flex-col gap-3 shadow-sm">
+            <div className="h-3 w-24 bg-[#E0E0E0] rounded" />
+            <div className="h-8 w-48 bg-[#E0E0E0] rounded-xl" />
+            <div className="h-4 w-full bg-[#E0E0E0] rounded" />
+            <div className="h-4 w-3/4 bg-[#E0E0E0] rounded" />
+          </div>
+
+          {/* 3 blocs KPI en ligne */}
+          <div className="grid grid-cols-3 gap-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl px-4 py-5 h-20 shadow-sm flex flex-col gap-2">
+                <div className="h-3 w-12 bg-[#E0E0E0] rounded" />
+                <div className="h-5 w-8 bg-[#E0E0E0] rounded" />
+              </div>
+            ))}
+          </div>
+
+          {/* Bloc offres actives */}
+          <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
+            <div className="h-4 w-40 bg-[#E0E0E0] rounded" />
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="flex items-center justify-between gap-3 py-1">
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <div className="h-4 w-3/4 bg-[#E0E0E0] rounded" />
+                  <div className="h-3 w-1/2 bg-[#E0E0E0] rounded" />
+                </div>
+                <div className="h-5 w-10 bg-[#E0E0E0] rounded shrink-0" />
+              </div>
+            ))}
+          </div>
+
+          {/* Bloc offres expirées */}
+          <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
+            <div className="h-4 w-52 bg-[#E0E0E0] rounded" />
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="flex items-center justify-between gap-3 py-1 opacity-60">
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <div className="h-4 w-2/3 bg-[#E0E0E0] rounded" />
+                  <div className="h-3 w-1/3 bg-[#E0E0E0] rounded" />
+                </div>
+                <div className="h-5 w-10 bg-[#E0E0E0] rounded shrink-0" />
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </main>
     )
   }
 

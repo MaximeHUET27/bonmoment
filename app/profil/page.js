@@ -216,9 +216,80 @@ export default function ProfilPage() {
 
   if (loading || fetching) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <span className="w-8 h-8 border-[3px] border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
-      </div>
+      <main className="min-h-screen bg-[#F5F5F5] flex flex-col">
+        {/* Header */}
+        <header className="w-full bg-white border-b border-[#EBEBEB] px-5 py-3 flex items-center justify-between sticky top-0 z-30">
+          <div className="w-[110px] h-8 bg-[#E0E0E0] rounded-xl animate-pulse" />
+          <div className="h-4 w-16 bg-[#E0E0E0] rounded animate-pulse" />
+        </header>
+
+        <div className="flex-1 w-full max-w-xl mx-auto px-4 py-6 flex flex-col gap-4 animate-pulse">
+
+          {/* Bloc avatar + nom */}
+          <div className="bg-white rounded-3xl px-5 py-6 shadow-sm flex flex-col gap-4">
+            <div className="h-3 w-32 bg-[#E0E0E0] rounded" />
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-full bg-[#E0E0E0] shrink-0" />
+              <div className="flex flex-col gap-2">
+                <div className="h-6 w-40 bg-[#E0E0E0] rounded-xl" />
+                <div className="h-3 w-32 bg-[#E0E0E0] rounded" />
+              </div>
+            </div>
+            {/* Badge placeholder */}
+            <div className="bg-[#F5F5F5] rounded-2xl px-4 py-4 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <div className="h-5 w-32 bg-[#E0E0E0] rounded" />
+                <div className="h-3 w-20 bg-[#E0E0E0] rounded" />
+              </div>
+              <div className="w-full h-2 bg-[#E0E0E0] rounded-full" />
+              <div className="h-3 w-48 bg-[#E0E0E0] rounded" />
+            </div>
+          </div>
+
+          {/* Bloc Mes villes */}
+          <div className="bg-white rounded-3xl px-5 py-6 shadow-sm flex flex-col gap-3">
+            <div className="h-3 w-20 bg-[#E0E0E0] rounded" />
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="flex items-center justify-between py-2.5 border-b border-[#F5F5F5] last:border-0">
+                <div className="flex flex-col gap-1.5">
+                  <div className="h-4 w-32 bg-[#E0E0E0] rounded" />
+                  <div className="h-3 w-20 bg-[#E0E0E0] rounded" />
+                </div>
+                <div className="h-7 w-24 bg-[#E0E0E0] rounded-full" />
+              </div>
+            ))}
+          </div>
+
+          {/* Bloc Mes commerces favoris */}
+          <div className="bg-white rounded-3xl px-5 py-6 shadow-sm flex flex-col gap-3">
+            <div className="h-3 w-40 bg-[#E0E0E0] rounded" />
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="flex items-center gap-3 py-2.5 border-b border-[#F5F5F5] last:border-0">
+                <div className="w-10 h-10 rounded-xl bg-[#E0E0E0] shrink-0" />
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <div className="h-4 w-32 bg-[#E0E0E0] rounded" />
+                  <div className="h-3 w-20 bg-[#E0E0E0] rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Bloc Mes bons */}
+          <div className="bg-white rounded-3xl px-5 py-6 shadow-sm flex flex-col gap-3">
+            <div className="h-3 w-20 bg-[#E0E0E0] rounded" />
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="border border-[#F0F0F0] rounded-2xl px-4 py-3 flex items-center justify-between gap-3 h-16">
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <div className="h-4 w-32 bg-[#E0E0E0] rounded" />
+                  <div className="h-3 w-48 bg-[#E0E0E0] rounded" />
+                </div>
+                <div className="h-5 w-14 bg-[#E0E0E0] rounded-full shrink-0" />
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </main>
     )
   }
 
