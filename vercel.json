@@ -1,0 +1,19 @@
+{
+  "crons": [
+    {
+      "path": "/api/email-quotidien",
+      "schedule": "0 18 * * *",
+      "comment": "Habitant exemplaire — email 19h Paris (UTC+1)"
+    },
+    {
+      "path": "/api/email-quotidien",
+      "schedule": "0 19 * * *",
+      "comment": "Bon habitant — email 20h Paris (UTC+1)"
+    },
+    {
+      "path": "/api/email-quotidien",
+      "schedule": "0 20 * * *",
+      "comment": "Habitant — email 21h Paris (UTC+1)"
+    }
+  ]
+}

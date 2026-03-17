@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { useAuth } from '@/app/context/AuthContext'
 import AuthBottomSheet from '@/app/components/AuthBottomSheet'
 import FullScreenBon from '@/app/components/FullScreenBon'
+import FavoriButton from '@/app/components/FavoriButton'
 import { useReservation } from '@/app/hooks/useReservation'
 
 /* ── Mapping catégorie Google → filtre ───────────────────────────────────── */
@@ -191,14 +192,17 @@ export default function OffreCard({ offre }) {
             {offre.titre}
           </p>
 
-          {/* Commerce + catégorie */}
+          {/* Commerce + catégorie + favori */}
           <div className="flex items-center justify-center gap-1.5 flex-wrap">
             {commerce?.categorie && (
               <span className="text-[9px] font-semibold text-[#FF6B00] uppercase tracking-wider bg-[#FFF0E0] px-1.5 py-0.5 rounded-full">
                 {getCategorieFiltre(commerce.categorie) || commerce.categorie}
               </span>
             )}
-            <span className="text-xs font-semibold text-[#1A1A1A] truncate max-w-[110px]">{commerce?.nom}</span>
+            <span className="text-xs font-semibold text-[#1A1A1A] truncate max-w-[90px]">{commerce?.nom}</span>
+            {commerce?.id && (
+              <FavoriButton commerceId={commerce.id} commerceNom={commerce.nom || ''} className="!min-h-[28px] !min-w-[28px]" />
+            )}
           </div>
 
           {/* Ville */}

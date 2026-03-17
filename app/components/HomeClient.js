@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import SkeletonCard from './SkeletonCard'
 import OffreCard, { getCategorieFiltre } from '@/app/ville/[slug]/OffreCard'
+import VilleAbonnement from './VilleAbonnement'
 
 /* ── Barre de filtres ───────────────────────────────────────────────────── */
 
@@ -34,16 +35,11 @@ export default function HomeClient({ offres, villes }) {
   const [filtre, setFiltre]                 = useState('tous')
   const [isLoading, setIsLoading]           = useState(true)
   const [showVilleDropdown, setShowVilleDropdown] = useState(false)
-  const [abonnements, setAbonnements]       = useState([])
 
   /* Lecture localStorage côté client uniquement */
   useEffect(() => {
     const savedVille = localStorage.getItem('bonmoment_ville')
     if (savedVille) setVille(savedVille)
-    try {
-      const savedAbo = localStorage.getItem('bonmoment_abonnements')
-      if (savedAbo) setAbonnements(JSON.parse(savedAbo))
-    } catch {}
     setIsLoading(false)
   }, [])
 
@@ -51,15 +47,6 @@ export default function HomeClient({ offres, villes }) {
     setVille(nom)
     localStorage.setItem('bonmoment_ville', nom)
     setShowVilleDropdown(false)
-  }
-
-  function toggleAbonnement() {
-    if (!ville) return
-    const next = abonnements.includes(ville)
-      ? abonnements.filter(a => a !== ville)
-      : [...abonnements, ville]
-    setAbonnements(next)
-    localStorage.setItem('bonmoment_abonnements', JSON.stringify(next))
   }
 
   /* Filtrage + tri par urgence décroissante */
@@ -80,8 +67,6 @@ export default function HomeClient({ offres, villes }) {
     if (ville && o.commerces?.ville !== ville) return false
     return isUrgent(o)
   })
-
-  const isAbonne = ville ? abonnements.includes(ville) : false
 
   /* ── Skeleton pendant hydratation ────────────────────────────────────── */
   if (isLoading) {
@@ -132,18 +117,7 @@ export default function HomeClient({ offres, villes }) {
         </div>
 
         {/* Bouton abonnement */}
-        {ville && (
-          <button
-            onClick={toggleAbonnement}
-            className={`text-xs font-bold px-3 py-1.5 rounded-full transition-colors min-h-[36px] ${
-              isAbonne
-                ? 'bg-[#FF6B00] text-white'
-                : 'border border-[#FF6B00] text-[#FF6B00] hover:bg-[#FFF0E0]'
-            }`}
-          >
-            {isAbonne ? '📌 Abonné ✓' : "📌 S'abonner à cette ville"}
-          </button>
-        )}
+        {ville && <VilleAbonnement villeNom={ville} />}
       </div>
 
       {/* ── Zone urgence ─────────────────────────────────────────────────── */}

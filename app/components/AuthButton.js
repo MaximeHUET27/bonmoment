@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/app/context/AuthContext'
 import AuthBottomSheet from './AuthBottomSheet'
@@ -72,6 +73,14 @@ export default function AuthButton() {
                 {user.email}
               </p>
               <div className="my-3 border-t border-[#F5F5F5]" />
+              <Link
+                href="/profil"
+                onClick={() => setOpen(false)}
+                className="block text-sm font-semibold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors py-1"
+              >
+                👤 Mon profil
+              </Link>
+              <div className="my-2 border-t border-[#F5F5F5]" />
               <button
                 onClick={async () => { await signOut(); setOpen(false) }}
                 className="w-full text-left text-sm font-semibold text-red-500 hover:text-red-600 transition-colors py-1"

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import OffreCard from './OffreCard'
 import SkeletonCard from '@/app/components/SkeletonCard'
 import { getCategorieFiltre } from './OffreCard'
+import VilleAbonnement from '@/app/components/VilleAbonnement'
 
 /* ── Filtres ─────────────────────────────────────────────────────────────── */
 
@@ -35,27 +36,10 @@ function isUrgent(offre) {
 /* ── Composant ────────────────────────────────────────────────────────────── */
 
 export default function VilleClient({ offres, villeNom }) {
-  const [filtre,      setFiltre]      = useState('tous')
-  const [isLoading,   setIsLoading]   = useState(true)
-  const [abonnements, setAbonnements] = useState([])
+  const [filtre,    setFiltre]    = useState('tous')
+  const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('bonmoment_abonnements')
-      if (saved) setAbonnements(JSON.parse(saved))
-    } catch {}
-    setIsLoading(false)
-  }, [])
-
-  function toggleAbonnement() {
-    const next = abonnements.includes(villeNom)
-      ? abonnements.filter(a => a !== villeNom)
-      : [...abonnements, villeNom]
-    setAbonnements(next)
-    localStorage.setItem('bonmoment_abonnements', JSON.stringify(next))
-  }
-
-  const isAbonne = abonnements.includes(villeNom)
+  useEffect(() => { setIsLoading(false) }, [])
 
   /* Filtrage */
   const offresActives  = (offres || []).filter(isActive)
@@ -100,16 +84,7 @@ export default function VilleClient({ offres, villeNom }) {
             </span>
           )}
         </div>
-        <button
-          onClick={toggleAbonnement}
-          className={`text-xs font-bold px-3 py-1.5 rounded-full transition-colors min-h-[36px] ${
-            isAbonne
-              ? 'bg-[#FF6B00] text-white'
-              : 'border border-[#FF6B00] text-[#FF6B00] hover:bg-[#FFF0E0]'
-          }`}
-        >
-          {isAbonne ? '📌 Abonné ✓' : "📌 S'abonner à cette ville"}
-        </button>
+        <VilleAbonnement villeNom={villeNom} />
       </div>
 
       {/* ── Zone urgence ── */}

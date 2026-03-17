@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useAuth } from '@/app/context/AuthContext'
 import AuthBottomSheet from '@/app/components/AuthBottomSheet'
 import FullScreenBon from '@/app/components/FullScreenBon'
+import FavoriButton from '@/app/components/FavoriButton'
 import { useReservation } from '@/app/hooks/useReservation'
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
@@ -184,6 +185,17 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
         <p className="text-center text-xs text-[#3D3D3D]/60 font-medium">
           🔥 {reservationsCount} habitant{reservationsCount > 1 ? 's ont' : ' a'} déjà réservé
         </p>
+      )}
+
+      {/* ── Favori commerce ── */}
+      {offre.commerces?.id && (
+        <div className="flex items-center justify-center gap-2">
+          <FavoriButton
+            commerceId={offre.commerces.id}
+            commerceNom={offre.commerces.nom || ''}
+          />
+          <span className="text-xs text-[#3D3D3D]/60">Suivre {offre.commerces.nom}</span>
+        </div>
       )}
 
       {/* ── Mention concours ── */}
