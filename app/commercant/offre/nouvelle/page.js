@@ -7,14 +7,26 @@
  *   ALTER TABLE offres ADD COLUMN IF NOT EXISTS est_recurrente BOOLEAN DEFAULT false;
  *   ALTER TABLE offres ADD COLUMN IF NOT EXISTS jours_recurrence TEXT[];
  *   ALTER TABLE commerces ADD COLUMN IF NOT EXISTS palier TEXT DEFAULT 'decouverte';
+ *   ALTER TABLE commerces ADD COLUMN IF NOT EXISTS tutoriel_complete BOOLEAN DEFAULT false;
  */
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/app/context/AuthContext'
 import OffreCard from '@/app/ville/[slug]/OffreCard'
+import TutorialOffre from '@/app/components/tutorial/TutorialOffre'
+import suggestionsData from '@/data/suggestions-offres.json'
+
+const TUT_KEY = 'bonmoment_tutoriel'
+function readTutState() {
+  try { return JSON.parse(localStorage.getItem(TUT_KEY) || 'null') } catch { return null }
+}
+function writeTutState(state) {
+  if (state) localStorage.setItem(TUT_KEY, JSON.stringify(state))
+  else localStorage.removeItem(TUT_KEY)
+}
 
 /* ── Constantes ─────────────────────────────────────────────────────────── */
 
@@ -85,15 +97,21 @@ function diffHours(dateDebut, heureDebut, dateFin, heureFin) {
 
 /* ── Composant ──────────────────────────────────────────────────────────── */
 
-export default function NouvelleOffrePage() {
+function NouvelleOffrePageInner() {
   const { user, loading, supabase } = useAuth()
-  const router = useRouter()
+  const router       = useRouter()
+  const searchParams = useSearchParams()
+  const isTutoriel   = searchParams.get('tutoriel') === 'true'
 
   /* ── État auth / commerce ── */
   const [commerce,      setCommerce]      = useState(null)
   const [fetching,      setFetching]      = useState(true)
   const [quotaAtteint,  setQuotaAtteint]  = useState(false)
   const [quotaInfo,     setQuotaInfo]     = useState({ used: 0, limite: 4, palier: 'decouverte' })
+
+  /* ── État tutoriel ── */
+  // substep: 0-4 (4A-4E) | 'apercu' | 'publier' | 'waiting_publish' | null
+  const [tutSubstep,    setTutSubstep]    = useState(null)
 
   /* ── État formulaire ── */
   const today           = toDateStr(new Date())
@@ -151,6 +169,59 @@ export default function NouvelleOffrePage() {
       setFetching(false)
     })()
   }, [user, supabase, router])
+
+  /* ── Init tutorial substep ── */
+  useEffect(() => {
+    if (!isTutoriel) return
+    const saved = readTutState()
+    if (saved?.active && saved.step === 4) {
+      setTutSubstep(saved.substep ?? 0)
+    } else if (isTutoriel) {
+      // Fresh start from ?tutoriel=true
+      writeTutState({ active: true, step: 4, substep: 0 })
+      setTutSubstep(0)
+    }
+  }, [isTutoriel])
+
+  /* ── Tutorial advance handler ── */
+  function handleTutAdvance() {
+    if (typeof tutSubstep === 'number' && tutSubstep < 4) {
+      const next = tutSubstep + 1
+      writeTutState({ active: true, step: 4, substep: next })
+      setTutSubstep(next)
+    } else if (tutSubstep === 4) {
+      writeTutState({ active: true, step: 5, substep: null })
+      setTutSubstep('apercu')
+    } else if (tutSubstep === 'apercu') {
+      writeTutState({ active: true, step: 6, substep: null })
+      setTutSubstep('publier')
+    } else if (tutSubstep === 'publier') {
+      // Hide tooltip, let user interact with publish button
+      setTutSubstep('waiting_publish')
+    }
+  }
+
+  async function handleTutSkip() {
+    writeTutState(null)
+    setTutSubstep(null)
+    if (commerce) {
+      await supabase.from('commerces').update({ tutoriel_complete: true }).eq('id', commerce.id)
+    }
+  }
+
+  async function handleTutFinish() {
+    writeTutState(null)
+    if (commerce) {
+      await supabase.from('commerces').update({ tutoriel_complete: true }).eq('id', commerce.id)
+    }
+    router.replace('/commercant/dashboard')
+  }
+
+  /* ── Suggestions pour la catégorie ── */
+  const suggestions = (() => {
+    if (!commerce?.categorie) return suggestionsData['default'] || []
+    return suggestionsData[commerce.categorie] || suggestionsData['default'] || []
+  })()
 
   /* ── Validation plage horaire (en temps réel) ── */
   const diff = diffHours(dateDebut, heureDebut, dateFin, heureFin)
@@ -231,7 +302,10 @@ export default function NouvelleOffrePage() {
     }
 
     setSuccess(true)
-    setTimeout(() => router.replace('/commercant/dashboard'), 2200)
+    if (!isTutoriel) {
+      setTimeout(() => router.replace('/commercant/dashboard'), 2200)
+    }
+    // In tutorial mode: TutorialOffre handles the success screen + redirect
   }
 
   /* ── États de chargement / garde ── */
@@ -245,8 +319,8 @@ export default function NouvelleOffrePage() {
 
   if (!user || !commerce) return null
 
-  /* ── Écran de succès ── */
-  if (success) {
+  /* ── Écran de succès (mode normal uniquement) ── */
+  if (success && !isTutoriel) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white text-center px-6 gap-4">
         <div className="text-6xl">🎉</div>
@@ -563,6 +637,32 @@ export default function NouvelleOffrePage() {
 
         <div className="h-6" />
       </form>
+
+      {/* ── Tutorial overlay (steps 4-6) ─────────────────────────────────── */}
+      {isTutoriel && (
+        <TutorialOffre
+          substep={tutSubstep}
+          onAdvance={handleTutAdvance}
+          onSkip={handleTutSkip}
+          onApplySugg={(text) => setTitre(text)}
+          suggestions={suggestions}
+          success={success && isTutoriel}
+          onFinish={handleTutFinish}
+        />
+      )}
+
     </main>
+  )
+}
+
+export default function NouvelleOffrePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <span className="w-8 h-8 border-[3px] border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <NouvelleOffrePageInner />
+    </Suspense>
   )
 }

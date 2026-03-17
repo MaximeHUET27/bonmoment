@@ -1,0 +1,79 @@
+{
+  "Restaurant": [
+    "20% sur l'addition dès 2 plats commandés",
+    "Dessert offert pour tout menu du jour",
+    "Entrée offerte le soir à partir de 19h",
+    "Happy hour : boissons à -30% de 18h à 20h"
+  ],
+  "Restauration rapide": [
+    "Menu offert pour tout achat de boisson",
+    "Frites offertes avec tout burger du jour",
+    "-15% sur les commandes à emporter avant 12h"
+  ],
+  "Boulangerie": [
+    "Viennoiserie offerte à partir de 2 pains",
+    "10% sur les commandes avant 9h",
+    "Café offert avec toute pâtisserie",
+    "Tarte du jour à -20% après 16h"
+  ],
+  "Pâtisserie": [
+    "Macaron offert pour tout achat de 10€",
+    "Box découverte 6 pièces à -25% ce vendredi",
+    "Atelier dégustation gratuit ce samedi"
+  ],
+  "Coiffure": [
+    "Brushing offert avec toute coloration",
+    "20% sur la coupe ce vendredi",
+    "Soin capillaire gratuit pour toute nouvelle cliente",
+    "Balayage -15% jusqu'à ce soir"
+  ],
+  "Beauté": [
+    "Manucure offerte pour 2 soins réservés",
+    "20% sur les soins visage du mardi",
+    "Épilation jambes offerte avec forfait complet",
+    "Routine soin : -30% sur le 2ème produit"
+  ],
+  "Institut de beauté": [
+    "Soin visage découverte à -40%",
+    "Massage relaxant 30 min offert ce week-end",
+    "Diagnostic peau gratuit sans engagement"
+  ],
+  "Retail / Mode": [
+    "-20% sur la 2ème pièce achetée",
+    "Accessoire offert dès 50€ d'achats",
+    "Livraison gratuite sur toute commande",
+    "Vente flash : -30% jusqu'à 18h"
+  ],
+  "Boutique": [
+    "Remise 15% sur toute la collection printemps",
+    "Bon cadeau 10€ dès 60€ d'achats",
+    "Retouche gratuite pour tout achat du jour"
+  ],
+  "Sport": [
+    "Séance d'essai gratuite sans engagement",
+    "1 mois offert pour toute inscription annuelle",
+    "Cours collectif gratuit ce week-end",
+    "Bilan forme gratuit ce mardi"
+  ],
+  "Salle de sport": [
+    "Pass découverte 3 jours à 1€",
+    "Coaching nutrition gratuit avec toute inscription",
+    "-20% sur les abonnements jusqu'à ce soir"
+  ],
+  "Pharmacie": [
+    "Bilan bien-être gratuit sur rendez-vous",
+    "2ème produit parapharmacie à -50%",
+    "Test glycémie gratuit ce mardi"
+  ],
+  "Fleuriste": [
+    "Bouquet du jour à -20% après 17h",
+    "Livraison gratuite dans la ville pour toute commande",
+    "Composition mariage : devis gratuit + -10% si réservé aujourd'hui"
+  ],
+  "default": [
+    "Remise de 20% sur toute prestation",
+    "Offre découverte : 1 achat = 1 cadeau",
+    "Service premium gratuit ce week-end",
+    "Réservation avec -15% aujourd'hui seulement"
+  ]
+}
