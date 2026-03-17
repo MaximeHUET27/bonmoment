@@ -3,6 +3,7 @@ import Link from "next/link";
 import "./globals.css";
 import { AuthProvider } from "@/app/context/AuthContext";
 import FloatingBonButton from "@/app/components/FloatingBonButton";
+import AdminFooterLink from "@/app/components/AdminFooterLink";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -32,6 +33,7 @@ export default function RootLayout({ children }) {
                 <Link href="/cgv" className="hover:text-[#FF6B00] transition-colors">CGV</Link>
                 <span className="text-[#3D3D3D]/30 hidden sm:inline">|</span>
                 <Link href="/confidentialite" className="hover:text-[#FF6B00] transition-colors">Confidentialité</Link>
+                <AdminFooterLink />
               </nav>
               <p className="text-[11px] text-[#3D3D3D]/60 text-center sm:text-right">
                 Vous êtes commerçant ?{" "}
