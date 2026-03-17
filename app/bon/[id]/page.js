@@ -3,11 +3,12 @@
  * Permet au commerçant de scanner le QR et voir le bon pour validation.
  */
 
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import BonDisplay from './BonDisplay'
 
 export default async function BonPage({ params }) {
   const { id } = await params
+  const supabase = await createClient()
 
   const { data: reservation } = await supabase
     .from('reservations')

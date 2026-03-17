@@ -86,6 +86,7 @@ export function useReservation() {
       const finalRes = { ...newRes, qr_code_data: qrUrl }
       setReservation(finalRes)
       setStatus('success')
+      window.dispatchEvent(new Event('bonmoment:reservation'))
       return finalRes
 
     } catch (err) {

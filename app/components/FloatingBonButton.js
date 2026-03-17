@@ -23,6 +23,7 @@ export default function FloatingBonButton() {
     if (!user) { setReservation(null); return }
 
     async function fetchActive() {
+      setExpired(false)
       const { data, error } = await supabase
         .from('reservations')
         .select(`
@@ -51,6 +52,8 @@ export default function FloatingBonButton() {
     }
 
     fetchActive()
+    window.addEventListener('bonmoment:reservation', fetchActive)
+    return () => window.removeEventListener('bonmoment:reservation', fetchActive)
   }, [user, supabase])
 
   /* ── Auto-expire : surveille l'heure de fin ── */
@@ -74,7 +77,7 @@ export default function FloatingBonButton() {
     <>
       <button
         onClick={() => setShowBon(true)}
-        className="fixed bottom-6 right-4 z-40 flex items-center gap-2 bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-sm px-5 py-3 rounded-full shadow-xl shadow-orange-300/50 transition-colors min-h-[48px]"
+        className="fixed bottom-20 right-4 z-40 flex items-center gap-2 bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-sm px-5 py-3 rounded-full shadow-xl shadow-orange-300/50 transition-colors min-h-[48px]"
         aria-label="Voir mon bon en cours"
       >
         <span className="text-base">🎟️</span>
