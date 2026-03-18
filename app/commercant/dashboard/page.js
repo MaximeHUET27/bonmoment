@@ -217,12 +217,17 @@ export default function DashboardPage() {
             className="w-[120px] h-auto"
           />
         </Link>
-        <button
-          onClick={() => signOut().then(() => router.push('/'))}
-          className="text-xs text-[#3D3D3D]/60 hover:text-[#FF6B00] transition-colors"
-        >
-          Déconnexion
-        </button>
+        <div className="flex items-center gap-3">
+          <Link href="/aide" className="text-xs text-[#3D3D3D]/60 hover:text-[#FF6B00] transition-colors">
+            Aide
+          </Link>
+          <button
+            onClick={() => signOut().then(() => router.push('/'))}
+            className="text-xs text-[#3D3D3D]/60 hover:text-[#FF6B00] transition-colors"
+          >
+            Déconnexion
+          </button>
+        </div>
       </header>
 
       {/* ── Corps ────────────────────────────────────────────────────────── */}

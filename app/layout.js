@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/app/context/AuthContext";
 import FloatingBonButton from "@/app/components/FloatingBonButton";
 import AdminFooterLink from "@/app/components/AdminFooterLink";
+import ChatbotWidget from "@/app/components/ChatbotWidget";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -23,6 +24,7 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           {children}
           <FloatingBonButton />
+          <ChatbotWidget />
           <footer className="w-full bg-[#F5F5F5] border-t border-[#EBEBEB] px-6 py-5 mt-auto">
             <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
               <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-[#3D3D3D]/70">
@@ -33,6 +35,8 @@ export default function RootLayout({ children }) {
                 <Link href="/cgv" className="hover:text-[#FF6B00] transition-colors">CGV</Link>
                 <span className="text-[#3D3D3D]/30 hidden sm:inline">|</span>
                 <Link href="/confidentialite" className="hover:text-[#FF6B00] transition-colors">Confidentialité</Link>
+                <span className="text-[#3D3D3D]/30 hidden sm:inline">|</span>
+                <Link href="/aide" className="hover:text-[#FF6B00] transition-colors font-semibold">Besoin d&apos;aide ?</Link>
                 <AdminFooterLink />
               </nav>
               <p className="text-[11px] text-[#3D3D3D]/60 text-center sm:text-right">

@@ -503,6 +503,14 @@ export default function ProfilPage() {
           )}
         </section>
 
+        {/* ── Aide ── */}
+        <Link
+          href="/aide"
+          className="w-full border border-[#E0E0E0] text-sm font-semibold text-[#3D3D3D] py-3 rounded-2xl hover:border-[#FF6B00] hover:text-[#FF6B00] transition-colors flex items-center justify-center gap-2"
+        >
+          💬 Aide
+        </Link>
+
         {/* ── Déconnexion ── */}
         <button
           onClick={() => signOut().then(() => router.push('/'))}
