@@ -3,6 +3,49 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { toSlug } from '@/lib/utils'
 import UrgencyAndCTA from './UrgencyAndCTA'
+import ShareButton from '@/app/components/ShareButton'
+
+const OG_DEFAULT_IMAGE = 'https://bonmoment.app/og-default.jpg'
+
+/* ── Open Graph metadata ─────────────────────────────────────────────────── */
+
+export async function generateMetadata({ params }) {
+  const { id } = await params
+  const { data: offre } = await supabase
+    .from('offres')
+    .select('type_remise, valeur, titre, commerces(nom, ville, photo_url)')
+    .eq('id', id)
+    .single()
+
+  if (!offre) return {}
+
+  const badge = formatBadge(offre)
+  const nom   = offre.commerces?.nom   || 'Commerce'
+  const ville = offre.commerces?.ville || ''
+  const image = offre.commerces?.photo_url || OG_DEFAULT_IMAGE
+  const offreTitle = `${badge} chez ${nom} — BONMOMENT`
+  const offreDesc  = `${offre.titre} à ${ville}. Réserve ton bon gratuit !`
+  const offreUrl   = `https://bonmoment.app/offre/${id}`
+
+  return {
+    title:       offreTitle,
+    description: offreDesc,
+    openGraph: {
+      title:       offreTitle,
+      description: offreDesc,
+      url:         offreUrl,
+      siteName:    'BONMOMENT',
+      images:      [{ url: image, width: 1200, height: 630, alt: offreTitle }],
+      type:        'website',
+    },
+    twitter: {
+      card:        'summary_large_image',
+      title:       offreTitle,
+      description: offreDesc,
+      images:      [image],
+    },
+  }
+}
 
 function formatBadge(offre) {
   if (offre.type_remise === 'pourcentage')    return `−${offre.valeur}%`
@@ -75,12 +118,15 @@ export default async function OffrePage({ params }) {
             className="w-[100px] h-auto"
           />
         </Link>
-        <Link
-          href={villeSlug ? `/ville/${villeSlug}` : '/'}
-          className="text-xs font-semibold text-[#3D3D3D]/60 hover:text-[#FF6B00] transition-colors"
-        >
-          ← Tous les bons plans
-        </Link>
+        <div className="flex items-center gap-2">
+          <ShareButton offre={offre} commerce={commerce} />
+          <Link
+            href={villeSlug ? `/ville/${villeSlug}` : '/'}
+            className="text-xs font-semibold text-[#3D3D3D]/60 hover:text-[#FF6B00] transition-colors"
+          >
+            ← Tous les bons plans
+          </Link>
+        </div>
       </header>
 
       {/* ── Corps ── */}

@@ -9,6 +9,7 @@ const PENDING_KEY = 'bonmoment_pending_reservation'
 import AuthBottomSheet from '@/app/components/AuthBottomSheet'
 import FullScreenBon from '@/app/components/FullScreenBon'
 import FavoriButton from '@/app/components/FavoriButton'
+import ShareButton from '@/app/components/ShareButton'
 import { useReservation } from '@/app/hooks/useReservation'
 
 /* ── Mapping catégorie Google → filtre ───────────────────────────────────── */
@@ -184,11 +185,11 @@ export default function OffreCard({ offre }) {
     <>
       <div className={`bg-white rounded-2xl border border-[#F0F0F0] shadow-sm overflow-hidden flex flex-col ${fini ? 'opacity-60 grayscale' : ''}`}>
 
-        {/* ── Header : countdown + bons restants (cliquable → détail) ── */}
-        <Link href={`/offre/${offre.id}`} className="block">
-          <div className={`flex items-center justify-between px-3 py-2.5 ${
-            urgent && !fini ? 'bg-red-50' : 'bg-[#F5F5F5]'
-          }`}>
+        {/* ── Header : countdown + bons restants + partage ── */}
+        <div className={`flex items-center gap-1 px-2 py-1.5 ${
+          urgent && !fini ? 'bg-red-50' : 'bg-[#F5F5F5]'
+        }`}>
+          <Link href={`/offre/${offre.id}`} className="flex-1 flex items-center justify-between gap-1.5 px-1 py-1 min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="text-sm">⏱</span>
               {timeLeft ? (
@@ -209,8 +210,9 @@ export default function OffreCard({ offre }) {
                 ? '∞ bons'
                 : `🎫 ${offre.nb_bons_restants}`}
             </span>
-          </div>
-        </Link>
+          </Link>
+          <ShareButton offre={offre} commerce={commerce} />
+        </div>
 
         {/* ── Corps : cliquable → détail ── */}
         <Link href={`/offre/${offre.id}`} className="block flex-1 px-3 py-4 flex flex-col gap-2.5">

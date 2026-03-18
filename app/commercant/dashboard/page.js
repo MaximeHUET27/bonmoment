@@ -14,6 +14,7 @@ import { useAuth } from '@/app/context/AuthContext'
 import { toSlug } from '@/lib/utils'
 import TirageAuSort from '@/app/commercant/components/TirageAuSort'
 import TutorialDashboard from '@/app/components/tutorial/TutorialDashboard'
+import ShareButton from '@/app/components/ShareButton'
 
 const TUT_KEY = 'bonmoment_tutoriel'
 
@@ -369,7 +370,7 @@ export default function DashboardPage() {
               Offres en cours · {offresActives.length}
             </h2>
             {offresActives.map(o => (
-              <OffreRow key={o.id} offre={o} />
+              <OffreRow key={o.id} offre={o} commerce={commerce} />
             ))}
           </div>
         )}
@@ -435,7 +436,7 @@ export default function DashboardPage() {
 
 /* ── Ligne d'offre ───────────────────────────────────────────────────────── */
 
-function OffreRow({ offre, expired = false }) {
+function OffreRow({ offre, commerce, expired = false }) {
   const labels = {
     pourcentage:    `${offre.valeur}%`,
     montant_fixe:   `${offre.valeur}€`,
@@ -461,9 +462,19 @@ function OffreRow({ offre, expired = false }) {
           )}
         </p>
       </div>
-      <span className="text-sm font-black text-[#FF6B00] shrink-0">
-        {labels[offre.type_remise] ?? offre.type_remise}
-      </span>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <span className="text-sm font-black text-[#FF6B00]">
+          {labels[offre.type_remise] ?? offre.type_remise}
+        </span>
+        {!expired && commerce && (
+          <ShareButton
+            offre={{ ...offre, commerces: commerce }}
+            commerce={commerce}
+            shareText={`🎉 Nouvelle offre chez ${commerce.nom} ! ${offre.titre} — Réserve ton bon gratuit 👉 bonmoment.app/offre/${offre.id}`}
+            shareTitle={`Nouvelle offre chez ${commerce.nom} — BONMOMENT`}
+          />
+        )}
+      </div>
     </div>
   )
 }

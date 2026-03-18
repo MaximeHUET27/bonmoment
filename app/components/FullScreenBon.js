@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
+import ShareButton from '@/app/components/ShareButton'
 
 /* QRCodeSVG chargé dynamiquement (évite SSR) */
 const QRCodeSVG = dynamic(
@@ -183,6 +184,16 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
             📍 S'y rendre
           </a>
         )}
+
+        {/* ── Bouton partager post-réservation ── */}
+        <ShareButton
+          offre={offre}
+          commerce={commerce}
+          label="Fais profiter tes proches ! ↗"
+          shareText={`Je viens de réserver un bon chez ${commerce?.nom || 'ce commerce'} à ${commerce?.ville || 'ma ville'} ! Il reste encore des places 👉 bonmoment.app/offre/${offre?.id}`}
+          shareTitle={`Bon plan chez ${commerce?.nom || 'ce commerce'} — BONMOMENT`}
+          className="w-full [&>button]:w-full"
+        />
 
         {/* Espace bas */}
         <div className="h-4" />
