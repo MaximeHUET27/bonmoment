@@ -32,8 +32,7 @@ export default function MentionsLegales() {
               <Tr label="Nom et prénom" value="Maxime HUET" />
               <Tr label="Statut juridique" value="Auto-entrepreneur (Entrepreneur Individuel)" />
               <Tr label="Adresse postale" value="7 rue du Chesne, 27190 Nogent-le-Sec" />
-              <Tr label="Téléphone" value={<a href="tel:0637665078" className="text-[#FF6B00] hover:text-[#CC5500]">06 37 66 50 78</a>} />
-              <Tr label="Email de contact" value={<a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a>} />
+<Tr label="Email de contact" value={<a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a>} />
               <Tr label="Site web" value={<a href="https://bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">bonmoment.app</a>} />
               <Tr label="SIRET" value={<em className="text-[#3D3D3D]/60">En cours d'immatriculation, à compléter dès réception</em>} />
               <Tr label="Numéro de TVA" value={<em className="text-[#3D3D3D]/60">En cours, à compléter dès réception</em>} />

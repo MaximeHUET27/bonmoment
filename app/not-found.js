@@ -28,7 +28,7 @@ export default function NotFound() {
           href="/aide/contact"
           className="text-xs text-[#3D3D3D]/50 hover:text-[#FF6B00] transition-colors py-2"
         >
-          📧 Contacter Maxime directement
+          📧 Contacter BONMOMENT
         </Link>
       </div>
     </main>

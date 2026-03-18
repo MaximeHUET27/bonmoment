@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY
 const TO_EMAIL      = 'bonmomentapp@gmail.com'
-const TO_NAME       = 'Maxime BONMOMENT'
+const TO_NAME       = 'Équipe BONMOMENT'
 
 export async function POST(req) {
   try {
@@ -53,7 +53,7 @@ export async function POST(req) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        sender:   { name: `${prenom} via BON'Aide`, email: 'bonmomentapp@gmail.com' },
+        sender:   { name: 'BONMOMENT', email: 'bonmomentapp@gmail.com' },
         to:       [{ email: TO_EMAIL, name: TO_NAME }],
         replyTo:  { email, name: prenom },
         subject:  `[BON'Aide] Nouveau message de ${prenom} (${profil})`,

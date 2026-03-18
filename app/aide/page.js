@@ -124,12 +124,12 @@ export default function AidePage() {
           <div className="bg-white rounded-3xl px-6 py-10 text-center flex flex-col items-center gap-4">
             <div className="text-5xl">🤔</div>
             <p className="font-black text-[#0A0A0A]">On n&apos;a pas la réponse ici…</p>
-            <p className="text-sm text-[#3D3D3D]/60">Contacte Maxime directement !</p>
+            <p className="text-sm text-[#3D3D3D]/60">Contacte l&apos;équipe BONMOMENT directement !</p>
             <Link
               href="/aide/contact"
               className="bg-[#FF6B00] text-white font-black text-sm px-6 py-3 rounded-2xl hover:bg-[#CC5500] transition-colors"
             >
-              📧 Contacter Maxime →
+              📧 Contacter BONMOMENT →
             </Link>
           </div>
         ) : (
@@ -154,12 +154,12 @@ export default function AidePage() {
         {/* Contact CTA */}
         <div className="bg-[#0A0A0A] rounded-3xl px-6 py-6 flex flex-col items-center gap-3 text-center">
           <p className="text-white font-black text-base">Tu n&apos;as pas trouvé ta réponse ?</p>
-          <p className="text-white/60 text-sm">Maxime te répond personnellement sous 24h.</p>
+          <p className="text-white/60 text-sm">L&apos;équipe BONMOMENT te répond sous 24h.</p>
           <Link
             href="/aide/contact"
             className="bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-sm px-6 py-3 rounded-2xl transition-colors min-h-[44px] flex items-center"
           >
-            📧 Contacter Maxime →
+            📧 Contacter BONMOMENT →
           </Link>
         </div>
 

@@ -35,7 +35,7 @@ export default function ContactPage() {
       })
 
       if (res.ok) {
-        setToast('📧 Message envoyé ! Maxime te répondra sous 24h.')
+        setToast("📧 Message envoyé ! L'équipe BONMOMENT te répondra sous 24h.")
         setPrenom('')
         setEmail('')
         setProfil('habitant')
@@ -66,7 +66,7 @@ export default function ContactPage() {
           </Link>
           <h1 className="text-3xl font-black text-[#0A0A0A] mb-1">Besoin d&apos;aide personnalisée ?</h1>
           <p className="text-sm text-[#3D3D3D]/70 leading-relaxed">
-            Je m&apos;appelle <strong>Maxime</strong>, je suis le créateur de BONMOMENT et je suis là pour t&apos;aider.
+            L&apos;équipe BONMOMENT est là pour t&apos;aider.
           </p>
         </div>
       </div>
@@ -82,18 +82,8 @@ export default function ContactPage() {
             </a>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xl">📱</span>
-            <a href="tel:0637665078" className="text-sm font-bold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors">
-              06 37 66 50 78
-            </a>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xl">⏰</span>
-            <p className="text-sm text-[#3D3D3D]/70">Lundi au vendredi · 9h–18h</p>
-          </div>
-          <div className="flex items-center gap-3">
             <span className="text-xl">💬</span>
-            <p className="text-sm text-[#3D3D3D]/70">Réponse sous 24h par email</p>
+            <p className="text-sm text-[#3D3D3D]/70">Réponse sous 24h</p>
           </div>
         </div>
 

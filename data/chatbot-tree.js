@@ -220,7 +220,7 @@ const TREE = {
     bot: "Je n'ai pas la réponse 😅 Tu peux :",
     buttons: [
       { label: '📖 Voir la FAQ complète', next: 'faq-nav'      },
-      { label: '📧 Contacter Maxime',     next: 'contacter-nav' },
+      { label: '📧 Contacter BONMOMENT',   next: 'contacter-nav' },
     ],
   },
 
@@ -232,8 +232,8 @@ const TREE = {
   },
 
   'contacter-nav': {
-    user: '📧 Contacter Maxime',
-    bot: "Je t'emmène vers Maxime. Il te répondra sous 24h 😊",
+    user: '📧 Contacter BONMOMENT',
+    bot: "Je t'emmène vers notre équipe. On te répond sous 24h 😊",
     action: { type: 'navigate', path: '/aide/contact' },
     buttons: [],
   },
