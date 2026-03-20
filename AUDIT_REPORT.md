@@ -6,18 +6,20 @@
 
 ---
 
-## SCORE GLOBAL : 78 / 100
+## SCORE GLOBAL : 86 / 100
+
+> Re-score du 2026-03-20 apres corrections manuelles (index SQL, contraintes UNIQUE/CHECK, region Vercel cdg1, npm install)
 
 | Categorie | Score | Details |
 |---|---|---|
-| 1. Integrite fichiers & imports | 9/10 | 2 imports corriges, 1 package supprime |
-| 2. Securite | 7/10 | Injection HTML corrigee, SSR client corrige, rate limiting absent |
-| 3. Performance & scalabilite | 6/10 | select('*') reduit, requetes admin non paginee (acceptable a cette echelle) |
-| 4. Gestion d'erreurs | 7/10 | error.js cree, .catch() ajoutes, certains appels Supabase sans check error |
-| 5. Coherence donnees & logique metier | 8/10 | Logique solide, race condition theorique sur decrement |
+| 1. Integrite fichiers & imports | 10/10 | Tous imports corriges, mammoth supprime, npm install OK |
+| 2. Securite | 7/10 | Injection HTML corrigee, SSR client corrige, rate limiting toujours absent |
+| 3. Performance & scalabilite | 8/10 | select specifiques, 6 index SQL crees, contraintes ajoutees |
+| 4. Gestion d'erreurs | 8/10 | error.js + not-found.js OK, .catch() ajoutes, quelques { error } Supabase non verifies |
+| 5. Coherence donnees & logique metier | 9/10 | UNIQUE(user_id,offre_id) + CHECK 24h ajoutes, quota serveur manquant |
 | 6. Accessibilite & SEO | 8/10 | lang="fr" OK, meta OK, alt decoratifs en admin |
-| 7. Lexique BONMOMENT | 9/10 | Tutoiement corrige partout dans l'UI, pages legales inchangees |
-| 8. Configuration & deploiement | 8/10 | .env.example cree, next.config complete, vercel.json OK |
+| 7. Lexique BONMOMENT | 10/10 | Tutoiement partout dans l'UI (y compris dashboard), pages legales en vouvoiement (intentionnel) |
+| 8. Configuration & deploiement | 9/10 | .env.example complet, region cdg1 configuree, npm install fait |
 
 ---
 
@@ -313,11 +315,26 @@ ALTER TABLE offres
 
 ### Actions manuelles requises
 
-1. **Supabase** : Verifier que RLS est active sur toutes les tables
-2. **Supabase** : Executer les CREATE INDEX SQL ci-dessus
-3. **Supabase** : Ajouter le UNIQUE constraint `(user_id, offre_id)` sur reservations
-4. **Supabase** : Ajouter le CHECK constraint duree max 24h sur offres
-5. **Vercel** : Configurer la region `cdg1` (Paris, EU West)
-6. **Supabase** : Verifier la region EU West
-7. **Vercel cron** : Ajuster les heures en fonction de l'heure d'ete si necessaire
-8. **npm** : Executer `npm install` pour mettre a jour le lockfile apres suppression de mammoth
+1. ~~**Supabase** : Executer les CREATE INDEX SQL~~ FAIT
+2. ~~**Supabase** : Ajouter le UNIQUE constraint `(user_id, offre_id)` sur reservations~~ FAIT
+3. ~~**Supabase** : Ajouter le CHECK constraint duree max 24h sur offres~~ FAIT
+4. ~~**Vercel** : Configurer la region `cdg1` (Paris, EU West)~~ FAIT
+5. ~~**npm** : Executer `npm install` pour mettre a jour le lockfile~~ FAIT
+6. **Supabase** : Verifier que RLS est active sur toutes les tables
+7. **Supabase** : Verifier la region EU West
+8. **Vercel cron** : Ajuster les heures en fonction de l'heure d'ete si necessaire
+
+---
+
+## POUR ATTEINDRE 90+ / 100
+
+Il manque 4 points. Voici les actions a plus fort impact :
+
+| Action | Categorie impactee | Gain estime | Effort |
+|---|---|---|---|
+| Ajouter rate limiting sur `/api/contact` et `/api/valider-bon` (ex: `@upstash/ratelimit`) | Securite 7→9 | +2 pts | Moyen |
+| Verifier `{ error }` sur les appels Supabase dans `app/page.js`, `app/profil/page.js`, `app/components/HomeClient.js` | Gestion erreurs 8→9 | +1 pt | Faible |
+| Ajouter verification quota offres cote serveur (RPC ou trigger) | Coherence donnees 9→10 | +1 pt | Moyen |
+| Verifier RLS active sur toutes les tables Supabase | Securite (bonus confiance) | +0-1 pt | Faible |
+
+**Priorite recommandee** : Rate limiting > Error checks Supabase > Quota serveur

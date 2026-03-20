@@ -544,7 +544,7 @@ function QRVitrine({ commerce, toast, setToast }) {
     <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
       <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">Mon QR code vitrine</h2>
       <p className="text-xs text-[#3D3D3D]/60">
-        Affichez ce QR code en vitrine. Vos clients scannent et découvrent les bons plans de{' '}
+        Affiche ce QR code en vitrine. Tes clients scannent et découvrent les bons plans de{' '}
         <span className="font-bold text-[#0A0A0A]">{commerce.ville}</span>.
       </p>
 
