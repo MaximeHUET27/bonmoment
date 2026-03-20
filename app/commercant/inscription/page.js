@@ -460,7 +460,7 @@ export default function InscriptionCommercant() {
               <StepLabel num={3} optional>Code de parrainage</StepLabel>
               <p className="text-xs text-[#3D3D3D]/60 mb-3">
                 Si un autre commerçant t&apos;a recommandé BONMOMENT, entre son code pour que
-                vous bénéficiez tous les deux d&apos;une remise sur votre premier mois.
+                vous bénéficiez tous les deux d&apos;une remise sur le premier mois.
               </p>
               <input
                 type="text"

@@ -1,14 +1,15 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import { toSlug } from '@/lib/utils'
 import OffreCard from '@/app/ville/[slug]/OffreCard'
 
 export default async function CommercantPage({ params }) {
   const { id } = await params
+  const supabase = await createClient()
 
   const [{ data: commerce }, { data: offres }] = await Promise.all([
-    supabase.from('commerces').select('*').eq('id', id).single(),
+    supabase.from('commerces').select('id, nom, categorie, adresse, ville, description, photo_url, abonnement_actif').eq('id', id).single(),
     supabase
       .from('offres')
       .select('*')
@@ -97,8 +98,8 @@ export default async function CommercantPage({ params }) {
         ) : (
           <div className="text-center py-12">
             <p className="text-3xl mb-3">🕐</p>
-            <p className="text-[#0A0A0A] font-bold text-sm">Vos commerçants préparent des surprises...</p>
-            <p className="text-[#3D3D3D] text-xs mt-1">Revenez bientôt !</p>
+            <p className="text-[#0A0A0A] font-bold text-sm">Tes commerçants préparent des surprises...</p>
+            <p className="text-[#3D3D3D] text-xs mt-1">Reviens bientôt !</p>
           </div>
         )}
 
@@ -107,12 +108,12 @@ export default async function CommercantPage({ params }) {
       {/* Footer */}
       <footer className="px-6 py-10 mt-4 text-center border-t border-[#F5F5F5]">
         <p className="text-sm text-[#3D3D3D]">
-          Vous êtes commerçant ?{' '}
+          Tu es commerçant ?{' '}
           <a
             href="/commercant"
             className="font-semibold text-[#FF6B00] hover:text-[#CC5500] underline underline-offset-2 transition-colors"
           >
-            Rejoignez BONMOMENT
+            Rejoins BONMOMENT
           </a>
         </p>
       </footer>

@@ -42,7 +42,7 @@ const TYPES = [
 
 const PLACEHOLDERS = {
   pourcentage:    "Ex : Sur toutes les coupes aujourd'hui",
-  montant_fixe:   'Ex : Sur votre repas du soir',
+  montant_fixe:   'Ex : Sur ton repas du soir',
   cadeau:         "Ex : Un croissant à l'achat d'une baguette",
   produit_offert: 'Ex : Une boisson offerte pour tout menu',
   service_offert: 'Ex : Diagnostic capillaire gratuit',

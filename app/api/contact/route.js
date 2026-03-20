@@ -4,6 +4,14 @@ const BREVO_API_KEY = process.env.BREVO_API_KEY
 const TO_EMAIL      = 'bonmomentapp@gmail.com'
 const TO_NAME       = 'Équipe BONMOMENT'
 
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
 export async function POST(req) {
   try {
     const { prenom, email, profil, message } = await req.json()
@@ -11,6 +19,14 @@ export async function POST(req) {
     if (!prenom || !email || !message) {
       return NextResponse.json({ error: 'Champs manquants' }, { status: 400 })
     }
+
+    if (prenom.length > 100 || email.length > 320 || message.length > 5000) {
+      return NextResponse.json({ error: 'Contenu trop long' }, { status: 400 })
+    }
+
+    const safePrenom  = escapeHtml(prenom)
+    const safeEmail   = escapeHtml(email)
+    const safeMessage = escapeHtml(message)
 
     const emailHtml = `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
@@ -21,12 +37,12 @@ export async function POST(req) {
           <table style="width:100%;border-collapse:collapse;">
             <tr>
               <td style="padding:8px 0;width:120px;font-size:13px;font-weight:700;color:#9CA3AF;text-transform:uppercase;">Prénom</td>
-              <td style="padding:8px 0;font-size:14px;color:#0A0A0A;font-weight:600;">${prenom}</td>
+              <td style="padding:8px 0;font-size:14px;color:#0A0A0A;font-weight:600;">${safePrenom}</td>
             </tr>
             <tr>
               <td style="padding:8px 0;font-size:13px;font-weight:700;color:#9CA3AF;text-transform:uppercase;">Email</td>
               <td style="padding:8px 0;font-size:14px;color:#0A0A0A;font-weight:600;">
-                <a href="mailto:${email}" style="color:#FF6B00;">${email}</a>
+                <a href="mailto:${safeEmail}" style="color:#FF6B00;">${safeEmail}</a>
               </td>
             </tr>
             <tr>
@@ -38,7 +54,7 @@ export async function POST(req) {
           </table>
           <hr style="border:none;border-top:1px solid #F0F0F0;margin:16px 0;" />
           <p style="font-size:13px;font-weight:700;color:#9CA3AF;text-transform:uppercase;margin:0 0 8px;">Message</p>
-          <p style="font-size:14px;color:#0A0A0A;line-height:1.6;white-space:pre-wrap;margin:0;">${message}</p>
+          <p style="font-size:14px;color:#0A0A0A;line-height:1.6;white-space:pre-wrap;margin:0;">${safeMessage}</p>
         </div>
         <div style="background:#F5F5F5;padding:16px;border-radius:0 0 12px 12px;text-align:center;">
           <p style="font-size:11px;color:#9CA3AF;margin:0;">BONMOMENT · bonmoment.app</p>

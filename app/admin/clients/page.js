@@ -30,6 +30,7 @@ export default function AdminClients() {
     fetch('/api/admin/clients')
       .then(r => r.json())
       .then(d => { setData(d.clients || []); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
 
   const villes = useMemo(() => {

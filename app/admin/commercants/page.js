@@ -31,6 +31,7 @@ export default function AdminCommercants() {
     fetch('/api/admin/commercants')
       .then(r => r.json())
       .then(d => { setData(d.commercants || []); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
 
   /* ── Options villes ── */

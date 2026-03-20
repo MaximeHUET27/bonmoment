@@ -60,6 +60,7 @@ export default function AdminOffres() {
     fetch('/api/admin/offres')
       .then(r => r.json())
       .then(d => { setData(d.offres || []); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
 
   const villes    = useMemo(() => ['tous', ...new Set(data.map(o => o.commerces?.ville).filter(Boolean))], [data])

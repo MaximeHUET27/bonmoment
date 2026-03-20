@@ -12,7 +12,7 @@ export default async function VillePage({ params }) {
   /* ── Résolution de la ville depuis son slug ── */
   const { data: villes } = await supabase
     .from('villes')
-    .select('*')
+    .select('id, nom')
     .eq('active', true)
 
   const ville = villes?.find(v => toSlug(v.nom) === slug)
@@ -76,12 +76,12 @@ export default async function VillePage({ params }) {
       {/* ── Footer ── */}
       <footer className="px-6 py-8 text-center border-t border-[#F5F5F5]">
         <p className="text-sm text-[#3D3D3D]">
-          Vous êtes commerçant ?{' '}
+          Tu es commerçant ?{' '}
           <a
             href="/commercant/inscription"
             className="font-semibold text-[#FF6B00] hover:text-[#CC5500] underline underline-offset-2 transition-colors"
           >
-            Rejoignez BONMOMENT
+            Rejoins BONMOMENT
           </a>
         </p>
       </footer>

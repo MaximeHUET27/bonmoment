@@ -14,7 +14,7 @@ const montserrat = Montserrat({
 
 export const metadata = {
   title: "BONMOMENT – Soyez là au bon moment",
-  description: "Découvrez les bons plans et offres exclusives des commerçants de votre ville.",
+  description: "Découvre les bons plans et offres exclusives des commerçants de ta ville.",
 };
 
 export default function RootLayout({ children }) {
@@ -40,9 +40,9 @@ export default function RootLayout({ children }) {
                 <AdminFooterLink />
               </nav>
               <p className="text-[11px] text-[#3D3D3D]/60 text-center sm:text-right">
-                Vous êtes commerçant ?{" "}
+                Tu es commerçant ?{" "}
                 <Link href="/commercant/inscription" className="font-semibold text-[#FF6B00] hover:text-[#CC5500] transition-colors">
-                  Rejoignez BONMOMENT
+                  Rejoins BONMOMENT
                 </Link>
               </p>
             </div>

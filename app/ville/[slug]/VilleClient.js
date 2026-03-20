@@ -139,9 +139,9 @@ export default function VilleClient({ offres, villeNom }) {
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="text-5xl mb-4">🕐</div>
             <p className="text-[#0A0A0A] font-black text-base">
-              Vos commerçants préparent des surprises...
+              Tes commerçants préparent des surprises...
             </p>
-            <p className="text-[#3D3D3D]/60 text-sm mt-1">Revenez bientôt !</p>
+            <p className="text-[#3D3D3D]/60 text-sm mt-1">Reviens bientôt !</p>
           </div>
         )}
       </div>

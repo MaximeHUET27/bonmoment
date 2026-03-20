@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import { toSlug } from '@/lib/utils'
 import UrgencyAndCTA from './UrgencyAndCTA'
 import ShareButton from '@/app/components/ShareButton'
@@ -11,6 +11,7 @@ const OG_DEFAULT_IMAGE = 'https://bonmoment.app/og-default.jpg'
 
 export async function generateMetadata({ params }) {
   const { id } = await params
+  const supabase = await createClient()
   const { data: offre } = await supabase
     .from('offres')
     .select('type_remise, valeur, titre, commerces(nom, ville, photo_url)')
@@ -68,6 +69,7 @@ function formatSubBadge(offre) {
 
 export default async function OffrePage({ params }) {
   const { id } = await params
+  const supabase = await createClient()
 
   /* ── Données offre ── */
   const [{ data: offre }, { count: reservationsCount }] = await Promise.all([
