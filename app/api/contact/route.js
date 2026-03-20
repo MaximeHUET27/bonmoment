@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rate-limit'
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY
+const checkRate = rateLimit({ maxRequests: 5, windowMs: 15 * 60 * 1000 })
 const TO_EMAIL      = 'bonmomentapp@gmail.com'
 const TO_NAME       = 'Équipe BONMOMENT'
 
@@ -13,6 +15,9 @@ function escapeHtml(str) {
 }
 
 export async function POST(req) {
+  const limited = checkRate(req)
+  if (limited) return limited
+
   try {
     const { prenom, email, profil, message } = await req.json()
 

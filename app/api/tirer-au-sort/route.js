@@ -7,6 +7,9 @@
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rate-limit'
+
+const checkRate = rateLimit({ maxRequests: 3, windowMs: 60 * 1000 })
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -14,6 +17,9 @@ const admin = createClient(
 )
 
 export async function POST(request) {
+  const limited = checkRate(request)
+  if (limited) return limited
+
   /* ── Auth ─────────────────────────────────────────────────────────────── */
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()

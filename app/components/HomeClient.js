@@ -60,7 +60,10 @@ export default function HomeClient({ offres, villes }) {
       .select('villes_abonnees')
       .eq('id', user.id)
       .single()
-      .then(({ data }) => setVillesAbonnees(data?.villes_abonnees || []))
+      .then(({ data, error }) => {
+        if (error) console.error('Erreur chargement villes abonnées:', error.message)
+        setVillesAbonnees(data?.villes_abonnees || [])
+      })
   }, [user, supabase])
 
   /* Quand l'utilisateur sélectionne une ville active dans l'overlay */

@@ -72,9 +72,9 @@ export default function ProfilPage() {
 
     async function load() {
       const [
-        { data: prof },
-        { data: resa },
-        { data: villesActives },
+        { data: prof, error: profError },
+        { data: resa, error: resaError },
+        { data: villesActives, error: villesError },
       ] = await Promise.all([
         supabase
           .from('users')
@@ -92,6 +92,10 @@ export default function ProfilPage() {
           .eq('active', true)
           .order('nom'),
       ])
+
+      if (profError) console.error('Erreur chargement profil:', profError.message)
+      if (resaError) console.error('Erreur chargement réservations:', resaError.message)
+      if (villesError) console.error('Erreur chargement villes:', villesError.message)
 
       setVillesBonmoment(villesActives || [])
 

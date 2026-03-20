@@ -6,17 +6,17 @@
 
 ---
 
-## SCORE GLOBAL : 86 / 100
+## SCORE GLOBAL : 90 / 100
 
-> Re-score du 2026-03-20 apres corrections manuelles (index SQL, contraintes UNIQUE/CHECK, region Vercel cdg1, npm install)
+> Re-score du 2026-03-20 — v3 : rate limiting, error handling Supabase, quota serveur
 
 | Categorie | Score | Details |
 |---|---|---|
 | 1. Integrite fichiers & imports | 10/10 | Tous imports corriges, mammoth supprime, npm install OK |
-| 2. Securite | 7/10 | Injection HTML corrigee, SSR client corrige, rate limiting toujours absent |
+| 2. Securite | 9/10 | Rate limiting sur contact/valider-bon/tirer-au-sort, injection HTML corrigee, SSR OK |
 | 3. Performance & scalabilite | 8/10 | select specifiques, 6 index SQL crees, contraintes ajoutees |
-| 4. Gestion d'erreurs | 8/10 | error.js + not-found.js OK, .catch() ajoutes, quelques { error } Supabase non verifies |
-| 5. Coherence donnees & logique metier | 9/10 | UNIQUE(user_id,offre_id) + CHECK 24h ajoutes, quota serveur manquant |
+| 4. Gestion d'erreurs | 9/10 | error.js + not-found.js OK, { error } Supabase verifie dans page.js/profil/HomeClient |
+| 5. Coherence donnees & logique metier | 10/10 | UNIQUE + CHECK + quota serveur via /api/offres |
 | 6. Accessibilite & SEO | 8/10 | lang="fr" OK, meta OK, alt decoratifs en admin |
 | 7. Lexique BONMOMENT | 10/10 | Tutoiement partout dans l'UI (y compris dashboard), pages legales en vouvoiement (intentionnel) |
 | 8. Configuration & deploiement | 9/10 | .env.example complet, region cdg1 configuree, npm install fait |
@@ -326,15 +326,31 @@ ALTER TABLE offres
 
 ---
 
-## POUR ATTEINDRE 90+ / 100
+## CORRECTIONS V3 — PASSAGE A 90/100
 
-Il manque 4 points. Voici les actions a plus fort impact :
+### Rate limiting (Securite 7→9)
 
-| Action | Categorie impactee | Gain estime | Effort |
-|---|---|---|---|
-| Ajouter rate limiting sur `/api/contact` et `/api/valider-bon` (ex: `@upstash/ratelimit`) | Securite 7→9 | +2 pts | Moyen |
-| Verifier `{ error }` sur les appels Supabase dans `app/page.js`, `app/profil/page.js`, `app/components/HomeClient.js` | Gestion erreurs 8→9 | +1 pt | Faible |
-| Ajouter verification quota offres cote serveur (RPC ou trigger) | Coherence donnees 9→10 | +1 pt | Moyen |
-| Verifier RLS active sur toutes les tables Supabase | Securite (bonus confiance) | +0-1 pt | Faible |
+- `lib/rate-limit.js` : rate limiter en memoire (Map IP + timestamp), nettoyage auto toutes les 5 min
+- `app/api/contact/route.js` : max 5 req / IP / 15 min
+- `app/api/valider-bon/route.js` : max 30 req / IP / min (anti brute-force code 6 chiffres)
+- `app/api/tirer-au-sort/route.js` : max 3 req / IP / min
 
-**Priorite recommandee** : Rate limiting > Error checks Supabase > Quota serveur
+### Error handling Supabase (Erreurs 8→9)
+
+- `app/page.js` : destructuration `{ error }` + `console.error` sur villes et offres
+- `app/profil/page.js` : destructuration `{ error }` + `console.error` sur profil, reservations, villes
+- `app/components/HomeClient.js` : `{ error }` sur chargement villes abonnees
+
+### Quota serveur (Coherence 9→10)
+
+- `app/api/offres/route.js` : nouvelle API Route POST — verifie auth, quota mensuel par palier (4/8/16), puis insert
+- `app/commercant/offre/nouvelle/page.js` : utilise `fetch('/api/offres')` au lieu de `supabase.from('offres').insert()` direct
+
+### Points restants pour aller plus loin (90→95+)
+
+| Action | Categorie | Gain estime |
+|---|---|---|
+| Verifier RLS active sur toutes les tables Supabase | Securite 9→10 | +1 pt |
+| Paginer les requetes admin (`/api/admin/clients`) | Performance 8→9 | +1 pt |
+| Metadata specifique sur pages legales | SEO 8→9 | +1 pt |
+| Contraste texte secondaire (ratio 4.5:1 WCAG AA) | Accessibilite 8→9 | +1 pt |

@@ -6,8 +6,8 @@ import HomeClient from '@/app/components/HomeClient'
 export default async function Home() {
   const supabase = await createClient()
   const [
-    { data: villes },
-    { data: offres },
+    { data: villes, error: villesError },
+    { data: offres, error: offresError },
   ] = await Promise.all([
     supabase.from('villes').select('id, nom').eq('active', true).order('nom'),
     supabase
@@ -17,6 +17,9 @@ export default async function Home() {
       .gt('date_fin', new Date().toISOString())
       .gt('nb_bons_restants', 0),
   ])
+
+  if (villesError) console.error('Erreur chargement villes:', villesError.message)
+  if (offresError) console.error('Erreur chargement offres:', offresError.message)
 
   return (
     <main className="min-h-screen bg-white flex flex-col">

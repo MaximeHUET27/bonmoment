@@ -281,22 +281,30 @@ function NouvelleOffrePageInner() {
     setSubmitting(true)
     const nbTotal = illimite ? null : nbBons
 
-    const { error } = await supabase.from('offres').insert({
-      commerce_id:       commerce.id,
-      type_remise:       typeRemise,
-      valeur:            (typeRemise === 'pourcentage' || typeRemise === 'montant_fixe') ? Number(valeur) : null,
-      titre:             titre.trim(),
-      nb_bons_total:     nbTotal,
-      nb_bons_restants:  illimite ? 9999 : nbBons,
-      date_debut:        buildISO(dateDebut, heureDebut),
-      date_fin:          buildISO(dateFin, heureFin),
-      statut:            'active',
-      est_recurrente:    estRecurrente,
-      jours_recurrence:  estRecurrente ? joursRecurrence : null,
-    })
-
-    if (error) {
-      setErrors({ submit: error.message })
+    try {
+      const res = await fetch('/api/offres', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type_remise:       typeRemise,
+          valeur:            (typeRemise === 'pourcentage' || typeRemise === 'montant_fixe') ? Number(valeur) : null,
+          titre:             titre.trim(),
+          nb_bons_total:     nbTotal,
+          nb_bons_restants:  illimite ? 9999 : nbBons,
+          date_debut:        buildISO(dateDebut, heureDebut),
+          date_fin:          buildISO(dateFin, heureFin),
+          est_recurrente:    estRecurrente,
+          jours_recurrence:  estRecurrente ? joursRecurrence : null,
+        }),
+      })
+      const result = await res.json()
+      if (!res.ok) {
+        setErrors({ submit: result.error || 'Erreur serveur' })
+        setSubmitting(false)
+        return
+      }
+    } catch {
+      setErrors({ submit: 'Erreur réseau, réessaie.' })
       setSubmitting(false)
       return
     }
