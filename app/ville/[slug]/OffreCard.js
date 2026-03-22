@@ -294,7 +294,7 @@ export default function OffreCard({ offre }) {
               className={`w-full text-white font-bold text-xs py-2.5 rounded-full transition-all duration-200 min-h-[40px] flex items-center justify-center gap-1.5 ${
                 abonneComm
                   ? 'bg-green-500'
-                  : 'bg-[#FF6B00] hover:bg-[#CC5500] active:scale-[0.97]'
+                  : 'bg-[#F08040] hover:bg-[#D06830] active:scale-[0.97]'
               }`}
             >
               {abonneCommLoading
