@@ -210,24 +210,6 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* ── Sélecteur de commerce (si 2+) ────────────────────────────── */}
-        {allCommerces.length >= 2 && (
-          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-            {allCommerces.map(c => (
-              <button
-                key={c.id}
-                onClick={() => setCommerce(c)}
-                className={`shrink-0 text-xs font-bold px-4 py-2 rounded-full transition-colors whitespace-nowrap min-h-[36px] ${
-                  commerce?.id === c.id
-                    ? 'bg-[#FF6B00] text-white'
-                    : 'bg-[#F5F5F5] text-[#3D3D3D] hover:bg-[#FFF0E0] hover:text-[#FF6B00]'
-                }`}
-              >
-                🏪 {c.nom}
-              </button>
-            ))}
-          </div>
-        )}
 
         {/* ── Infos commerce ───────────────────────────────────────────── */}
         {commerce && (
