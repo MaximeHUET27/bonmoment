@@ -176,22 +176,6 @@ export default function DashboardPage() {
       {/* ── Corps ────────────────────────────────────────────────────────── */}
       <div className="flex-1 w-full max-w-xl mx-auto px-5 py-6 flex flex-col gap-5">
 
-        {/* ═══════════════════════════════════════════════════════════════ */}
-        {/* ✅ BOUTON VÉRIFIER UN BON — Priorité absolue, toujours visible */}
-        {/* ═══════════════════════════════════════════════════════════════ */}
-        {commerce && (
-          <div>
-            <Link
-              href="/commercant/valider"
-              className="w-full bg-[#FF6B00] hover:bg-[#CC5500] active:bg-[#CC5500] text-white font-black text-xl py-5 rounded-3xl transition-colors duration-200 shadow-xl shadow-orange-300/50 min-h-[72px] flex items-center justify-center text-center gap-3"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
-            >
-              <span className="text-2xl">✅</span>
-              Vérifier un bon
-            </Link>
-          </div>
-        )}
-
         {/* ── Message de bienvenue ──────────────────────────────────────── */}
         <div className="bg-white rounded-3xl px-6 py-8 flex flex-col gap-2 shadow-sm">
           <p className="text-xs font-semibold text-[#FF6B00] uppercase tracking-widest">Mon commerce</p>
@@ -210,6 +194,23 @@ export default function DashboardPage() {
           )}
         </div>
 
+        {/* ── Actions principales côte à côte ──────────────────────────── */}
+        {commerce && (
+          <div className="flex gap-4">
+            <Link
+              href="/commercant/valider"
+              className="flex-1 bg-[#FF6B00] hover:bg-[#CC5500] text-white font-semibold text-lg py-4 rounded-xl transition-colors flex items-center justify-center text-center"
+            >
+              ✅ Vérifier un bon
+            </Link>
+            <Link
+              href="/commercant/offre/nouvelle"
+              className="flex-1 border-2 border-[#FF6B00] text-[#FF6B00] bg-white hover:bg-[#FFF0E0] font-semibold text-lg py-4 rounded-xl transition-colors flex items-center justify-center text-center"
+            >
+              ✨ Créer une offre
+            </Link>
+          </div>
+        )}
 
         {/* ── Infos commerce ───────────────────────────────────────────── */}
         {commerce && (
@@ -256,18 +257,6 @@ export default function DashboardPage() {
                 </p>
               </div>
             )}
-          </div>
-        )}
-
-        {/* ── CTA créer une offre ───────────────────────────────────────── */}
-        {commerce && (
-          <div>
-            <Link
-              href="/commercant/offre/nouvelle"
-              className="w-full bg-[#0A0A0A] hover:bg-[#1A1A1A] text-white font-black text-base py-4 rounded-2xl transition-colors duration-200 min-h-[56px] flex items-center justify-center text-center"
-            >
-              ✨ Créer une offre
-            </Link>
           </div>
         )}
 
