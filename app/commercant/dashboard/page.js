@@ -522,9 +522,8 @@ function OffreRow({ offre, commerce, expired = false }) {
 /* ── Section QR code vitrine ─────────────────────────────────────────────── */
 
 function QRVitrine({ commerce, toast, setToast }) {
-  const canvasRef = useRef(null)
-  const villeSlug = toSlug(commerce.ville)
-  const qrUrl     = `https://bonmoment.app/ville/${villeSlug}`
+  const [showOverlay, setShowOverlay] = useState(false)
+  const qrUrl = `https://bonmoment.app/commercant/${commerce.id}`
 
   function afficherToast(msg) {
     setToast(msg)
@@ -564,7 +563,7 @@ function QRVitrine({ commerce, toast, setToast }) {
     ctx.font = 'bold 36px Arial'
     ctx.textAlign = 'center'
     ctx.fillText('Scannez pour découvrir', W / 2, qrY + qrSize + 70)
-    ctx.fillText(`les bons plans de ${commerce.ville}`, W / 2, qrY + qrSize + 120)
+    ctx.fillText(commerce.nom, W / 2, qrY + qrSize + 120)
     ctx.font = '28px Arial'
     ctx.fillStyle = '#9CA3AF'
     ctx.fillText('sur BONMOMENT', W / 2, qrY + qrSize + 170)
@@ -574,55 +573,96 @@ function QRVitrine({ commerce, toast, setToast }) {
     ctx.fillText(qrUrl, W / 2, H - 80)
 
     const link    = document.createElement('a')
-    link.download = `qr-vitrine-${villeSlug}.png`
+    link.download = `qr-vitrine-${commerce.nom.toLowerCase().replace(/\s+/g, '-')}.png`
     link.href     = out.toDataURL('image/png')
     link.click()
     afficherToast('📥 QR code téléchargé !')
   }
 
   return (
-    <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
-      <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">Mon QR code vitrine</h2>
-      <p className="text-xs text-[#3D3D3D]/60">
-        Affiche ce QR code en vitrine. Tes clients scannent et découvrent les bons plans de{' '}
-        <span className="font-bold text-[#0A0A0A]">{commerce.ville}</span>.
-      </p>
+    <>
+      <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-3 shadow-sm">
+        <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">Mon QR code vitrine</h2>
+        <p className="text-xs text-[#3D3D3D]/60">
+          Tes clients scannent et découvrent directement{' '}
+          <span className="font-bold text-[#0A0A0A]">{commerce.nom}</span> sur BONMOMENT.
+        </p>
 
-      <div className="flex flex-col items-center gap-3">
-        <div className="bg-white border-2 border-[#F0F0F0] rounded-2xl p-4 flex flex-col items-center gap-2">
-          <QRCodeCanvas
-            id="qr-vitrine-canvas"
-            value={qrUrl}
-            size={200}
-            level="H"
-            includeMargin
-            fgColor="#0A0A0A"
-            bgColor="#FFFFFF"
-          />
-          <p className="text-[10px] text-[#3D3D3D]/50 font-medium text-center max-w-[200px]">
-            Bons plans de {commerce.ville} sur BONMOMENT
-          </p>
-        </div>
+        {/* Bouton 1 : afficher overlay */}
+        <button
+          onClick={() => setShowOverlay(true)}
+          className="w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-semibold text-sm py-3 rounded-lg transition-colors min-h-[48px]"
+        >
+          📲 Afficher mon QR code vitrine
+        </button>
 
-        <p className="text-[10px] text-[#9CA3AF] text-center break-all">{qrUrl}</p>
-
+        {/* Bouton 2 : télécharger */}
         <button
           onClick={telechargerQR}
-          className="w-full bg-[#0A0A0A] hover:bg-[#1A1A1A] text-white font-bold text-sm py-3.5 rounded-2xl transition-colors flex items-center justify-center gap-2 min-h-[48px]"
+          className="w-full bg-[#0A0A0A] hover:bg-[#1A1A1A] text-white font-semibold text-sm py-3 rounded-lg transition-colors min-h-[48px]"
         >
           📥 Télécharger mon QR code
         </button>
 
-        <p className="text-[10px] text-[#3D3D3D]/40 text-center">
-          Format A5 • Prêt pour l'impression
-        </p>
+        <p className="text-[10px] text-[#3D3D3D]/40 text-center">Format A5 • Prêt pour l'impression</p>
       </div>
+
+      {/* QR canvas caché (pour génération téléchargement) */}
+      <div className="hidden">
+        <QRCodeCanvas
+          id="qr-vitrine-canvas"
+          value={qrUrl}
+          size={600}
+          level="H"
+          includeMargin
+          fgColor="#0A0A0A"
+          bgColor="#FFFFFF"
+        />
+      </div>
+
+      {/* Overlay plein écran */}
+      {showOverlay && (
+        <div className="fixed inset-0 z-[90] bg-white flex flex-col items-center justify-center px-6">
+          <button
+            onClick={() => setShowOverlay(false)}
+            className="absolute top-5 right-5 w-10 h-10 flex items-center justify-center rounded-full bg-[#F5F5F5] text-[#3D3D3D] font-bold text-lg hover:bg-[#E0E0E0] transition-colors"
+          >
+            ✕
+          </button>
+
+          <div className="flex flex-col items-center gap-6 w-full max-w-xs">
+            <div className="bg-white border-2 border-[#F0F0F0] rounded-2xl p-5">
+              <QRCodeCanvas
+                value={qrUrl}
+                size={260}
+                level="H"
+                includeMargin
+                fgColor="#0A0A0A"
+                bgColor="#FFFFFF"
+              />
+            </div>
+
+            <p className="text-base font-bold text-[#0A0A0A] text-center leading-snug">
+              Scanne pour découvrir{' '}
+              <span className="text-[#FF6B00]">{commerce.nom}</span>{' '}
+              sur BONMOMENT
+            </p>
+
+            <button
+              onClick={() => setShowOverlay(false)}
+              className="text-sm text-[#3D3D3D]/50 hover:text-[#3D3D3D] transition-colors"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
 
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-[#0A0A0A] text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-2xl max-w-[90vw] text-center">
           {toast}
         </div>
       )}
-    </div>
+    </>
   )
 }
