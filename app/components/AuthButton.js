@@ -112,14 +112,13 @@ export default function AuthButton() {
                   <div className="my-2 border-t border-[#F5F5F5]" />
                   <p className="text-[11px] font-semibold text-[#3D3D3D]/50 mb-1">🏪 Mes commerces</p>
                   {commerces.map(c => (
-                    <Link
+                    <button
                       key={c.id}
-                      href={`/commercant/dashboard?commerce=${c.id}`}
-                      onClick={() => setOpen(false)}
-                      className="block text-sm font-semibold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors py-1 pl-2"
+                      onClick={() => { setOpen(false); window.location.href = `/commercant/dashboard?commerce=${c.id}` }}
+                      className="block w-full text-left text-sm font-semibold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors py-1 pl-2"
                     >
-                      → {c.nom}
-                    </Link>
+                      {c.nom}
+                    </button>
                   ))}
                 </>
               )}
