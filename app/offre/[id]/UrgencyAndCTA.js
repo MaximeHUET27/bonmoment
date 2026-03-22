@@ -139,6 +139,7 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
   }, [status])
 
   async function handleReserver() {
+    if (status === 'already_reserved') { setShowBon(true); return }
     if (!user) {
       sessionStorage.setItem(PENDING_KEY, offre.id)
       setShowAuth(true)

@@ -31,28 +31,39 @@ export default function DashboardPage() {
   const router  = useRouter()
   const qrRef   = useRef(null)
   const [commerce,      setCommerce]      = useState(null)
+  const [allCommerces,  setAllCommerces]  = useState([])
   const [fetching,      setFetching]      = useState(true)
   const [qrToast,       setQrToast]       = useState(null)
   const [offres,        setOffres]        = useState([])
   const [nbParticipants, setNbParticipants] = useState({}) // offre_id → count
   const [tutStep,       setTutStep]       = useState(null) // null | 1 | 2 | 3
   const [showRelance,   setShowRelance]   = useState(false)
+  const tutRef1 = useRef(null)
+  const tutRef2 = useRef(null)
+  const tutRef3 = useRef(null)
 
   /* ── Auth guard ─────────────────────────────────────────────────────────── */
   useEffect(() => {
     if (!loading && !user) router.replace('/')
   }, [user, loading, router])
 
-  /* ── Fetch commerce ─────────────────────────────────────────────────────── */
+  /* ── Fetch commerce(s) ───────────────────────────────────────────────────── */
   useEffect(() => {
     if (!user) return
+    const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+    const commerceId = params?.get('commerce')
     supabase
       .from('commerces')
       .select('id, nom, categorie, ville, adresse, code_parrainage, code_parrainage_expire_at, note_google, tutoriel_complete')
       .eq('owner_id', user.id)
-      .maybeSingle()
       .then(({ data }) => {
-        setCommerce(data)
+        const list = data || []
+        setAllCommerces(list)
+        if (commerceId) {
+          setCommerce(list.find(c => c.id === commerceId) || list[0] || null)
+        } else {
+          setCommerce(list[0] || null)
+        }
         setFetching(false)
       })
   }, [user, supabase])
@@ -67,6 +78,15 @@ export default function DashboardPage() {
       setShowRelance(true)
     }
   }, [])
+
+  /* ── Scroll to highlighted element when tutorial step changes ── */
+  useEffect(() => {
+    if (!tutStep) return
+    const ref = tutStep === 1 ? tutRef1 : tutStep === 2 ? tutRef2 : tutRef3
+    if (ref.current) {
+      setTimeout(() => ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150)
+    }
+  }, [tutStep])
 
   /* ── Fetch offres (actives + expirées) ──────────────────────────────────── */
   useEffect(() => {
@@ -261,20 +281,22 @@ export default function DashboardPage() {
         {/* ✅ BOUTON VÉRIFIER UN BON — Priorité absolue, toujours visible */}
         {/* ═══════════════════════════════════════════════════════════════ */}
         {commerce && (
-          <Link
-            href="/commercant/valider"
-            className={`w-full bg-[#FF6B00] hover:bg-[#CC5500] active:bg-[#CC5500] text-white font-black text-xl py-5 rounded-3xl transition-colors duration-200 shadow-xl shadow-orange-300/50 min-h-[72px] flex items-center justify-center text-center gap-3 ${
-              tutStep === 2 ? 'ring-4 ring-white ring-offset-2 relative z-[41]' : ''
-            }`}
-            style={{ fontFamily: 'Montserrat, sans-serif' }}
-          >
-            <span className="text-2xl">✅</span>
-            Vérifier un bon
-          </Link>
+          <div ref={tutRef2}>
+            <Link
+              href="/commercant/valider"
+              className={`w-full bg-[#FF6B00] hover:bg-[#CC5500] active:bg-[#CC5500] text-white font-black text-xl py-5 rounded-3xl transition-colors duration-200 shadow-xl shadow-orange-300/50 min-h-[72px] flex items-center justify-center text-center gap-3 ${
+                tutStep === 2 ? 'ring-4 ring-white ring-offset-2 relative z-[41]' : ''
+              }`}
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
+            >
+              <span className="text-2xl">✅</span>
+              Vérifier un bon
+            </Link>
+          </div>
         )}
 
         {/* ── Message de bienvenue ──────────────────────────────────────── */}
-        <div className={`bg-white rounded-3xl px-6 py-8 flex flex-col gap-2 shadow-sm ${
+        <div ref={tutRef1} className={`bg-white rounded-3xl px-6 py-8 flex flex-col gap-2 shadow-sm ${
           tutStep === 1 ? 'ring-4 ring-[#FF6B00] ring-offset-2 relative z-[41]' : ''
         }`}>
           <p className="text-xs font-semibold text-[#FF6B00] uppercase tracking-widest">Mon commerce</p>
@@ -292,6 +314,25 @@ export default function DashboardPage() {
             </p>
           )}
         </div>
+
+        {/* ── Sélecteur de commerce (si 2+) ────────────────────────────── */}
+        {allCommerces.length >= 2 && (
+          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            {allCommerces.map(c => (
+              <button
+                key={c.id}
+                onClick={() => setCommerce(c)}
+                className={`shrink-0 text-xs font-bold px-4 py-2 rounded-full transition-colors whitespace-nowrap min-h-[36px] ${
+                  commerce?.id === c.id
+                    ? 'bg-[#FF6B00] text-white'
+                    : 'bg-[#F5F5F5] text-[#3D3D3D] hover:bg-[#FFF0E0] hover:text-[#FF6B00]'
+                }`}
+              >
+                🏪 {c.nom}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* ── Infos commerce ───────────────────────────────────────────── */}
         {commerce && (
@@ -343,14 +384,16 @@ export default function DashboardPage() {
 
         {/* ── CTA créer une offre ───────────────────────────────────────── */}
         {commerce && (
-          <Link
-            href="/commercant/offre/nouvelle"
-            className={`w-full bg-[#0A0A0A] hover:bg-[#1A1A1A] text-white font-black text-base py-4 rounded-2xl transition-colors duration-200 min-h-[56px] flex items-center justify-center text-center ${
-              tutStep === 3 ? 'ring-4 ring-[#FF6B00] ring-offset-2 relative z-[41]' : ''
-            }`}
-          >
-            ✨ Créer une offre
-          </Link>
+          <div ref={tutRef3}>
+            <Link
+              href="/commercant/offre/nouvelle"
+              className={`w-full bg-[#0A0A0A] hover:bg-[#1A1A1A] text-white font-black text-base py-4 rounded-2xl transition-colors duration-200 min-h-[56px] flex items-center justify-center text-center ${
+                tutStep === 3 ? 'ring-4 ring-[#FF6B00] ring-offset-2 relative z-[41]' : ''
+              }`}
+            >
+              ✨ Créer une offre
+            </Link>
+          </div>
         )}
 
         {/* ── CTA démarrer le guide (premier lancement) ─────────────────── */}

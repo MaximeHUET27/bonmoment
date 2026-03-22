@@ -180,6 +180,7 @@ export default function OffreCard({ offre }) {
     e.preventDefault()  // empêche navigation si dans un Link
     e.stopPropagation()
     if (fini) return
+    if (status === 'already_reserved') { setShowBon(true); return }
     if (!user) {
       sessionStorage.setItem(PENDING_KEY, offre.id)
       setShowAuth(true)
@@ -215,8 +216,11 @@ export default function OffreCard({ offre }) {
     <>
       <div className="bg-white rounded-2xl border border-[#F0F0F0] shadow-sm overflow-hidden flex flex-col">
 
+        {/* Zone 1 : header + corps grisés pour les cartes expirées */}
+        <div className={fini ? 'opacity-50 grayscale pointer-events-none' : ''}>
+
         {/* ── Header : countdown + bons restants + partage ── */}
-        <div className={`flex items-center gap-1 px-2 py-1.5 ${fini ? 'opacity-60 grayscale' : ''} ${
+        <div className={`flex items-center gap-1 px-2 py-1.5 ${
           urgent && !fini ? 'bg-red-50' : 'bg-[#F5F5F5]'
         }`}>
           <Link href={`/offre/${offre.id}`} className="flex-1 flex items-center justify-between gap-1.5 px-1 py-1 min-w-0">
@@ -245,7 +249,7 @@ export default function OffreCard({ offre }) {
         </div>
 
         {/* ── Corps : cliquable → détail ── */}
-        <Link href={`/offre/${offre.id}`} className={`block flex-1 px-3 py-4 flex flex-col gap-2.5 ${fini ? 'opacity-60 grayscale' : ''}`}>
+        <Link href={`/offre/${offre.id}`} className="block flex-1 px-3 py-4 flex flex-col gap-2.5">
 
           {/* Badge remise */}
           <div className="flex items-center justify-center bg-[#FFF0E0] rounded-xl py-4">
@@ -279,8 +283,10 @@ export default function OffreCard({ offre }) {
 
         </Link>
 
-        {/* ── CTA — bouton non-navigable ── */}
-        <div className="px-3 pb-3">
+        </div>{/* fin Zone 1 */}
+
+        {/* Zone 2 : CTA toujours actif — non affecté par grayscale/opacity */}
+        <div className="px-3 pb-3 pointer-events-auto">
           {fini ? (
             <button
               onClick={commerce?.id ? handleAbonnerComm : undefined}

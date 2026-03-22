@@ -89,12 +89,32 @@ export default function InscriptionCommercant() {
   const [parrainInvalid, setParrainInvalid] = useState(false)
   const [submitError, setSubmitError]   = useState(null)
 
+  // Multi-commerce
+  const [existingCommerces, setExistingCommerces] = useState([])
+  const [showExistingWarning, setShowExistingWarning] = useState(false)
+
   // Redirection si non connecté
   useEffect(() => {
     if (!loading && !user) {
       router.replace('/')
     }
   }, [user, loading, router])
+
+  // Reset accordion horaires quand on change de commerce sélectionné
+  useEffect(() => { setShowAllHoraires(false) }, [selectedPlace])
+
+  // Vérification commerce existant
+  useEffect(() => {
+    if (!user || !supabase) return
+    supabase.from('commerces').select('id, nom').eq('owner_id', user.id)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setExistingCommerces(data)
+          setShowExistingWarning(true)
+        }
+      })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   // Initialise les services Google Maps
   function onMapsLoad() {
@@ -267,6 +287,35 @@ export default function InscriptionCommercant() {
       <div ref={mapDivRef} style={{ display: 'none' }} />
 
       <main className="min-h-screen bg-white flex flex-col">
+
+        {/* ── Avertissement multi-commerce ────────────────────────────────── */}
+        {showExistingWarning && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+            <div className="bg-white rounded-3xl px-6 py-7 max-w-sm w-full flex flex-col gap-4 shadow-2xl">
+              <p className="text-lg font-black text-[#0A0A0A]">
+                Tu as déjà un commerce inscrit
+              </p>
+              {existingCommerces.map(c => (
+                <p key={c.id} className="text-sm font-bold text-[#FF6B00]">🏪 {c.nom}</p>
+              ))}
+              <p className="text-sm text-[#3D3D3D]/70">Souhaites-tu en ajouter un autre ?</p>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => setShowExistingWarning(false)}
+                  className="w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-sm py-3.5 rounded-2xl transition-colors"
+                >
+                  Oui, ajouter un commerce
+                </button>
+                <button
+                  onClick={() => router.push('/commercant/dashboard')}
+                  className="w-full border border-[#E0E0E0] text-sm font-semibold text-[#3D3D3D] py-3 rounded-2xl hover:border-[#FF6B00] hover:text-[#FF6B00] transition-colors"
+                >
+                  Non, voir mon commerce
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <header className="px-6 pt-8 pb-6 border-b border-[#F5F5F5]">

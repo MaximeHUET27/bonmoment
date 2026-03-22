@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/app/context/AuthContext'
@@ -13,9 +13,16 @@ import AuthBottomSheet from './AuthBottomSheet'
  * - Connecté     : avatar + prénom → ouvre un menu déroulant (déconnexion)
  */
 export default function AuthButton() {
-  const { user, loading, signOut } = useAuth()
+  const { user, loading, signOut, supabase } = useAuth()
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const [commerces, setCommerces] = useState([])
+
+  useEffect(() => {
+    if (!user || !supabase) { setCommerces([]); return }
+    supabase.from('commerces').select('id, nom').eq('owner_id', user.id)
+      .then(({ data }) => setCommerces(data || []))
+  }, [user, supabase])
 
   // Placeholder pendant la vérification de session
   if (loading) {
@@ -73,12 +80,13 @@ export default function AuthButton() {
                 {user.email}
               </p>
               <div className="my-3 border-t border-[#F5F5F5]" />
-              <button
-                onClick={() => { setOpen(false); window.dispatchEvent(new CustomEvent('bonmoment:showpicker')) }}
-                className="block w-full text-left text-sm font-semibold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors py-1"
+              <Link
+                href="/profil/bons"
+                onClick={() => setOpen(false)}
+                className="block text-sm font-semibold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors py-1"
               >
                 🎟️ Mes bons
-              </button>
+              </Link>
               <div className="my-2 border-t border-[#F5F5F5]" />
               <Link
                 href="/profil"
@@ -87,6 +95,34 @@ export default function AuthButton() {
               >
                 👤 Mon profil
               </Link>
+              {commerces.length === 1 && (
+                <>
+                  <div className="my-2 border-t border-[#F5F5F5]" />
+                  <Link
+                    href="/commercant/dashboard"
+                    onClick={() => setOpen(false)}
+                    className="block text-sm font-semibold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors py-1"
+                  >
+                    🏪 Mon commerce
+                  </Link>
+                </>
+              )}
+              {commerces.length >= 2 && (
+                <>
+                  <div className="my-2 border-t border-[#F5F5F5]" />
+                  <p className="text-[11px] font-semibold text-[#3D3D3D]/50 mb-1">🏪 Mes commerces</p>
+                  {commerces.map(c => (
+                    <Link
+                      key={c.id}
+                      href={`/commercant/dashboard?commerce=${c.id}`}
+                      onClick={() => setOpen(false)}
+                      className="block text-sm font-semibold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors py-1 pl-2"
+                    >
+                      → {c.nom}
+                    </Link>
+                  ))}
+                </>
+              )}
               <div className="my-2 border-t border-[#F5F5F5]" />
               <button
                 onClick={async () => { await signOut(); setOpen(false) }}

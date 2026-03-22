@@ -85,18 +85,18 @@ export default function NotifBottomSheet({ isOpen, onClose, villeNom }) {
         </p>
 
         {/* Toggle email */}
-        <label className="flex items-center justify-between py-4 border-b border-[#F5F5F5] cursor-pointer">
+        <div className="flex items-center justify-between py-4 border-b border-[#F5F5F5]">
           <div>
             <p className="text-sm font-bold text-[#0A0A0A]">📧 Recevoir les offres par email</p>
             <p className="text-xs text-[#3D3D3D]/50 mt-0.5">Les bons plans du lendemain chaque soir à 21h</p>
           </div>
-          <input
-            type="checkbox"
-            checked={emailOn}
-            onChange={e => setEmailOn(e.target.checked)}
-            className="w-5 h-5 accent-[#FF6B00] shrink-0 ml-3"
-          />
-        </label>
+          <button
+            onClick={() => setEmailOn(v => !v)}
+            className={`relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 ml-3 ${emailOn ? 'bg-[#FF6B00]' : 'bg-gray-300'}`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${emailOn ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+        </div>
 
         {/* Toggle push */}
         <div className="flex items-center justify-between py-4 border-b border-[#F5F5F5]">

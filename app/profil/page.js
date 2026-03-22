@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/app/context/AuthContext'
 import VilleSearchOverlay from '@/app/components/VilleSearchOverlay'
+import { toSlug } from '@/lib/utils'
 
 /* ── Helpers badges ────────────────────────────────────────────────────────── */
 
@@ -380,17 +381,17 @@ export default function ProfilPage() {
             <div className="flex flex-col gap-2">
               {profile.villes_abonnees.map(ville => (
                 <div key={ville} className="flex items-center justify-between py-2.5 border-b border-[#F5F5F5] last:border-0">
-                  <div>
-                    <p className="text-sm font-bold text-[#0A0A0A]">📍 {ville}</p>
+                  <Link href={`/ville/${toSlug(ville)}`} className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors">📍 {ville}</p>
                     <p className="text-[11px] text-[#3D3D3D]/50">
                       {villeCounts[ville] !== undefined
                         ? `${villeCounts[ville]} offre${villeCounts[ville] > 1 ? 's' : ''} active${villeCounts[ville] > 1 ? 's' : ''}`
                         : '—'}
                     </p>
-                  </div>
+                  </Link>
                   <button
-                    onClick={() => desabonnerVille(ville)}
-                    className="text-[10px] font-semibold text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 px-2.5 py-1 rounded-full transition-colors"
+                    onClick={(e) => { e.stopPropagation(); desabonnerVille(ville) }}
+                    className="ml-3 text-[10px] font-semibold text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 px-2.5 py-1 rounded-full transition-colors shrink-0"
                   >
                     Se désabonner
                   </button>
@@ -411,7 +412,7 @@ export default function ProfilPage() {
           ) : (
             <div className="flex flex-col gap-2">
               {favorisDetails.map(commerce => (
-                <div key={commerce.id} className="flex items-center gap-3 py-2.5 border-b border-[#F5F5F5] last:border-0">
+                <Link key={commerce.id} href={`/commercant/${commerce.id}`} className="flex items-center gap-3 py-2.5 border-b border-[#F5F5F5] last:border-0 hover:bg-[#FFF8F3] rounded-xl px-1 -mx-1 transition-colors">
                   {commerce.photo_url ? (
                     <img src={commerce.photo_url} alt={commerce.nom} className="w-10 h-10 rounded-xl object-cover shrink-0" />
                   ) : (
@@ -422,7 +423,7 @@ export default function ProfilPage() {
                     {commerce.ville && <p className="text-[11px] text-[#3D3D3D]/50">📍 {commerce.ville}</p>}
                   </div>
                   <button
-                    onClick={() => retirerFavori(commerce.id)}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); retirerFavori(commerce.id) }}
                     aria-label={`Retirer ${commerce.nom} des favoris`}
                     className="shrink-0"
                   >
@@ -430,7 +431,7 @@ export default function ProfilPage() {
                       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                     </svg>
                   </button>
-                </div>
+                </Link>
               ))}
             </div>
           )}

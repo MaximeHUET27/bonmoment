@@ -335,7 +335,7 @@ export default function VilleSearchOverlay({
 
                       {/* Option : Toutes mes villes */}
                       <button
-                        onClick={() => { router.push('/'); onClose() }}
+                        onClick={() => { try { localStorage.removeItem('bonmoment_ville') } catch {} router.push('/'); onClose() }}
                         className="w-full flex items-center gap-3 py-3.5 border-b border-[#F5F5F5] hover:bg-[#FFF0E0] rounded-xl px-2 transition-colors min-h-[48px]"
                       >
                         <span className="text-lg">🏠</span>
@@ -475,17 +475,6 @@ export default function VilleSearchOverlay({
                 <p className="text-xs text-[#3D3D3D]/50 mt-2">
                   Abonne-toi quand même pour être prévenu dès l'ouverture !
                 </p>
-                {villesBonmoment[0] && (
-                  <button
-                    onClick={() => subscriberVille(villesBonmoment[0].nom)}
-                    disabled={abonnesLocal.has(villesBonmoment[0].nom) || abonnement === villesBonmoment[0].nom}
-                    className="mt-4 bg-[#FF6B00] text-white font-bold text-sm px-5 py-3 rounded-2xl hover:bg-[#CC5500] transition-colors disabled:opacity-60"
-                  >
-                    {abonnesLocal.has(villesBonmoment[0].nom)
-                      ? `✅ Abonné à ${villesBonmoment[0].nom}`
-                      : `S'abonner à ${villesBonmoment[0].nom}`}
-                  </button>
-                )}
               </div>
             )}
 
