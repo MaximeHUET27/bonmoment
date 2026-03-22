@@ -171,7 +171,6 @@ export default function MesBonsPage() {
           code_validation,
           qr_code_data,
           created_at,
-          updated_at,
           offres (
             id,
             titre,
@@ -306,7 +305,7 @@ export default function MesBonsPage() {
                     <p className="text-xs text-[#3D3D3D]/60 mt-0.5">{resa.offres?.commerces?.nom}</p>
                     <p className="text-[11px] text-[#3D3D3D]/40 mt-1">
                       Utilisé le{' '}
-                      {new Date(resa.updated_at || resa.created_at).toLocaleDateString('fr-FR', {
+                      {new Date(resa.created_at).toLocaleDateString('fr-FR', {
                         day: 'numeric', month: 'long', year: 'numeric',
                       })}
                     </p>
