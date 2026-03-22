@@ -98,6 +98,12 @@ export default function HomeClient({ offres, villes }) {
       return getOffreFiltre(o) === filtre
     })
     .sort((a, b) => {
+      const now = new Date()
+      const aFini = new Date(a.date_fin) <= now ||
+        (a.nb_bons_restants !== null && a.nb_bons_restants !== 9999 && a.nb_bons_restants <= 0)
+      const bFini = new Date(b.date_fin) <= now ||
+        (b.nb_bons_restants !== null && b.nb_bons_restants !== 9999 && b.nb_bons_restants <= 0)
+      if (aFini !== bFini) return aFini ? 1 : -1
       const ua = isUrgent(a) ? 1 : 0
       const ub = isUrgent(b) ? 1 : 0
       if (ub !== ua) return ub - ua
