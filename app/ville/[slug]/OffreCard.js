@@ -90,7 +90,6 @@ export default function OffreCard({ offre }) {
   const pathname  = usePathname()
   const [showAuth, setShowAuth] = useState(false)
   const [showBon,  setShowBon]  = useState(false)
-  const [abonne,   setAbonne]   = useState(false)
   const [toast,    setToast]    = useState(null)
 
   const { reserver, status, reservation, reset } = useReservation()
@@ -161,19 +160,20 @@ export default function OffreCard({ offre }) {
 
   /* ── Libellé et style du bouton selon l'état ── */
   const btnLabel = (() => {
-    if (fini)                        return "C'est parti !"
-    if (status === 'loading')        return null                  // spinner
-    if (status === 'success')        return '✓ Bon réservé !'
-    if (status === 'already_reserved') return '🎟️ Déjà réservé'
-    if (status === 'no_stock')       return 'Plus de bons…'
-    if (status === 'error')          return '✗ Erreur — réessaie'
+    if (fini)                          return 'Trop tard !'
+    if (status === 'loading')          return null                  // spinner
+    if (status === 'success')          return '✓ Bon réservé !'
+    if (status === 'already_reserved') return '✅ Bon réservé — Voir mon bon'
+    if (status === 'no_stock')         return 'Plus de bons…'
+    if (status === 'error')            return '✗ Erreur — réessaie'
     return 'Réserver mon bon'
   })()
 
-  const btnColor = fini                         ? 'bg-[#D0D0D0] cursor-not-allowed'
-    : status === 'success'                      ? 'bg-green-500'
-    : status === 'error'                        ? 'bg-red-500'
-    : (status === 'already_reserved' || status === 'no_stock') ? 'bg-[#FF6B00]'
+  const btnColor = fini                           ? 'bg-[#D0D0D0] cursor-not-allowed'
+    : status === 'success'                        ? 'bg-green-500'
+    : status === 'error'                          ? 'bg-red-500'
+    : status === 'already_reserved'               ? 'bg-green-500'
+    : status === 'no_stock'                       ? 'bg-[#FF6B00]'
     : 'bg-[#FF6B00] hover:bg-[#CC5500] active:scale-[0.97]'
 
   /* ── Pulse sur le compteur de bons si < 5 ── */
@@ -202,7 +202,7 @@ export default function OffreCard({ offre }) {
                   {String(timeLeft.s).padStart(2, '0')}s
                 </span>
               ) : (
-                <span className="text-xs font-black text-[#3D3D3D]/60">C'est parti !</span>
+                <span className="text-xs font-black text-[#3D3D3D]/60">Trop tard !</span>
               )}
             </div>
             <span className={`text-[11px] font-bold ${nbPulse ? 'text-red-500 animate-pulse' : 'text-[#3D3D3D]'}`}>
@@ -254,18 +254,14 @@ export default function OffreCard({ offre }) {
           {fini ? (
             <div className="flex flex-col gap-1.5">
               <button disabled className="w-full bg-[#D0D0D0] text-white font-bold text-xs py-2.5 rounded-full cursor-not-allowed min-h-[40px]">
-                C'est parti !
+                Trop tard !
               </button>
-              <button
-                onClick={() => setAbonne(v => !v)}
-                className={`w-full text-[10px] font-bold py-2 rounded-full border transition-colors min-h-[36px] ${
-                  abonne
-                    ? 'bg-[#FF6B00] border-[#FF6B00] text-white'
-                    : 'border-[#FF6B00] text-[#FF6B00] hover:bg-[#FFF0E0]'
-                }`}
-              >
-                {abonne ? '✓ Abonné pour la prochaine' : 'S\'abonner pour la prochaine'}
-              </button>
+              {commerce?.id && (
+                <div className="flex items-center justify-center gap-1.5">
+                  <FavoriButton commerceId={commerce.id} commerceNom={commerce.nom || ''} className="!min-h-[32px] !min-w-[32px]" />
+                  <span className="text-[10px] font-bold text-[#FF6B00]">S'abonner à ce commerçant</span>
+                </div>
+              )}
             </div>
           ) : (
             <button
@@ -277,13 +273,6 @@ export default function OffreCard({ offre }) {
                 <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : btnLabel}
             </button>
-          )}
-
-          {/* Invitation connexion */}
-          {!user && !fini && status === 'idle' && (
-            <p className="text-center text-[9px] text-[#3D3D3D]/40 mt-1.5">
-              Connecte-toi pour réserver ton bon
-            </p>
           )}
 
           {/* Erreur */}

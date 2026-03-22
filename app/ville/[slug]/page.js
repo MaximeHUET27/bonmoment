@@ -71,7 +71,7 @@ export default async function VillePage({ params }) {
       </header>
 
       {/* ── Interface interactive : bandeau, urgence, filtres, grille ── */}
-      <VilleClient offres={offres || []} villeNom={ville.nom} />
+      <VilleClient offres={offres || []} villeNom={ville.nom} villes={villes || []} />
 
       {/* ── Footer ── */}
       <footer className="px-6 py-8 text-center border-t border-[#F5F5F5]">

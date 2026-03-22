@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import OffreCard from './OffreCard'
 import SkeletonCard from '@/app/components/SkeletonCard'
 import { getCategorieFiltre } from './OffreCard'
 import VilleAbonnement from '@/app/components/VilleAbonnement'
+import VilleSearchOverlay from '@/app/components/VilleSearchOverlay'
+import { toSlug } from '@/lib/utils'
 
 /* ── Filtres ─────────────────────────────────────────────────────────────── */
 
@@ -35,19 +38,25 @@ function isUrgent(offre) {
 
 /* ── Composant ────────────────────────────────────────────────────────────── */
 
-export default function VilleClient({ offres, villeNom }) {
-  const [filtre,    setFiltre]    = useState('tous')
-  const [isLoading, setIsLoading] = useState(true)
+export default function VilleClient({ offres, villeNom, villes = [] }) {
+  const router = useRouter()
+  const [filtre,      setFiltre]      = useState('tous')
+  const [isLoading,   setIsLoading]   = useState(true)
+  const [showOverlay, setShowOverlay] = useState(false)
 
   useEffect(() => { setIsLoading(false) }, [])
 
+  function handleVilleSelect(nomVille) {
+    router.push(`/ville/${toSlug(nomVille)}`)
+  }
+
   /* Filtrage */
   const offresActives  = (offres || []).filter(isActive)
-  const offresUrgentes = offresActives.filter(isUrgent).slice(0, 3)
 
   const offresAffichees = (offres || [])
     .filter(o => {
       if (filtre === 'tous') return true
+      if (!isActive(o)) return true  // les offres expirées restent visibles peu importe le filtre
       return getOffreFiltre(o) === filtre
     })
     .sort((a, b) => {
@@ -75,37 +84,16 @@ export default function VilleClient({ offres, villeNom }) {
     <div className="w-full">
 
       {/* ── Bandeau ville + abonnement ── */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#F0F0F0] bg-white">
-        <div className="flex items-center gap-1.5">
-          <span className="text-sm font-black text-[#0A0A0A]">📍 {villeNom}</span>
-          {offresActives.length > 0 && (
-            <span className="text-[11px] text-[#3D3D3D]/50 font-medium">
-              · {offresActives.length} bon{offresActives.length > 1 ? 's' : ''} en cours
-            </span>
-          )}
-        </div>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#F0F0F0] bg-white sticky top-0 z-30">
+        <button
+          onClick={() => setShowOverlay(true)}
+          className="flex items-center gap-1.5 text-sm font-bold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors min-h-[44px]"
+        >
+          <span>📍 {villeNom}</span>
+          <span className="text-[#FF6B00] text-xs font-semibold">Changer ▼</span>
+        </button>
         <VilleAbonnement villeNom={villeNom} />
       </div>
-
-      {/* ── Zone urgence ── */}
-      {offresUrgentes.length > 0 && (
-        <div className="px-4 pt-5 pb-1">
-          <h2 className="text-base font-black text-[#0A0A0A] mb-3 flex items-center gap-2">
-            <span className="inline-flex items-center justify-center w-6 h-6 bg-red-500 text-white text-xs rounded-full font-black">⚡</span>
-            À ne pas rater
-          </h2>
-          <div
-            className="flex gap-4 overflow-x-auto pb-3 -mx-4 px-4"
-            style={{ scrollbarWidth: 'none' }}
-          >
-            {offresUrgentes.map(o => (
-              <div key={o.id} className="min-w-[240px] max-w-[240px] shrink-0">
-                <OffreCard offre={o} />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* ── Barre de filtres ── */}
       <div
@@ -145,6 +133,14 @@ export default function VilleClient({ offres, villeNom }) {
           </div>
         )}
       </div>
+
+      {/* ── Overlay sélecteur de ville ── */}
+      <VilleSearchOverlay
+        isOpen={showOverlay}
+        onClose={() => setShowOverlay(false)}
+        villesBonmoment={villes}
+        onSelectActive={handleVilleSelect}
+      />
 
     </div>
   )

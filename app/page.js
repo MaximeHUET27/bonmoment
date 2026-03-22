@@ -32,7 +32,7 @@ export default async function Home() {
       {/* Logo + tagline */}
       <div className="flex flex-col items-center px-6 pt-16 pb-6 text-center">
         <span className="inline-block mb-4 px-3 py-1.5 rounded-full bg-[#FFF0E0] text-[#FF6B00] text-[10px] sm:text-xs font-semibold tracking-wider uppercase">
-          Bons plans de ta ville
+          Pour vos commerçants, soyez là au
         </span>
         <Image
           src="/LOGO.png"

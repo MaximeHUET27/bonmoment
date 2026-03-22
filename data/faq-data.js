@@ -74,7 +74,7 @@ const FAQ = [
         r: "Présente ton écran avec le QR code au commerçant. Il le scanne ou saisit ton code 6 chiffres. En quelques secondes c'est validé !",
       },
       {
-        q: "Que signifie \"C'est parti !\" ?",
+        q: "Que signifie \"Trop tard !\" ?",
         r: "L'offre est terminée. Abonne-toi au commerce pour être prévenu de la prochaine !",
       },
       {

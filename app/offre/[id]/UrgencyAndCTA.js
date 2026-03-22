@@ -129,10 +129,10 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
   const btnDisabled = fini || status === 'loading'
 
   const btnLabel = (() => {
-    if (fini)                          return "C'est parti !"
+    if (fini)                          return 'Trop tard !'
     if (status === 'loading')          return null
     if (status === 'success')          return '✓ Bon réservé !'
-    if (status === 'already_reserved') return '🎟️ Tu as déjà réservé ce bon'
+    if (status === 'already_reserved') return '✅ Bon réservé — Voir mon bon'
     if (status === 'no_stock')         return 'Plus de bons disponibles'
     if (status === 'error')            return '✗ Erreur — réessaie'
     return 'Réserver mon bon'
@@ -141,7 +141,7 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
   const btnBase = 'w-full font-black text-lg py-4 rounded-2xl transition-all duration-200 min-h-[56px] flex items-center justify-center gap-2 shadow-lg active:scale-[0.97]'
   const btnColor = fini
     ? 'bg-[#D0D0D0] text-white cursor-not-allowed shadow-none'
-    : status === 'success'
+    : (status === 'success' || status === 'already_reserved')
     ? 'bg-green-500 text-white shadow-green-200'
     : status === 'error'
     ? 'bg-red-500 text-white shadow-red-200'
@@ -149,10 +149,9 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
 
   /* ── Messages sous le bouton ── */
   const subMsg = (() => {
-    if (status === 'no_stock') return 'Tous les bons ont été réservés — S\'abonner pour la prochaine !'
-    if (status === 'already_reserved') return 'Tu as déjà réservé un bon pour cette offre 🎟️'
+    if (status === 'no_stock') return 'Tous les bons ont été réservés.'
+    if (status === 'already_reserved') return null
     if (status === 'error')    return 'Une erreur est survenue. Réessaie dans quelques secondes.'
-    if (!user && !fini)        return 'Connecte-toi pour réserver ton bon'
     return null
   })()
 
@@ -169,7 +168,7 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
         <div className="flex items-center gap-2">
           <span className="text-lg">⏱</span>
           {expired ? (
-            <span className="text-sm font-bold text-red-500">C'est parti !</span>
+            <span className="text-sm font-bold text-red-500">Trop tard !</span>
           ) : (
             <span className={`text-base font-black tabular-nums tracking-tight ${
               urgent && !fini ? 'text-white' : 'text-[#0A0A0A]'

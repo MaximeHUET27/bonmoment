@@ -5,25 +5,22 @@ import { useAuth } from '@/app/context/AuthContext'
 import FullScreenBon from './FullScreenBon'
 
 /**
- * Bouton flottant bas-droite — visible si le client a un bon actif (statut='reservee' ET non expiré).
- * Disparaît automatiquement à l'expiration.
- * Intégré dans le layout global.
+ * Bouton flottant centré en bas — visible si le client a un ou plusieurs bons actifs.
+ * Support multi-bons avec sélecteur.
  */
 export default function FloatingBonButton() {
   const { user, supabase } = useAuth()
 
-  const [reservation, setReservation] = useState(null)
-  const [offre,       setOffre]       = useState(null)
-  const [commerce,    setCommerce]    = useState(null)
-  const [showBon,     setShowBon]     = useState(false)
-  const [expired,     setExpired]     = useState(false)
+  const [reservations, setReservations] = useState([])
+  const [showPicker,   setShowPicker]   = useState(false)
+  const [showBon,      setShowBon]      = useState(false)
+  const [selected,     setSelected]     = useState(null)
 
-  /* ── Cherche la réservation active la plus récente ── */
+  /* ── Cherche toutes les réservations actives ── */
   useEffect(() => {
-    if (!user) { setReservation(null); return }
+    if (!user) { setReservations([]); return }
 
     async function fetchActive() {
-      setExpired(false)
       const { data, error } = await supabase
         .from('reservations')
         .select(`
@@ -38,17 +35,8 @@ export default function FloatingBonButton() {
         .order('created_at', { ascending: false })
 
       if (error || !data) return
-
-      const now    = new Date()
-      const active = data.find(r => r.offres && new Date(r.offres.date_fin) > now)
-
-      if (active) {
-        setReservation({ id: active.id, code_validation: active.code_validation, qr_code_data: active.qr_code_data })
-        setOffre(active.offres)
-        setCommerce(active.offres?.commerces)
-      } else {
-        setReservation(null)
-      }
+      const now = new Date()
+      setReservations(data.filter(r => r.offres && new Date(r.offres.date_fin) > now))
     }
 
     fetchActive()
@@ -56,40 +44,77 @@ export default function FloatingBonButton() {
     return () => window.removeEventListener('bonmoment:reservation', fetchActive)
   }, [user, supabase])
 
-  /* ── Auto-expire : surveille l'heure de fin ── */
+  /* ── Auto-expire : retire les bons expirés ── */
   useEffect(() => {
-    if (!offre?.date_fin) return
+    if (!reservations.length) return
     function checkExpiry() {
-      if (new Date(offre.date_fin) <= new Date()) {
-        setExpired(true)
-        setReservation(null)
-        setShowBon(false)
+      const now = new Date()
+      const still = reservations.filter(r => new Date(r.offres.date_fin) > now)
+      if (still.length !== reservations.length) {
+        setReservations(still)
+        if (!still.length) { setShowBon(false); setShowPicker(false) }
       }
     }
-    checkExpiry()
     const t = setInterval(checkExpiry, 10_000)
     return () => clearInterval(t)
-  }, [offre?.date_fin])
+  }, [reservations])
 
-  if (!reservation || expired) return null
+  if (!reservations.length) return null
+
+  function openBon(r) {
+    setSelected({
+      reservation: { id: r.id, code_validation: r.code_validation, qr_code_data: r.qr_code_data },
+      offre:       r.offres,
+      commerce:    r.offres?.commerces,
+    })
+    setShowBon(true)
+    setShowPicker(false)
+  }
+
+  function handleClick() {
+    if (reservations.length === 1) {
+      openBon(reservations[0])
+    } else {
+      setShowPicker(v => !v)
+    }
+  }
 
   return (
     <>
+      {/* ── Picker multi-bons ── */}
+      {showPicker && (
+        <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-40 bg-white rounded-2xl shadow-2xl border border-[#F0F0F0] py-2 w-72 flex flex-col">
+          {reservations.map(r => (
+            <button
+              key={r.id}
+              onClick={() => openBon(r)}
+              className="flex flex-col px-4 py-3 hover:bg-[#F5F5F5] transition-colors text-left border-b border-[#F5F5F5] last:border-0"
+            >
+              <span className="text-sm font-bold text-[#0A0A0A]">{r.offres?.commerces?.nom}</span>
+              <span className="text-xs text-[#3D3D3D]/60">{r.offres?.titre}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── Bouton principal ── */}
       <button
-        onClick={() => setShowBon(true)}
-        className="fixed bottom-20 right-4 z-40 flex items-center gap-2 bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-sm px-5 py-3 rounded-full shadow-xl shadow-orange-300/50 transition-colors min-h-[48px]"
+        onClick={handleClick}
+        className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-sm px-5 py-3 rounded-full shadow-xl shadow-orange-300/50 transition-colors min-h-[48px] whitespace-nowrap"
         aria-label="Voir mon bon en cours"
       >
         <span className="text-base">🎟️</span>
-        <span>Mon bon</span>
+        <span>Mon bon{reservations.length > 1 ? ` (${reservations.length})` : ''}</span>
+        {reservations.length > 1 && <span className="text-xs opacity-75">▲</span>}
       </button>
 
-      {showBon && (
+      {/* ── Bon plein écran ── */}
+      {showBon && selected && (
         <FullScreenBon
-          reservation={reservation}
-          offre={offre}
-          commerce={commerce}
-          onClose={() => setShowBon(false)}
+          reservation={selected.reservation}
+          offre={selected.offre}
+          commerce={selected.commerce}
+          onClose={() => { setShowBon(false); setSelected(null) }}
         />
       )}
     </>

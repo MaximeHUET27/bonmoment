@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import ShareButton from '@/app/components/ShareButton'
+import { useAuth } from '@/app/context/AuthContext'
 
 /* QRCodeSVG chargé dynamiquement (évite SSR) */
 const QRCodeSVG = dynamic(
@@ -53,9 +54,12 @@ function formatCode(code) {
  * @param {function} onClose      - callback fermeture (null = pas de bouton ×)
  */
 export default function FullScreenBon({ reservation, offre, commerce, onClose }) {
-  const timeLeft   = useCountdown(offre?.date_fin)
-  const wakeLock   = useRef(null)
-  const [entered,  setEntered]  = useState(false)
+  const { supabase }     = useAuth()
+  const timeLeft         = useCountdown(offre?.date_fin)
+  const wakeLock         = useRef(null)
+  const [entered,        setEntered]        = useState(false)
+  const [confirmCancel,  setConfirmCancel]  = useState(false)
+  const [cancelling,     setCancelling]     = useState(false)
 
   /* Animation d'entrée */
   useEffect(() => {
@@ -75,6 +79,21 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
     return () => { wakeLock.current?.release().catch(() => {}) }
   }, [])
 
+  async function handleCancel() {
+    setCancelling(true)
+    try {
+      await supabase.from('reservations').update({ statut: 'annulee' }).eq('id', reservation.id)
+      const { data: o } = await supabase.from('offres').select('nb_bons_restants').eq('id', offre.id).single()
+      if (o?.nb_bons_restants != null && o.nb_bons_restants !== 9999) {
+        await supabase.from('offres').update({ nb_bons_restants: o.nb_bons_restants + 1 }).eq('id', offre.id)
+      }
+      window.dispatchEvent(new Event('bonmoment:reservation'))
+      onClose?.()
+    } catch {
+      setCancelling(false)
+    }
+  }
+
   const qrUrl   = reservation?.qr_code_data
     || `${typeof window !== 'undefined' ? window.location.origin : 'https://bonmoment.app'}/bon/${reservation?.id}`
 
@@ -85,7 +104,8 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
   const timerRed = timeLeft && timeLeft.diff < 1_800_000
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white flex flex-col overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex flex-col sm:items-center sm:justify-center sm:bg-black/60">
+      <div className="relative bg-white flex-1 sm:flex-none overflow-y-auto sm:w-full sm:max-w-[500px] sm:max-h-[90vh] sm:rounded-3xl sm:shadow-2xl">
 
       {/* ── Bouton fermer ── */}
       {onClose && (
@@ -98,7 +118,7 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
         </button>
       )}
 
-      <div className="flex flex-col items-center justify-center gap-6 px-6 py-10 min-h-full max-w-sm mx-auto w-full">
+      <div className="flex flex-col items-center justify-center gap-6 px-6 py-10 min-h-full sm:min-h-0 max-w-sm mx-auto w-full">
 
         {/* ── Commerce + titre ── */}
         <div className="text-center">
@@ -162,7 +182,7 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
               </p>
             </>
           ) : (
-            <p className="text-base font-black text-red-500">C'est parti — bon expiré</p>
+            <p className="text-base font-black text-red-500">Trop tard — bon expiré</p>
           )}
         </div>
 
@@ -195,8 +215,41 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
           className="w-full [&>button]:w-full"
         />
 
+        {/* ── Annulation ── */}
+        {onClose && !confirmCancel && (
+          <button
+            onClick={() => setConfirmCancel(true)}
+            className="text-[10px] text-[#3D3D3D]/40 hover:text-red-400 transition-colors"
+          >
+            Annuler ma réservation
+          </button>
+        )}
+        {confirmCancel && (
+          <div className="w-full bg-red-50 border border-red-100 rounded-2xl px-4 py-4 flex flex-col gap-3 text-center">
+            <p className="text-sm font-bold text-red-600">Annuler ce bon ?</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirmCancel(false)}
+                className="flex-1 border border-[#E0E0E0] text-sm font-semibold py-2.5 rounded-xl"
+              >
+                Non
+              </button>
+              <button
+                onClick={handleCancel}
+                disabled={cancelling}
+                className="flex-1 bg-red-500 text-white text-sm font-bold py-2.5 rounded-xl flex items-center justify-center"
+              >
+                {cancelling
+                  ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  : 'Oui, annuler'}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Espace bas */}
         <div className="h-4" />
+      </div>
       </div>
     </div>
   )

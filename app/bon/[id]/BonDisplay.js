@@ -114,7 +114,7 @@ export default function BonDisplay({ reservation, offre, commerce }) {
         {/* Timer */}
         <div className="text-center">
           {expired ? (
-            <p className="text-base font-black text-red-500">C'est parti — bon expiré</p>
+            <p className="text-base font-black text-red-500">Trop tard — bon expiré</p>
           ) : (
             <>
               <p className={`text-2xl font-black tabular-nums tracking-tight ${timerRed ? 'text-red-500' : 'text-[#0A0A0A]'}`}>

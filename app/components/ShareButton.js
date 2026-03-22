@@ -147,7 +147,7 @@ export default function ShareButton({
           type="button"
           onClick={handleShare}
           aria-label="Partager"
-          className="w-8 h-8 flex items-center justify-center rounded-full text-[#3D3D3D]/40 hover:text-[#FF6B00] hover:bg-[#FFF0E0] active:text-[#FF6B00] transition-colors shrink-0"
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-[#FFF0E0] text-[#FF6B00] hover:bg-[#FF6B00] hover:text-white active:bg-[#CC5500] transition-colors shrink-0"
         >
           <ShareIcon />
         </button>

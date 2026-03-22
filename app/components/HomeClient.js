@@ -95,16 +95,6 @@ export default function HomeClient({ offres, villes }) {
       return new Date(a.date_fin) - new Date(b.date_fin)
     })
 
-  const offresUrgentes = (offres || []).filter(o => {
-    const villeOffre = o.commerces?.ville
-    if (showMultiCityFilter) {
-      if (villeFiltre) return villeOffre === villeFiltre && isUrgent(o)
-      return villesAbonnees.includes(villeOffre) && isUrgent(o)
-    }
-    if (ville && villeOffre !== ville) return false
-    return isUrgent(o)
-  }).slice(0, 3)
-
   /* ── Skeleton pendant hydratation ── */
   if (isLoading) {
     return (
@@ -162,25 +152,6 @@ export default function HomeClient({ offres, villes }) {
               {v}
             </button>
           ))}
-        </div>
-      )}
-
-      {/* ── Zone urgence ─────────────────────────────────────────────────── */}
-      {offresUrgentes.length > 0 && (
-        <div className="px-4 pt-5 pb-1">
-          <h2 className="text-base font-black text-[#0A0A0A] mb-3 flex items-center gap-2">
-            <span className="inline-flex items-center justify-center w-6 h-6 bg-red-500 text-white text-xs rounded-full font-black">
-              ⚡
-            </span>
-            À ne pas rater
-          </h2>
-          <div className="flex gap-4 overflow-x-auto pb-3 -mx-4 px-4" style={{ scrollbarWidth: 'none' }}>
-            {offresUrgentes.map(o => (
-              <div key={o.id} className="min-w-[240px] max-w-[240px] shrink-0">
-                <OffreCard offre={o} />
-              </div>
-            ))}
-          </div>
         </div>
       )}
 

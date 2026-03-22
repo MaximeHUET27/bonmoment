@@ -75,7 +75,7 @@ export default async function OffrePage({ params }) {
   const [{ data: offre }, { count: reservationsCount }] = await Promise.all([
     supabase
       .from('offres')
-      .select('*, commerces(nom, categorie, adresse, ville, description, photo_url)')
+      .select('*, commerces(id, nom, categorie, adresse, ville, description, photo_url)')
       .eq('id', id)
       .single(),
     supabase
@@ -166,7 +166,7 @@ export default async function OffrePage({ params }) {
             </div>
             <div>
               <Link
-                href={`/commercant/${/* id inconnu ici → utilise le nom */''}`}
+                href={`/commercant/${commerce?.id || ''}`}
                 className="text-base font-black text-[#0A0A0A] hover:text-[#FF6B00] transition-colors"
               >
                 {commerce?.nom}

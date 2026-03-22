@@ -29,8 +29,8 @@ function statutPastille(statut) {
 
 function Toggle({ value, onChange, label, sublabel }) {
   return (
-    <div className="flex items-center justify-between py-4 border-b border-[#F5F5F5] last:border-0">
-      <div>
+    <div className="flex items-center justify-between gap-4 py-4 border-b border-[#F5F5F5] last:border-0">
+      <div className="flex-1 min-w-0">
         <p className="text-sm font-bold text-[#0A0A0A]">{label}</p>
         {sublabel && <p className="text-xs text-[#3D3D3D]/50 mt-0.5">{sublabel}</p>}
       </div>
