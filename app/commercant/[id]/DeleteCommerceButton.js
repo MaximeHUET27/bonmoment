@@ -47,9 +47,9 @@ export default function DeleteCommerceButton({ commerceId, ownerUserId }) {
       {step === 0 && (
         <button
           onClick={() => setStep(1)}
-          className="mt-6 text-xs text-red-400 hover:text-red-600 transition-colors underline underline-offset-2"
+          className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold text-base py-4 rounded-lg mt-8 mb-4 transition-colors min-h-[56px]"
         >
-          🗑️ Supprimer ce commerce
+          🗑️ Supprimer ce commerce de mon compte
         </button>
       )}
 

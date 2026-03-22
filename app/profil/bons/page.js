@@ -159,11 +159,39 @@ export default function MesBonsPage() {
   useEffect(() => {
     if (!user || !supabase) return
     async function load() {
-      const { data } = await supabase
+      // Vérifie que l'on a bien le user connecté
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      const userId = authUser?.id || user.id
+
+      const { data, error } = await supabase
         .from('reservations')
-        .select('id, statut, code_validation, qr_code_data, created_at, updated_at, offres(id, titre, type_remise, valeur, date_fin, commerces(nom, ville, adresse))')
-        .eq('user_id', user.id)
+        .select(`
+          id,
+          statut,
+          code_validation,
+          qr_code_data,
+          created_at,
+          updated_at,
+          offres (
+            id,
+            titre,
+            type_remise,
+            valeur,
+            date_fin,
+            commerces (
+              nom,
+              ville,
+              adresse
+            )
+          )
+        `)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('[Mes bons] Erreur requête Supabase:', error.message, error)
+      }
+
       const sorted = (data || []).sort((a, b) => {
         const da = a.offres?.date_fin ? new Date(a.offres.date_fin) : new Date(0)
         const db = b.offres?.date_fin ? new Date(b.offres.date_fin) : new Date(0)
