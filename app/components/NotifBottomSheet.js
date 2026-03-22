@@ -72,7 +72,7 @@ export default function NotifBottomSheet({ isOpen, onClose, villeNom }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl px-6 pt-6 pb-10 sm:pb-6 shadow-2xl">
         <div className="w-10 h-1 bg-[#E0E0E0] rounded-full mx-auto mb-5 sm:hidden" />

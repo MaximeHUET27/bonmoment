@@ -88,10 +88,10 @@ export default function FavoriButton({ commerceId, commerceNom, className = '' }
         onClick={handleClick}
         disabled={loading}
         aria-label={favori ? `Retirer ${commerceNom} des favoris` : `Ajouter ${commerceNom} aux favoris`}
-        className={`flex items-center justify-center transition-transform duration-200 min-h-[44px] min-w-[44px] ${
-          pulse ? 'scale-[1.3]' : 'scale-100'
+        className={`flex items-center justify-center min-h-[44px] min-w-[44px] ${
+          pulse ? 'scale-[1.2]' : 'scale-100'
         } ${className}`}
-        style={{ transition: pulse ? 'transform 0.15s ease-out' : 'transform 0.25s ease-in' }}
+        style={{ transition: 'transform 0.3s ease-in-out' }}
       >
         {favori ? (
           <svg viewBox="0 0 24 24" className="w-6 h-6 fill-[#FF6B00]" aria-hidden>

@@ -34,11 +34,13 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
   const { user, supabase } = useAuth()
   const pathname   = usePathname()
 
-  const [showAuth, setShowAuth] = useState(false)
-  const [showBon,  setShowBon]  = useState(false)
-  const [toast,    setToast]    = useState(null)
+  const [showAuth,          setShowAuth]          = useState(false)
+  const [showBon,           setShowBon]           = useState(false)
+  const [toast,             setToast]             = useState(null)
+  const [abonneComm,        setAbonneComm]        = useState(false)
+  const [abonneCommLoading, setAbonneCommLoading] = useState(false)
 
-  const { reserver, status, reservation, reset } = useReservation()
+  const { reserver, status, reservation, reset, checkExisting } = useReservation()
 
   /* ── Countdown ── */
   useEffect(() => {
@@ -47,6 +49,27 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
     return () => clearInterval(t)
   }, [offre.date_fin])
 
+  /* ── Vérifier favori commerce au montage ── */
+  useEffect(() => {
+    if (!user || !offre.commerces?.id) return
+    supabase.from('users').select('commerces_abonnes').eq('id', user.id).single()
+      .then(({ data }) => {
+        if (data?.commerces_abonnes?.includes(offre.commerces.id)) setAbonneComm(true)
+      })
+  }, [user, offre.commerces?.id, supabase])
+
+  /* ── Vérifier réservation existante au montage (bouton vert persistant) ── */
+  useEffect(() => {
+    const finiCheck = (() => {
+      const tl = getTimeLeft(offre.date_fin)
+      if (!tl) return true
+      const nb = offre.nb_bons_restants
+      return nb !== null && nb !== 9999 && nb <= 0
+    })()
+    if (user && !finiCheck) checkExisting(offre.id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, offre.id])
+
   /* ── Auto-pending : réservation déclenchée après retour OAuth ── */
   useEffect(() => {
     if (!user || !supabase) return
@@ -54,34 +77,45 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
     if (pendingId !== offre.id) return
     sessionStorage.removeItem(PENDING_KEY)
 
-    // Abonnement silencieux à la ville du commerce
-    const ville = offre.commerces?.ville
-    if (ville) {
-      supabase
-        .from('users')
-        .select('villes_abonnees, notif_email')
-        .eq('id', user.id)
-        .single()
-        .then(({ data }) => {
-          if (!data) return
+    async function autoReserver() {
+      let ville = offre.commerces?.ville
+      if (!ville) {
+        const { data: d } = await supabase
+          .from('offres').select('commerces(ville)').eq('id', offre.id).single()
+        ville = d?.commerces?.ville
+      }
+      if (ville) {
+        const { data } = await supabase
+          .from('users').select('villes_abonnees, notifications_email').eq('id', user.id).single()
+        if (data) {
           const villes = data.villes_abonnees || []
           const isNew  = !villes.includes(ville)
           const updates = {}
           if (isNew) updates.villes_abonnees = [...villes, ville]
-          if (!data.notif_email) updates.notif_email = true
+          if (!data.notifications_email) updates.notifications_email = true
           if (Object.keys(updates).length > 0) {
-            supabase.from('users').update(updates).eq('id', user.id).then(() => {
-              if (isNew) {
-                setToast(`🎉 Bienvenue à ${ville} ! Tu recevras les bons plans chaque soir à 21h.`)
-              }
-            })
+            await supabase.from('users').update(updates).eq('id', user.id)
+            if (isNew) setToast(`🎉 Bienvenue à ${ville} ! Tu recevras les bons plans chaque soir à 21h.`)
           }
-        })
+        }
+      }
+      reserver(offre)
     }
-
-    reserver(offre)
+    autoReserver()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
+
+  /* ── Toggle favori commerce (depuis bouton offre expirée) ── */
+  async function handleAbonnerComm() {
+    if (!user) { setShowAuth(true); return }
+    setAbonneCommLoading(true)
+    const { data: current } = await supabase.from('users').select('commerces_abonnes').eq('id', user.id).single()
+    const existant = current?.commerces_abonnes || []
+    const next = abonneComm ? existant.filter(id => id !== offre.commerces?.id) : [...existant, offre.commerces?.id]
+    await supabase.from('users').update({ commerces_abonnes: next }).eq('id', user.id)
+    setAbonneComm(!abonneComm)
+    setAbonneCommLoading(false)
+  }
 
   /* ── Toast auto-dismiss ── */
   useEffect(() => {
@@ -201,15 +235,29 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
       </div>
 
       {/* ── CTA principal ── */}
-      <button
-        onClick={handleReserver}
-        disabled={btnDisabled}
-        className={`${btnBase} ${btnColor}`}
-      >
-        {status === 'loading' ? (
-          <span className="w-6 h-6 border-[3px] border-white border-t-transparent rounded-full animate-spin" />
-        ) : btnLabel}
-      </button>
+      {fini ? (
+        <button
+          onClick={offre.commerces?.id ? handleAbonnerComm : undefined}
+          disabled={abonneCommLoading || !offre.commerces?.id}
+          className={`${btnBase} ${abonneComm ? 'bg-green-500 text-white shadow-green-200' : 'bg-[#FF6B00] hover:bg-[#CC5500] text-white shadow-orange-200'}`}
+        >
+          {abonneCommLoading
+            ? <span className="w-6 h-6 border-[3px] border-white border-t-transparent rounded-full animate-spin" />
+            : abonneComm
+            ? '✅ Abonné à ce commerçant'
+            : 'Trop tard ! Abonne-toi à ce commerçant ❤️'}
+        </button>
+      ) : (
+        <button
+          onClick={handleReserver}
+          disabled={status === 'loading'}
+          className={`${btnBase} ${btnColor}`}
+        >
+          {status === 'loading' ? (
+            <span className="w-6 h-6 border-[3px] border-white border-t-transparent rounded-full animate-spin" />
+          ) : btnLabel}
+        </button>
+      )}
 
       {/* ── Message contextuel sous le bouton ── */}
       {subMsg && (

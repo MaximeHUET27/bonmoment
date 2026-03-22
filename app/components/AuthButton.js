@@ -73,6 +73,13 @@ export default function AuthButton() {
                 {user.email}
               </p>
               <div className="my-3 border-t border-[#F5F5F5]" />
+              <button
+                onClick={() => { setOpen(false); window.dispatchEvent(new CustomEvent('bonmoment:showpicker')) }}
+                className="block w-full text-left text-sm font-semibold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors py-1"
+              >
+                🎟️ Mes bons
+              </button>
+              <div className="my-2 border-t border-[#F5F5F5]" />
               <Link
                 href="/profil"
                 onClick={() => setOpen(false)}

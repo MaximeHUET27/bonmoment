@@ -45,6 +45,19 @@ function formatCode(code) {
   return `${s[0]} ${s[1]} ${s[2]}  ${s[3]} ${s[4]} ${s[5]}`
 }
 
+function formatBadge(offre) {
+  if (!offre) return 'Offre'
+  if (offre.type_remise === 'pourcentage')    return `−${offre.valeur}%`
+  if (offre.type_remise === 'montant_fixe')   return `−${offre.valeur}€`
+  if (offre.type_remise === 'montant')        return `−${offre.valeur}€`
+  if (offre.type_remise === 'cadeau')         return '🎁 Cadeau'
+  if (offre.type_remise === 'produit_offert') return '📦 Offert'
+  if (offre.type_remise === 'service_offert') return '✂️ Offert'
+  if (offre.type_remise === 'concours')       return '🎰 Concours'
+  if (offre.type_remise === 'atelier')        return '🎨 Atelier'
+  return 'Offre'
+}
+
 /* ── Composant ────────────────────────────────────────────────────────── */
 
 /**
@@ -128,6 +141,9 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
           <p className="text-base font-black text-[#0A0A0A] mt-1">
             {commerce?.nom}
           </p>
+          <span className="inline-block mt-1 mb-0.5 px-2.5 py-0.5 rounded-full bg-[#FFF0E0] text-[#FF6B00] text-xs font-black">
+            {formatBadge(offre)}
+          </span>
           <p className="text-sm text-[#3D3D3D]/60 mt-0.5 leading-snug">
             {offre?.titre}
           </p>

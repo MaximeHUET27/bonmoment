@@ -48,17 +48,6 @@ export default async function Home() {
       {/* Interface principale : bandeau ville, zone urgence, filtres, grille */}
       <HomeClient offres={offres || []} villes={villes || []} />
 
-      {/* Lien commerçant */}
-      <p className="py-6 text-sm text-[#3D3D3D] px-6 text-center border-t border-[#F0F0F0]">
-        Tu es commerçant ?{' '}
-        <a
-          href="/commercant"
-          className="font-semibold text-[#FF6B00] hover:text-[#CC5500] underline underline-offset-2 transition-colors"
-        >
-          Rejoins BONMOMENT
-        </a>
-      </p>
-
     </main>
   )
 }

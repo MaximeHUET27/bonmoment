@@ -36,22 +36,24 @@ export default function VilleSearchOverlay({
   const router              = useRouter()
   const { user, supabase }  = useAuth()
 
-  const [query,           setQuery]           = useState('')
-  const [results,         setResults]         = useState([])
-  const [searching,       setSearching]       = useState(false)
-  const [phase,           setPhase]           = useState('search') // 'search' | 'proches'
-  const [communeChoisie,  setCommuneChoisie]  = useState(null)
-  const [voisines,        setVoisines]        = useState([])
-  const [loadingVoisines, setLoadingVoisines] = useState(false)
-  const [abonnesLocal,    setAbonnesLocal]    = useState(new Set())
-  const [abonnement,      setAbonnement]      = useState(null)
+  const [query,             setQuery]             = useState('')
+  const [results,           setResults]           = useState([])
+  const [searching,         setSearching]         = useState(false)
+  const [phase,             setPhase]             = useState('search') // 'search' | 'proches'
+  const [communeChoisie,    setCommuneChoisie]    = useState(null)
+  const [voisines,          setVoisines]          = useState([])
+  const [loadingVoisines,   setLoadingVoisines]   = useState(false)
+  const [abonnesLocal,      setAbonnesLocal]      = useState(new Set())
+  const [abonnement,        setAbonnement]        = useState(null)
+  const [nbOffresMap,       setNbOffresMap]       = useState(new Map())
+  const [villesAbonneesList, setVillesAbonneesList] = useState([])
 
   const inputRef = useRef(null)
   const debounce = useRef(null)
 
   const villesActivesSet = new Set(villesBonmoment.map(v => v.nom.toLowerCase()))
 
-  /* Reset à l'ouverture */
+  /* Reset + chargement des villes abonnées à l'ouverture */
   useEffect(() => {
     if (!isOpen) return
     setQuery('')
@@ -61,6 +63,32 @@ export default function VilleSearchOverlay({
     setVoisines([])
     setAbonnesLocal(new Set())
     setTimeout(() => inputRef.current?.focus(), 80)
+
+    // Charger les villes abonnées du user connecté
+    if (user && supabase) {
+      supabase.from('users').select('villes_abonnees').eq('id', user.id).single()
+        .then(({ data }) => setVillesAbonneesList(data?.villes_abonnees || []))
+    } else {
+      setVillesAbonneesList([])
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen])
+
+  /* Compte les offres actives par ville BONMOMENT à l'ouverture */
+  useEffect(() => {
+    if (!isOpen || !supabase || villesBonmoment.length === 0) return
+    Promise.all(
+      villesBonmoment.map(v =>
+        supabase
+          .from('offres')
+          .select('id, commerces!inner(ville)', { count: 'exact', head: true })
+          .eq('statut', 'active')
+          .gt('date_fin', new Date().toISOString())
+          .eq('commerces.ville', v.nom)
+          .then(({ count }) => [v.nom, count || 0])
+      )
+    ).then(entries => setNbOffresMap(new Map(entries)))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
   /* Debounce search geo.api.gouv.fr */
@@ -189,6 +217,21 @@ export default function VilleSearchOverlay({
     }
   }
 
+  /* Déduplique villesBonmoment par nom (point 3) */
+  const villesBonmomentUniq = villesBonmoment.filter(
+    (v, i, arr) => arr.findIndex(x => x.nom.toLowerCase() === v.nom.toLowerCase()) === i
+  )
+
+  /* Villes BONMOMENT correspondant à la recherche (Bug 3 : toujours trouvées) */
+  const localMatches = query.length >= 2
+    ? villesBonmomentUniq.filter(v => v.nom.toLowerCase().includes(query.toLowerCase()))
+    : []
+
+  /* Résultats géo dédupliqués par code (point 3) */
+  const resultsDedupliques = results.filter(
+    (c, i, arr) => arr.findIndex(x => x.code === c.code) === i
+  )
+
   if (!isOpen) return null
 
   const nbNonAbonnes = voisines.filter(v => !abonnesLocal.has(v.nom)).length
@@ -263,63 +306,91 @@ export default function VilleSearchOverlay({
                 </div>
               )}
 
-              {!searching && query.length >= 2 && results.length === 0 && (
+              {!searching && query.length >= 2 && results.length === 0 && localMatches.length === 0 && (
                 <p className="text-center text-sm text-[#3D3D3D]/50 py-8">
                   Aucune commune trouvée.
                 </p>
               )}
 
-              {/* Liste des villes BONMOMENT actives quand pas encore de recherche */}
-              {!searching && query.length < 2 && villesBonmoment.length > 0 && (
-                <div className="px-4 py-4">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#3D3D3D]/40 mb-3">
-                    Villes actives sur BONMOMENT
-                  </p>
-                  {villesBonmoment.map(v => (
-                    <button
-                      key={v.id}
-                      onClick={() => handleSelectCommune({ nom: v.nom, code: '' })}
-                      className="w-full flex items-center justify-between py-3.5 border-b border-[#F5F5F5] last:border-0 hover:bg-[#FFF0E0] rounded-xl px-2 transition-colors min-h-[48px]"
-                    >
-                      <span className="text-sm font-bold text-[#0A0A0A]">📍 {v.nom}</span>
-                      <span className="text-[10px] font-bold text-white bg-[#FF6B00] px-2 py-0.5 rounded-full">
-                        Offres dispo
-                      </span>
-                    </button>
-                  ))}
+              {/* Liste initiale (avant recherche) : villes abonnées puis BONMOMENT actives */}
+              {!searching && query.length < 2 && villesBonmomentUniq.length > 0 && (
+                <div className="px-4 py-4 flex flex-col gap-1">
+                  {/* 1. Villes abonnées */}
+                  {villesAbonneesList.length > 0 && (
+                    <>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#3D3D3D]/40 mb-1">
+                        Mes villes
+                      </p>
+                      {villesAbonneesList.map(nom => (
+                        <button
+                          key={`ab-${nom}`}
+                          onClick={() => handleSelectCommune({ nom, code: '' })}
+                          className="w-full flex items-center justify-between py-3.5 border-b border-[#F5F5F5] last:border-0 hover:bg-[#FFF0E0] rounded-xl px-2 transition-colors min-h-[48px]"
+                        >
+                          <span className="text-sm font-bold text-[#0A0A0A]">📍 {nom}</span>
+                          <span className="text-[10px] font-bold text-[#FF6B00] bg-[#FFF0E0] px-2 py-0.5 rounded-full">
+                            ✅ Abonné
+                          </span>
+                        </button>
+                      ))}
+                    </>
+                  )}
+                  {/* 2. Autres villes BONMOMENT actives */}
+                  {villesBonmomentUniq.filter(v => !villesAbonneesList.includes(v.nom)).length > 0 && (
+                    <>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#3D3D3D]/40 mb-1 mt-2">
+                        Villes actives sur BONMOMENT
+                      </p>
+                      {villesBonmomentUniq.filter(v => !villesAbonneesList.includes(v.nom)).map(v => (
+                        <button
+                          key={v.id}
+                          onClick={() => handleSelectCommune({ nom: v.nom, code: '' })}
+                          className="w-full flex items-center justify-between py-3.5 border-b border-[#F5F5F5] last:border-0 hover:bg-[#FFF0E0] rounded-xl px-2 transition-colors min-h-[48px]"
+                        >
+                          <span className="text-sm font-bold text-[#0A0A0A]">📍 {v.nom}</span>
+                          <span className="text-[10px] font-bold text-white bg-[#FF6B00] px-2 py-0.5 rounded-full">
+                            {nbOffresMap.has(v.nom) && nbOffresMap.get(v.nom) > 0
+                              ? `${nbOffresMap.get(v.nom)} offre${nbOffresMap.get(v.nom) > 1 ? 's' : ''} dispos`
+                              : 'Offres dispo'}
+                          </span>
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
 
-              {/* Résultats de recherche */}
-              {!searching && results.map(c => {
-                const isActive = villesActivesSet.has(c.nom.toLowerCase())
-                return (
+              {/* Villes BONMOMENT correspondant à la recherche (toujours affichées — Bug 3) */}
+              {!searching && localMatches.map(v => (
+                <button
+                  key={`bm-${v.id}`}
+                  onClick={() => handleSelectCommune({ nom: v.nom, code: '' })}
+                  className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-[#FFF0E0] transition-colors border-b border-[#F5F5F5] last:border-0 min-h-[52px]"
+                >
+                  <div className="text-left min-w-0">
+                    <p className="text-sm font-bold text-[#0A0A0A]">{v.nom}</p>
+                  </div>
+                  <span className="text-[10px] font-bold text-white bg-[#FF6B00] px-2 py-0.5 rounded-full shrink-0 ml-2">
+                    {nbOffresMap.has(v.nom) && nbOffresMap.get(v.nom) > 0
+                      ? `${nbOffresMap.get(v.nom)} offre${nbOffresMap.get(v.nom) > 1 ? 's' : ''} dispos`
+                      : 'Offres dispo'}
+                  </span>
+                </button>
+              ))}
+
+              {/* Autres communes via geo API — dédupliquées, sans département ni habitants */}
+              {!searching && resultsDedupliques
+                .filter(c => !villesActivesSet.has(c.nom.toLowerCase()))
+                .map(c => (
                   <button
                     key={c.code}
                     onClick={() => handleSelectCommune(c)}
                     className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-[#FFF0E0] transition-colors border-b border-[#F5F5F5] last:border-0 min-h-[52px]"
                   >
-                    <div className="text-left min-w-0">
-                      <p className={`text-sm font-bold ${isActive ? 'text-[#0A0A0A]' : 'text-[#3D3D3D]'}`}>
-                        {c.nom}
-                      </p>
-                      {!isActive && (
-                        <p className="text-[11px] text-[#3D3D3D]/50">
-                          Dép. {c.codeDepartement}
-                          {c.population ? ` · ${c.population.toLocaleString('fr-FR')} hab.` : ''}
-                        </p>
-                      )}
-                    </div>
-                    {isActive ? (
-                      <span className="text-[10px] font-bold text-white bg-[#FF6B00] px-2 py-0.5 rounded-full shrink-0 ml-2">
-                        Offres dispo
-                      </span>
-                    ) : (
-                      <span className="text-[11px] text-[#3D3D3D]/40 shrink-0 ml-2">Voir les villes proches →</span>
-                    )}
+                    <p className="text-sm font-bold text-[#3D3D3D] text-left">{c.nom}</p>
+                    <span className="text-[11px] text-[#3D3D3D]/40 shrink-0 ml-2">Voir les villes proches →</span>
                   </button>
-                )
-              })}
+                ))}
             </div>
           </>
         )}
@@ -327,13 +398,35 @@ export default function VilleSearchOverlay({
         {/* ── Phase : communes proches ── */}
         {phase === 'proches' && (
           <div className="overflow-y-auto flex-1 px-5 py-5 flex flex-col gap-4">
-            <div>
+            <div className="flex flex-col gap-2">
               <p className="text-sm font-black text-[#0A0A0A]">
-                Pas encore de commerçant à {communeChoisie?.nom}.
+                Pas encore de commerçant à{' '}
+                <button
+                  onClick={() => { router.push(`/ville/${toSlug(communeChoisie?.nom || '')}`); onClose() }}
+                  className="text-[#FF6B00] underline underline-offset-2"
+                >
+                  {communeChoisie?.nom}
+                </button>
+                .
               </p>
-              <p className="text-xs text-[#3D3D3D]/60 mt-1">
-                Voici les villes actives proches :
+              <p className="text-xs text-[#3D3D3D]/60">
+                Abonne-toi pour être prévenu dès l'ouverture, ou choisis une ville proche :
               </p>
+              <button
+                onClick={() => subscriberVille(communeChoisie?.nom)}
+                disabled={abonnesLocal.has(communeChoisie?.nom) || abonnement === communeChoisie?.nom}
+                className={`w-full font-bold text-sm py-3 rounded-2xl transition-colors min-h-[48px] ${
+                  abonnesLocal.has(communeChoisie?.nom)
+                    ? 'bg-green-500 text-white'
+                    : 'bg-[#FF6B00] hover:bg-[#CC5500] text-white'
+                } disabled:opacity-60`}
+              >
+                {abonnement === communeChoisie?.nom
+                  ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+                  : abonnesLocal.has(communeChoisie?.nom)
+                  ? `✅ Abonné à ${communeChoisie?.nom}`
+                  : `📌 S'abonner pour être averti`}
+              </button>
             </div>
 
             {loadingVoisines && (

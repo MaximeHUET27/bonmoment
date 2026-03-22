@@ -88,11 +88,28 @@ export default function OffreCard({ offre }) {
 
   const { user, supabase } = useAuth()
   const pathname  = usePathname()
-  const [showAuth, setShowAuth] = useState(false)
-  const [showBon,  setShowBon]  = useState(false)
-  const [toast,    setToast]    = useState(null)
+  const [showAuth,          setShowAuth]          = useState(false)
+  const [showBon,           setShowBon]           = useState(false)
+  const [toast,             setToast]             = useState(null)
+  const [abonneComm,        setAbonneComm]        = useState(false)
+  const [abonneCommLoading, setAbonneCommLoading] = useState(false)
 
-  const { reserver, status, reservation, reset } = useReservation()
+  const { reserver, status, reservation, reset, checkExisting } = useReservation()
+
+  /* ── Vérifier favori commerce au montage ── */
+  useEffect(() => {
+    if (!user || !commerce?.id) return
+    supabase.from('users').select('commerces_abonnes').eq('id', user.id).single()
+      .then(({ data }) => {
+        if (data?.commerces_abonnes?.includes(commerce.id)) setAbonneComm(true)
+      })
+  }, [user, commerce?.id, supabase])
+
+  /* ── Vérifier réservation existante au montage (bouton vert persistant) ── */
+  useEffect(() => {
+    if (user && !fini) checkExisting(offre.id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, offre.id])
 
   /* ── Auto-pending : réservation déclenché après retour OAuth ── */
   useEffect(() => {
@@ -101,34 +118,48 @@ export default function OffreCard({ offre }) {
     if (pendingId !== offre.id) return
     sessionStorage.removeItem(PENDING_KEY)
 
-    // Abonnement silencieux à la ville du commerce
-    const ville = offre.commerces?.ville
-    if (ville) {
-      supabase
-        .from('users')
-        .select('villes_abonnees, notif_email')
-        .eq('id', user.id)
-        .single()
-        .then(({ data }) => {
-          if (!data) return
+    async function autoReserver() {
+      // Récupère la ville depuis les props ou via supabase (fix toast ville)
+      let ville = offre.commerces?.ville
+      if (!ville) {
+        const { data: d } = await supabase
+          .from('offres').select('commerces(ville)').eq('id', offre.id).single()
+        ville = d?.commerces?.ville
+      }
+      if (ville) {
+        const { data } = await supabase
+          .from('users').select('villes_abonnees, notifications_email').eq('id', user.id).single()
+        if (data) {
           const villes = data.villes_abonnees || []
           const isNew  = !villes.includes(ville)
           const updates = {}
           if (isNew) updates.villes_abonnees = [...villes, ville]
-          if (!data.notif_email) updates.notif_email = true
+          if (!data.notifications_email) updates.notifications_email = true
           if (Object.keys(updates).length > 0) {
-            supabase.from('users').update(updates).eq('id', user.id).then(() => {
-              if (isNew) {
-                setToast(`🎉 Bienvenue à ${ville} ! Tu recevras les bons plans chaque soir à 21h.`)
-              }
-            })
+            await supabase.from('users').update(updates).eq('id', user.id)
+            if (isNew) setToast(`🎉 Bienvenue à ${ville} ! Tu recevras les bons plans chaque soir à 21h.`)
           }
-        })
+        }
+      }
+      reserver(offre)
     }
-
-    reserver(offre)
+    autoReserver()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
+
+  /* ── Toggle favori commerce (depuis bouton offre expirée) ── */
+  async function handleAbonnerComm(e) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!user) { setShowAuth(true); return }
+    setAbonneCommLoading(true)
+    const { data: current } = await supabase.from('users').select('commerces_abonnes').eq('id', user.id).single()
+    const existant = current?.commerces_abonnes || []
+    const next = abonneComm ? existant.filter(id => id !== commerce.id) : [...existant, commerce.id]
+    await supabase.from('users').update({ commerces_abonnes: next }).eq('id', user.id)
+    setAbonneComm(!abonneComm)
+    setAbonneCommLoading(false)
+  }
 
   /* ── Toast auto-dismiss ── */
   useEffect(() => {
@@ -252,17 +283,23 @@ export default function OffreCard({ offre }) {
         {/* ── CTA — bouton non-navigable ── */}
         <div className="px-3 pb-3">
           {fini ? (
-            <div className="flex flex-col gap-1.5">
-              <button disabled className="w-full bg-[#D0D0D0] text-white font-bold text-xs py-2.5 rounded-full cursor-not-allowed min-h-[40px]">
-                Trop tard !
-              </button>
-              {commerce?.id && (
-                <div className="flex items-center justify-center gap-1.5">
-                  <FavoriButton commerceId={commerce.id} commerceNom={commerce.nom || ''} className="!min-h-[32px] !min-w-[32px]" />
-                  <span className="text-[10px] font-bold text-[#FF6B00]">S'abonner à ce commerçant</span>
-                </div>
-              )}
-            </div>
+            <button
+              onClick={commerce?.id ? handleAbonnerComm : undefined}
+              disabled={abonneCommLoading || !commerce?.id}
+              className={`w-full font-bold text-xs py-2.5 rounded-full transition-all duration-200 min-h-[40px] flex items-center justify-center gap-1.5 ${
+                abonneComm
+                  ? 'bg-green-500 text-white'
+                  : commerce?.id
+                  ? 'bg-[#FF6B00] hover:bg-[#CC5500] text-white'
+                  : 'bg-[#D0D0D0] text-white cursor-not-allowed'
+              }`}
+            >
+              {abonneCommLoading
+                ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                : abonneComm
+                ? '✅ Abonné à ce commerçant'
+                : 'Trop tard ! Abonne-toi à ce commerçant ❤️'}
+            </button>
           ) : (
             <button
               onClick={handleReserver}

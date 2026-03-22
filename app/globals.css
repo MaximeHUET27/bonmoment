@@ -1,26 +1,40 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  /* Couleurs BONMOMENT */
+  --color-bonmoment-orange: #FF6B00;
+  --color-bonmoment-dark:   #CC5500;
+  --color-bonmoment-light:  #FFF0E0;
+  --color-bonmoment-black:  #0A0A0A;
+  --color-bonmoment-charcoal: #1A1A1A;
+  --color-bonmoment-text:   #3D3D3D;
+  --color-bonmoment-muted:  #F5F5F5;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Fonts */
+  --font-sans: 'Montserrat', sans-serif;
+  --font-mono: 'Courier New', monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #ffffff;
+  color: #3D3D3D;
+  font-family: var(--font-sans);
+}
+
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee linear infinite;
+}
+
+@keyframes pulse-orange {
+  0%, 100% { background-color: #FF6B00; }
+  50%       { background-color: #CC5500; }
+}
+
+.animate-pulse-orange {
+  animation: pulse-orange 1.2s ease-in-out infinite;
 }

@@ -4,6 +4,19 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/app/context/AuthContext'
 import FullScreenBon from './FullScreenBon'
 
+function formatBadge(offre) {
+  if (!offre) return 'Offre'
+  if (offre.type_remise === 'pourcentage')    return `−${offre.valeur}%`
+  if (offre.type_remise === 'montant_fixe')   return `−${offre.valeur}€`
+  if (offre.type_remise === 'montant')        return `−${offre.valeur}€`
+  if (offre.type_remise === 'cadeau')         return '🎁 Cadeau'
+  if (offre.type_remise === 'produit_offert') return '📦 Offert'
+  if (offre.type_remise === 'service_offert') return '✂️ Offert'
+  if (offre.type_remise === 'concours')       return '🎰 Concours'
+  if (offre.type_remise === 'atelier')        return '🎨 Atelier'
+  return 'Offre'
+}
+
 /**
  * Bouton flottant centré en bas — visible si le client a un ou plusieurs bons actifs.
  * Support multi-bons avec sélecteur.
@@ -43,6 +56,17 @@ export default function FloatingBonButton() {
     window.addEventListener('bonmoment:reservation', fetchActive)
     return () => window.removeEventListener('bonmoment:reservation', fetchActive)
   }, [user, supabase])
+
+  /* ── Écoute l'événement "showpicker" depuis AuthButton ── */
+  useEffect(() => {
+    function onShowPicker() {
+      if (reservations.length === 1) openBon(reservations[0])
+      else if (reservations.length > 1) setShowPicker(v => !v)
+    }
+    window.addEventListener('bonmoment:showpicker', onShowPicker)
+    return () => window.removeEventListener('bonmoment:showpicker', onShowPicker)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reservations])
 
   /* ── Auto-expire : retire les bons expirés ── */
   useEffect(() => {
@@ -90,8 +114,8 @@ export default function FloatingBonButton() {
               onClick={() => openBon(r)}
               className="flex flex-col px-4 py-3 hover:bg-[#F5F5F5] transition-colors text-left border-b border-[#F5F5F5] last:border-0"
             >
-              <span className="text-sm font-bold text-[#0A0A0A]">{r.offres?.commerces?.nom}</span>
-              <span className="text-xs text-[#3D3D3D]/60">{r.offres?.titre}</span>
+              <span className="text-sm font-bold text-[#0A0A0A]">{formatBadge(r.offres)} · {r.offres?.titre}</span>
+              <span className="text-xs text-[#3D3D3D]/60">{r.offres?.commerces?.nom}</span>
             </button>
           ))}
         </div>
@@ -104,7 +128,7 @@ export default function FloatingBonButton() {
         aria-label="Voir mon bon en cours"
       >
         <span className="text-base">🎟️</span>
-        <span>Mon bon{reservations.length > 1 ? ` (${reservations.length})` : ''}</span>
+        <span>{reservations.length > 1 ? `Mes bons (${reservations.length})` : 'Mon bon'}</span>
         {reservations.length > 1 && <span className="text-xs opacity-75">▲</span>}
       </button>
 

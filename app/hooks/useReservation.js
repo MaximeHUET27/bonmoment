@@ -96,7 +96,23 @@ export function useReservation() {
     }
   }, [user, supabase])
 
+  /* Vérifie au montage si une réservation active existe déjà */
+  const checkExisting = useCallback(async (offreId) => {
+    if (!user || !supabase) return
+    const { data: existing } = await supabase
+      .from('reservations')
+      .select('id, code_validation, qr_code_data')
+      .eq('user_id',  user.id)
+      .eq('offre_id', offreId)
+      .eq('statut',   'reservee')
+      .maybeSingle()
+    if (existing) {
+      setReservation(existing)
+      setStatus('already_reserved')
+    }
+  }, [user, supabase])
+
   function reset() { setStatus('idle'); setReservation(null); setErrorMsg(null) }
 
-  return { reserver, status, reservation, errorMsg, reset, setStatus }
+  return { reserver, status, reservation, errorMsg, reset, setStatus, checkExisting }
 }

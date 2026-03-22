@@ -42,38 +42,19 @@ export default function VilleAbonnement({ villeNom, className = '' }) {
 
   async function subscribe() {
     setLoading(true)
-    const { error } = await supabase.rpc('array_append_unique', {
-      table_name:  'users',
-      column_name: 'villes_abonnees',
-      value:       villeNom,
-      row_id:      user.id,
-    }).catch(() => ({ error: true }))
 
-    // Fallback : UPDATE direct si la RPC n'existe pas encore
-    if (error) {
+    const { data: current } = await supabase
+      .from('users')
+      .select('villes_abonnees')
+      .eq('id', user.id)
+      .single()
+
+    const existant = current?.villes_abonnees || []
+    if (!existant.includes(villeNom)) {
       await supabase
         .from('users')
-        .update({
-          villes_abonnees: supabase.rpc
-            ? undefined
-            : [villeNom],
-        })
+        .update({ villes_abonnees: [...existant, villeNom] })
         .eq('id', user.id)
-
-      // Vraiment en fallback : on lit d'abord, puis on met à jour
-      const { data: current } = await supabase
-        .from('users')
-        .select('villes_abonnees')
-        .eq('id', user.id)
-        .single()
-
-      const existant = current?.villes_abonnees || []
-      if (!existant.includes(villeNom)) {
-        await supabase
-          .from('users')
-          .update({ villes_abonnees: [...existant, villeNom] })
-          .eq('id', user.id)
-      }
     }
 
     setAbonne(true)

@@ -34,12 +34,15 @@ function Toggle({ value, onChange, label, sublabel }) {
         <p className="text-sm font-bold text-[#0A0A0A]">{label}</p>
         {sublabel && <p className="text-xs text-[#3D3D3D]/50 mt-0.5">{sublabel}</p>}
       </div>
-      <button
-        onClick={onChange}
-        className={`relative w-12 h-6 rounded-full transition-colors duration-200 shrink-0 ${value ? 'bg-[#FF6B00]' : 'bg-[#E0E0E0]'}`}
-      >
-        <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${value ? 'translate-x-6' : 'translate-x-0.5'}`} />
-      </button>
+      <label className="relative inline-flex items-center shrink-0 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={value}
+          onChange={onChange}
+          className="sr-only peer"
+        />
+        <div className="w-12 h-6 rounded-full bg-[#E0E0E0] peer-checked:bg-[#FF6B00] transition-colors duration-200 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:bg-white after:rounded-full after:shadow after:transition-transform after:duration-200 peer-checked:after:translate-x-6" />
+      </label>
     </div>
   )
 }

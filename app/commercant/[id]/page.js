@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { toSlug } from '@/lib/utils'
 import OffreCard from '@/app/ville/[slug]/OffreCard'
+import FavoriButton from '@/app/components/FavoriButton'
 
 export default async function CommercantPage({ params }) {
   const { id } = await params
@@ -68,7 +69,10 @@ export default async function CommercantPage({ params }) {
         <p className="text-xs font-semibold text-[#FF6B00] uppercase tracking-widest mb-1">
           {commerce.categorie}
         </p>
-        <h1 className="text-2xl font-black text-[#0A0A0A] mb-2">{commerce.nom}</h1>
+        <div className="flex items-center gap-3 mb-2">
+          <h1 className="text-2xl font-black text-[#0A0A0A]">{commerce.nom}</h1>
+          <FavoriButton commerceId={commerce.id} commerceNom={commerce.nom || ''} />
+        </div>
         {commerce.adresse && (
           <p className="text-sm text-[#3D3D3D] mb-1">📍 {commerce.adresse}{commerce.ville ? `, ${commerce.ville}` : ''}</p>
         )}
