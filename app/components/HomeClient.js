@@ -44,7 +44,6 @@ export default function HomeClient({ offres, villes }) {
   const [isLoading,       setIsLoading]       = useState(true)
   const [showOverlay,     setShowOverlay]     = useState(false)
   const [villesAbonnees,  setVillesAbonnees]  = useState([])
-  const [villeFiltre,     setVilleFiltre]     = useState(null) // null = toutes mes villes
 
   /* Lecture localStorage + détection ?view=all côté client uniquement */
   useEffect(() => {
@@ -81,15 +80,11 @@ export default function HomeClient({ offres, villes }) {
     router.push(`/ville/${toSlug(nomVille)}`)
   }
 
-  /* Multi-city filter visible si user abonné à 2+ villes */
-  const showMultiCityFilter = villesAbonnees.length >= 2
-
   /* ── Filtrage ── */
   const offresFiltrees = (offres || [])
     .filter(o => {
       const villeOffre = o.commerces?.ville
-      if (viewAll || showMultiCityFilter) {
-        if (villeFiltre) return villeOffre === villeFiltre
+      if (viewAll) {
         if (villesAbonnees.length > 0) return villesAbonnees.includes(villeOffre)
         return true
       }
@@ -137,38 +132,6 @@ export default function HomeClient({ offres, villes }) {
 
         {ville && <VilleAbonnement villeNom={ville} />}
       </div>
-
-      {/* ── Filtre multi-villes (si abonné à 2+) ─────────────────────────── */}
-      {showMultiCityFilter && (
-        <div
-          className="flex gap-2 overflow-x-auto px-4 py-2.5 border-b border-[#F0F0F0] bg-[#FAFAFA]"
-          style={{ scrollbarWidth: 'none' }}
-        >
-          <button
-            onClick={() => setVilleFiltre(null)}
-            className={`shrink-0 text-xs font-bold px-3 py-1.5 rounded-full transition-colors whitespace-nowrap min-h-[32px] ${
-              villeFiltre === null
-                ? 'bg-[#FF6B00] text-white'
-                : 'bg-[#F0F0F0] text-[#3D3D3D] hover:bg-[#FFF0E0] hover:text-[#FF6B00]'
-            }`}
-          >
-            🏠 Toutes mes villes
-          </button>
-          {villesAbonnees.map(v => (
-            <button
-              key={v}
-              onClick={() => setVilleFiltre(v)}
-              className={`shrink-0 text-xs font-bold px-3 py-1.5 rounded-full transition-colors whitespace-nowrap min-h-[32px] ${
-                villeFiltre === v
-                  ? 'bg-[#FF6B00] text-white'
-                  : 'bg-[#F0F0F0] text-[#3D3D3D] hover:bg-[#FFF0E0] hover:text-[#FF6B00]'
-              }`}
-            >
-              {v}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* ── Barre de filtres catégorie ────────────────────────────────────── */}
       <div
