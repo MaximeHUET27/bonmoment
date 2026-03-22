@@ -1,10 +1,5 @@
 'use client'
 
-/**
- * SQL à exécuter dans Supabase si la colonne n'existe pas encore :
- *   ALTER TABLE commerces ADD COLUMN IF NOT EXISTS tutoriel_complete BOOLEAN DEFAULT false;
- */
-
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -13,20 +8,9 @@ import { QRCodeCanvas } from 'qrcode.react'
 import { useAuth } from '@/app/context/AuthContext'
 import { toSlug } from '@/lib/utils'
 import TirageAuSort from '@/app/commercant/components/TirageAuSort'
-import TutorialDashboard from '@/app/components/tutorial/TutorialDashboard'
 import ShareButton from '@/app/components/ShareButton'
 import AuthButton from '@/app/components/AuthButton'
 import DeleteCommerceButton from '@/app/commercant/[id]/DeleteCommerceButton'
-
-const TUT_KEY = 'bonmoment_tutoriel'
-
-function readTutState() {
-  try { return JSON.parse(localStorage.getItem(TUT_KEY) || 'null') } catch { return null }
-}
-function writeTutState(state) {
-  if (state) localStorage.setItem(TUT_KEY, JSON.stringify(state))
-  else localStorage.removeItem(TUT_KEY)
-}
 
 export default function DashboardPage() {
   const { user, loading, supabase } = useAuth()
@@ -38,11 +22,6 @@ export default function DashboardPage() {
   const [qrToast,       setQrToast]       = useState(null)
   const [offres,        setOffres]        = useState([])
   const [nbParticipants, setNbParticipants] = useState({}) // offre_id → count
-  const [tutStep,       setTutStep]       = useState(null) // null | 1 | 2 | 3
-  const [showRelance,   setShowRelance]   = useState(false)
-  const tutRef1 = useRef(null)
-  const tutRef2 = useRef(null)
-  const tutRef3 = useRef(null)
 
   /* ── Auth guard ─────────────────────────────────────────────────────────── */
   useEffect(() => {
@@ -56,7 +35,7 @@ export default function DashboardPage() {
     const commerceId = params?.get('commerce')
     supabase
       .from('commerces')
-      .select('id, nom, categorie, ville, adresse, code_parrainage, code_parrainage_expire_at, note_google, tutoriel_complete')
+      .select('id, nom, categorie, ville, adresse, code_parrainage, code_parrainage_expire_at, note_google')
       .eq('owner_id', user.id)
       .then(({ data }) => {
         const list = data || []
@@ -69,26 +48,6 @@ export default function DashboardPage() {
         setFetching(false)
       })
   }, [user, supabase])
-
-  /* ── Init tutorial state from localStorage ──────────────────────────────── */
-  useEffect(() => {
-    const saved = readTutState()
-    if (saved?.active && saved.step >= 1 && saved.step <= 3) {
-      setTutStep(saved.step)
-    } else if (saved?.active && saved.step > 3) {
-      // tutorial moved to offre page, show relance
-      setShowRelance(true)
-    }
-  }, [])
-
-  /* ── Scroll to highlighted element when tutorial step changes ── */
-  useEffect(() => {
-    if (!tutStep) return
-    const ref = tutStep === 1 ? tutRef1 : tutStep === 2 ? tutRef2 : tutRef3
-    if (ref.current) {
-      setTimeout(() => ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150)
-    }
-  }, [tutStep])
 
   /* ── Fetch offres (actives + expirées) ──────────────────────────────────── */
   useEffect(() => {
@@ -121,35 +80,6 @@ export default function DashboardPage() {
         })
       })
   }, [commerce, supabase])
-
-  /* ── Tutorial handlers ──────────────────────────────────────────────────── */
-  function startTutorial() {
-    writeTutState({ active: true, step: 1 })
-    setTutStep(1)
-  }
-
-  function handleTutAdvance() {
-    if (tutStep === 3) {
-      // Navigate to offre page in tutorial mode
-      writeTutState({ active: true, step: 4, substep: 0 })
-      setTutStep(null)
-      router.push('/commercant/offre/nouvelle?tutoriel=true')
-    } else {
-      const next = (tutStep || 1) + 1
-      writeTutState({ active: true, step: next })
-      setTutStep(next)
-    }
-  }
-
-  async function handleTutSkip() {
-    writeTutState(null)
-    setTutStep(null)
-    setShowRelance(false)
-    if (commerce) {
-      await supabase.from('commerces').update({ tutoriel_complete: true }).eq('id', commerce.id)
-      setCommerce(c => c ? { ...c, tutoriel_complete: true } : c)
-    }
-  }
 
   if (loading || fetching) {
     return (
@@ -246,39 +176,14 @@ export default function DashboardPage() {
       {/* ── Corps ────────────────────────────────────────────────────────── */}
       <div className="flex-1 w-full max-w-xl mx-auto px-5 py-6 flex flex-col gap-5">
 
-        {/* ── Relance tutoriel ──────────────────────────────────────────── */}
-        {showRelance && !tutStep && (
-          <div className="bg-[#FFF0E0] border border-[#FFCFA0] rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-black text-[#FF6B00]">Guide en cours 📚</p>
-              <p className="text-xs text-[#3D3D3D]/70">Reprends là où tu t'étais arrêté.</p>
-            </div>
-            <button
-              onClick={() => {
-                const saved = readTutState()
-                if (saved?.step >= 4) {
-                  router.push('/commercant/offre/nouvelle?tutoriel=true')
-                } else {
-                  setTutStep(saved?.step || 1)
-                }
-              }}
-              className="shrink-0 bg-[#FF6B00] text-white font-bold text-xs px-4 py-2 rounded-xl min-h-[36px]"
-            >
-              Reprendre →
-            </button>
-          </div>
-        )}
-
         {/* ═══════════════════════════════════════════════════════════════ */}
         {/* ✅ BOUTON VÉRIFIER UN BON — Priorité absolue, toujours visible */}
         {/* ═══════════════════════════════════════════════════════════════ */}
         {commerce && (
-          <div ref={tutRef2}>
+          <div>
             <Link
               href="/commercant/valider"
-              className={`w-full bg-[#FF6B00] hover:bg-[#CC5500] active:bg-[#CC5500] text-white font-black text-xl py-5 rounded-3xl transition-colors duration-200 shadow-xl shadow-orange-300/50 min-h-[72px] flex items-center justify-center text-center gap-3 ${
-                tutStep === 2 ? 'ring-4 ring-white ring-offset-2 relative z-[41]' : ''
-              }`}
+              className="w-full bg-[#FF6B00] hover:bg-[#CC5500] active:bg-[#CC5500] text-white font-black text-xl py-5 rounded-3xl transition-colors duration-200 shadow-xl shadow-orange-300/50 min-h-[72px] flex items-center justify-center text-center gap-3"
               style={{ fontFamily: 'Montserrat, sans-serif' }}
             >
               <span className="text-2xl">✅</span>
@@ -288,9 +193,7 @@ export default function DashboardPage() {
         )}
 
         {/* ── Message de bienvenue ──────────────────────────────────────── */}
-        <div ref={tutRef1} className={`bg-white rounded-3xl px-6 py-8 flex flex-col gap-2 shadow-sm ${
-          tutStep === 1 ? 'ring-4 ring-[#FF6B00] ring-offset-2 relative z-[41]' : ''
-        }`}>
+        <div className="bg-white rounded-3xl px-6 py-8 flex flex-col gap-2 shadow-sm">
           <p className="text-xs font-semibold text-[#FF6B00] uppercase tracking-widest">Mon commerce</p>
           <h1 className="text-2xl font-black text-[#0A0A0A] leading-tight">
             Bienvenue,&nbsp;{prenom}&nbsp;!&nbsp;🎉
@@ -376,26 +279,14 @@ export default function DashboardPage() {
 
         {/* ── CTA créer une offre ───────────────────────────────────────── */}
         {commerce && (
-          <div ref={tutRef3}>
+          <div>
             <Link
               href="/commercant/offre/nouvelle"
-              className={`w-full bg-[#0A0A0A] hover:bg-[#1A1A1A] text-white font-black text-base py-4 rounded-2xl transition-colors duration-200 min-h-[56px] flex items-center justify-center text-center ${
-                tutStep === 3 ? 'ring-4 ring-[#FF6B00] ring-offset-2 relative z-[41]' : ''
-              }`}
+              className="w-full bg-[#0A0A0A] hover:bg-[#1A1A1A] text-white font-black text-base py-4 rounded-2xl transition-colors duration-200 min-h-[56px] flex items-center justify-center text-center"
             >
               ✨ Créer une offre
             </Link>
           </div>
-        )}
-
-        {/* ── CTA démarrer le guide (premier lancement) ─────────────────── */}
-        {commerce && !commerce.tutoriel_complete && !tutStep && !showRelance && offresActives.length === 0 && (
-          <button
-            onClick={startTutorial}
-            className="w-full border-2 border-[#FF6B00] text-[#FF6B00] font-black text-sm py-4 rounded-2xl transition-colors hover:bg-[#FFF0E0] min-h-[56px] flex items-center justify-center gap-2"
-          >
-            🎓 Commencer le guide interactif
-          </button>
         )}
 
         {/* ── Offres actives ────────────────────────────────────────────── */}
@@ -462,13 +353,6 @@ export default function DashboardPage() {
         )}
 
       </div>
-
-      {/* ── Tutorial overlay (steps 1-3) ─────────────────────────────────── */}
-      <TutorialDashboard
-        step={tutStep}
-        onAdvance={handleTutAdvance}
-        onSkip={handleTutSkip}
-      />
 
     </main>
   )
