@@ -16,6 +16,7 @@ import TirageAuSort from '@/app/commercant/components/TirageAuSort'
 import TutorialDashboard from '@/app/components/tutorial/TutorialDashboard'
 import ShareButton from '@/app/components/ShareButton'
 import AuthButton from '@/app/components/AuthButton'
+import DeleteCommerceButton from '@/app/commercant/[id]/DeleteCommerceButton'
 
 const TUT_KEY = 'bonmoment_tutoriel'
 
@@ -453,6 +454,11 @@ export default function DashboardPage() {
         {/* ── QR code vitrine ──────────────────────────────────────────── */}
         {commerce?.ville && (
           <QRVitrine commerce={commerce} toast={qrToast} setToast={setQrToast} />
+        )}
+
+        {/* ── Supprimer ce commerce ─────────────────────────────────────────── */}
+        {commerce && user && (
+          <DeleteCommerceButton commerceId={commerce.id} ownerUserId={user.id} />
         )}
 
       </div>

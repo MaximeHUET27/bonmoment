@@ -4,16 +4,13 @@ import { createClient } from '@/lib/supabase/server'
 import { toSlug } from '@/lib/utils'
 import OffreCard from '@/app/ville/[slug]/OffreCard'
 import FavoriButton from '@/app/components/FavoriButton'
-import DeleteCommerceButton from './DeleteCommerceButton'
 
 export default async function CommercantPage({ params }) {
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: { user: currentUser } } = await supabase.auth.getUser()
-
   const [{ data: commerce }, { data: offres }] = await Promise.all([
-    supabase.from('commerces').select('id, nom, categorie, adresse, ville, description, photo_url, abonnement_actif, owner_id').eq('id', id).single(),
+    supabase.from('commerces').select('id, nom, categorie, adresse, ville, description, photo_url, abonnement_actif').eq('id', id).single(),
     supabase
       .from('offres')
       .select('*')
@@ -109,8 +106,6 @@ export default async function CommercantPage({ params }) {
             <p className="text-[#3D3D3D] text-xs mt-1">Reviens bientôt !</p>
           </div>
         )}
-
-        <DeleteCommerceButton commerceId={commerce.id} ownerUserId={commerce.owner_id} />
 
       </section>
 
