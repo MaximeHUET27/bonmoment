@@ -15,6 +15,7 @@ import { toSlug } from '@/lib/utils'
 import TirageAuSort from '@/app/commercant/components/TirageAuSort'
 import TutorialDashboard from '@/app/components/tutorial/TutorialDashboard'
 import ShareButton from '@/app/components/ShareButton'
+import AuthButton from '@/app/components/AuthButton'
 
 const TUT_KEY = 'bonmoment_tutoriel'
 
@@ -27,7 +28,7 @@ function writeTutState(state) {
 }
 
 export default function DashboardPage() {
-  const { user, loading, supabase, signOut } = useAuth()
+  const { user, loading, supabase } = useAuth()
   const router  = useRouter()
   const qrRef   = useRef(null)
   const [commerce,      setCommerce]      = useState(null)
@@ -238,17 +239,7 @@ export default function DashboardPage() {
             className="w-[120px] h-auto"
           />
         </Link>
-        <div className="flex items-center gap-3">
-          <Link href="/aide" className="text-xs text-[#3D3D3D]/60 hover:text-[#FF6B00] transition-colors">
-            Aide
-          </Link>
-          <button
-            onClick={() => signOut().then(() => router.push('/'))}
-            className="text-xs text-[#3D3D3D]/60 hover:text-[#FF6B00] transition-colors"
-          >
-            Déconnexion
-          </button>
-        </div>
+        <AuthButton />
       </header>
 
       {/* ── Corps ────────────────────────────────────────────────────────── */}

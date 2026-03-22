@@ -150,6 +150,7 @@ export default function MesBonsPage() {
   const router = useRouter()
   const [reservations, setReservations] = useState([])
   const [fetching,     setFetching]     = useState(true)
+  const [expandedId,   setExpandedId]   = useState(null)
 
   useEffect(() => {
     if (!loading && !user) router.replace('/')
@@ -163,7 +164,12 @@ export default function MesBonsPage() {
         .select('id, statut, code_validation, qr_code_data, created_at, updated_at, offres(id, titre, type_remise, valeur, date_fin, commerces(nom, ville, adresse))')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-      setReservations(data || [])
+      const sorted = (data || []).sort((a, b) => {
+        const da = a.offres?.date_fin ? new Date(a.offres.date_fin) : new Date(0)
+        const db = b.offres?.date_fin ? new Date(b.offres.date_fin) : new Date(0)
+        return da - db
+      })
+      setReservations(sorted)
       setFetching(false)
     }
     load()
@@ -253,25 +259,39 @@ export default function MesBonsPage() {
               Bons utilisés
             </p>
             {utilises.map(resa => (
-              <div key={resa.id} className="bg-white rounded-3xl px-5 py-4 shadow-sm border border-[#F0F0F0] flex items-start gap-3">
-                <div className="shrink-0 mt-0.5">
-                  <span className="inline-block px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold">
-                    ✅ Utilisé
-                  </span>
+              <div
+                key={resa.id}
+                className="bg-white rounded-3xl px-5 py-4 shadow-sm border border-[#F0F0F0] cursor-pointer"
+                onClick={() => setExpandedId(expandedId === resa.id ? null : resa.id)}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="shrink-0 mt-0.5">
+                    <span className="inline-block px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+                      ✅ Utilisé
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-[#0A0A0A]">
+                      <span className="text-[#FF6B00]">{formatBadge(resa.offres)}</span>
+                      {' · '}{resa.offres?.titre}
+                    </p>
+                    <p className="text-xs text-[#3D3D3D]/60 mt-0.5">{resa.offres?.commerces?.nom}</p>
+                    <p className="text-[11px] text-[#3D3D3D]/40 mt-1">
+                      Utilisé le{' '}
+                      {new Date(resa.updated_at || resa.created_at).toLocaleDateString('fr-FR', {
+                        day: 'numeric', month: 'long', year: 'numeric',
+                      })}
+                    </p>
+                  </div>
+                  <span className="text-xs text-[#3D3D3D]/30">{expandedId === resa.id ? '▲' : '▼'}</span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-[#0A0A0A]">
-                    <span className="text-[#FF6B00]">{formatBadge(resa.offres)}</span>
-                    {' · '}{resa.offres?.titre}
-                  </p>
-                  <p className="text-xs text-[#3D3D3D]/60 mt-0.5">{resa.offres?.commerces?.nom}</p>
-                  <p className="text-[11px] text-[#3D3D3D]/40 mt-1">
-                    Utilisé le{' '}
-                    {new Date(resa.updated_at || resa.created_at).toLocaleDateString('fr-FR', {
-                      day: 'numeric', month: 'long', year: 'numeric',
-                    })}
-                  </p>
-                </div>
+                {expandedId === resa.id && (
+                  <div className="mt-3 pt-3 border-t border-[#F5F5F5] flex flex-col gap-1 text-xs text-[#3D3D3D]/70">
+                    {resa.offres?.commerces?.adresse && <p>📍 {resa.offres.commerces.adresse}{resa.offres.commerces.ville ? `, ${resa.offres.commerces.ville}` : ''}</p>}
+                    {resa.offres?.date_fin && <p>🗓 Expirait le {new Date(resa.offres.date_fin).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>}
+                    {resa.code_validation && <p className="font-mono font-bold text-[#0A0A0A] mt-1">Code : {resa.code_validation}</p>}
+                  </div>
+                )}
               </div>
             ))}
           </section>
@@ -284,26 +304,39 @@ export default function MesBonsPage() {
               Bons expirés
             </p>
             {expires.map(resa => (
-              <div key={resa.id} className="bg-white rounded-3xl px-5 py-4 shadow-sm border border-[#F0F0F0] flex items-start gap-3 opacity-60">
-                <div className="shrink-0 mt-0.5">
-                  <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#E0E0E0] text-[#9CA3AF] text-xs font-bold">
-                    {resa.statut === 'annulee' ? 'Annulé' : 'Expiré'}
-                  </span>
+              <div
+                key={resa.id}
+                className="bg-white rounded-3xl px-5 py-4 shadow-sm border border-[#F0F0F0] opacity-60 cursor-pointer"
+                onClick={() => setExpandedId(expandedId === resa.id ? null : resa.id)}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="shrink-0 mt-0.5">
+                    <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#E0E0E0] text-[#9CA3AF] text-xs font-bold">
+                      {resa.statut === 'annulee' ? 'Annulé' : 'Expiré'}
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-[#3D3D3D]">
+                      {formatBadge(resa.offres)} · {resa.offres?.titre}
+                    </p>
+                    <p className="text-xs text-[#3D3D3D]/60 mt-0.5">{resa.offres?.commerces?.nom}</p>
+                    <p className="text-[11px] text-[#3D3D3D]/40 mt-1">
+                      Expiré le{' '}
+                      {resa.offres?.date_fin
+                        ? new Date(resa.offres.date_fin).toLocaleDateString('fr-FR', {
+                            day: 'numeric', month: 'long', year: 'numeric',
+                          })
+                        : '—'}
+                    </p>
+                  </div>
+                  <span className="text-xs text-[#3D3D3D]/30">{expandedId === resa.id ? '▲' : '▼'}</span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-[#3D3D3D]">
-                    {formatBadge(resa.offres)} · {resa.offres?.titre}
-                  </p>
-                  <p className="text-xs text-[#3D3D3D]/60 mt-0.5">{resa.offres?.commerces?.nom}</p>
-                  <p className="text-[11px] text-[#3D3D3D]/40 mt-1">
-                    Expiré le{' '}
-                    {resa.offres?.date_fin
-                      ? new Date(resa.offres.date_fin).toLocaleDateString('fr-FR', {
-                          day: 'numeric', month: 'long', year: 'numeric',
-                        })
-                      : '—'}
-                  </p>
-                </div>
+                {expandedId === resa.id && (
+                  <div className="mt-3 pt-3 border-t border-[#F5F5F5] flex flex-col gap-1 text-xs text-[#3D3D3D]/70">
+                    {resa.offres?.commerces?.adresse && <p>📍 {resa.offres.commerces.adresse}{resa.offres.commerces.ville ? `, ${resa.offres.commerces.ville}` : ''}</p>}
+                    {resa.code_validation && <p className="font-mono font-bold text-[#0A0A0A] mt-1">Code : {resa.code_validation}</p>}
+                  </div>
+                )}
               </div>
             ))}
           </section>

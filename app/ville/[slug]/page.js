@@ -38,6 +38,7 @@ export default async function VillePage({ params }) {
     .select(`
       *,
       commerces!inner (
+        id,
         nom,
         categorie,
         adresse,
@@ -72,18 +73,6 @@ export default async function VillePage({ params }) {
       {/* ── Interface interactive : bandeau, urgence, filtres, grille ── */}
       <VilleClient offres={offres || []} villeNom={ville.nom} villes={villes || []} />
 
-      {/* ── Footer ── */}
-      <footer className="px-6 py-8 text-center border-t border-[#F5F5F5]">
-        <p className="text-sm text-[#3D3D3D]">
-          Tu es commerçant ?{' '}
-          <a
-            href="/commercant/inscription"
-            className="font-semibold text-[#FF6B00] hover:text-[#CC5500] underline underline-offset-2 transition-colors"
-          >
-            Rejoins BONMOMENT
-          </a>
-        </p>
-      </footer>
 
     </main>
   )

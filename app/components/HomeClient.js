@@ -39,16 +39,24 @@ export default function HomeClient({ offres, villes }) {
   const router              = useRouter()
 
   const [ville,           setVille]           = useState(null)
+  const [viewAll,         setViewAll]         = useState(false)
   const [filtre,          setFiltre]          = useState('tous')
   const [isLoading,       setIsLoading]       = useState(true)
   const [showOverlay,     setShowOverlay]     = useState(false)
   const [villesAbonnees,  setVillesAbonnees]  = useState([])
   const [villeFiltre,     setVilleFiltre]     = useState(null) // null = toutes mes villes
 
-  /* Lecture localStorage côté client uniquement */
+  /* Lecture localStorage + détection ?view=all côté client uniquement */
   useEffect(() => {
-    const savedVille = localStorage.getItem('bonmoment_ville')
-    if (savedVille) setVille(savedVille)
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('view') === 'all') {
+      setViewAll(true)
+      setVille(null)
+      try { localStorage.removeItem('bonmoment_ville') } catch {}
+    } else {
+      const savedVille = localStorage.getItem('bonmoment_ville')
+      if (savedVille) setVille(savedVille)
+    }
     setIsLoading(false)
   }, [])
 
@@ -79,12 +87,13 @@ export default function HomeClient({ offres, villes }) {
   /* ── Filtrage ── */
   const offresFiltrees = (offres || [])
     .filter(o => {
-      if (showMultiCityFilter) {
-        const villeOffre = o.commerces?.ville
+      const villeOffre = o.commerces?.ville
+      if (viewAll || showMultiCityFilter) {
         if (villeFiltre) return villeOffre === villeFiltre
-        return villesAbonnees.includes(villeOffre)
+        if (villesAbonnees.length > 0) return villesAbonnees.includes(villeOffre)
+        return true
       }
-      if (ville && o.commerces?.ville !== ville) return false
+      if (ville && villeOffre !== ville) return false
       if (filtre === 'tous') return true
       return getOffreFiltre(o) === filtre
     })
@@ -116,7 +125,7 @@ export default function HomeClient({ offres, villes }) {
           onClick={() => setShowOverlay(true)}
           className="flex items-center gap-1.5 text-sm font-bold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors min-h-[44px]"
         >
-          <span>📍 {ville || 'Ta ville'}</span>
+          <span>📍 {viewAll ? 'Toutes mes villes' : (ville || 'Ta ville')}</span>
           <span className="text-[#FF6B00] text-xs font-semibold">Changer ▼</span>
         </button>
 

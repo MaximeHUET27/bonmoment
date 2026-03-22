@@ -98,7 +98,7 @@ export default function VilleSearchOverlay({
       setSearching(true)
       try {
         const res  = await fetch(
-          `https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(query)}&fields=nom,code,codeDepartement,population&boost=population&limit=10`
+          `https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(query)}&fields=nom,code,codeDepartement,codesPostaux,population&boost=population&limit=10`
         )
         const data = await res.json()
         data.sort((a, b) => {
@@ -133,30 +133,24 @@ export default function VilleSearchOverlay({
     setVoisines([])
 
     try {
-      const centreRes  = await fetch(
-        `https://geo.api.gouv.fr/communes?code=${commune.code}&fields=nom,centre`
-      )
-      const centreData = await centreRes.json()
-      const coords     = centreData[0]?.centre?.coordinates // [lon, lat]
+      // Récupère les coordonnées de la commune choisie (pour calculer les distances)
+      let lat = null, lon = null
+      try {
+        const centreRes  = await fetch(
+          `https://geo.api.gouv.fr/communes?code=${commune.code}&fields=nom,centre`
+        )
+        const centreData = await centreRes.json()
+        const coords     = centreData[0]?.centre?.coordinates // [lon, lat]
+        if (coords) { lon = coords[0]; lat = coords[1] }
+      } catch {}
 
-      if (!coords) { setLoadingVoisines(false); return }
-      const [lon, lat] = coords
-
-      const rayonRes    = await fetch(
-        `https://geo.api.gouv.fr/communes?lat=${lat}&lon=${lon}&rayon=20000&fields=nom,code,centre`
-      )
-      const voisinesGeo = await rayonRes.json()
-      const voisinesMap  = new Map(voisinesGeo.map(c => [c.nom.toLowerCase(), c]))
-
+      // Montre TOUTES les villes BONMOMENT (pas de filtre par distance)
       const proches = []
       for (const villeBm of villesBonmoment) {
-        const geoMatch = voisinesMap.get(villeBm.nom.toLowerCase())
-        let distance   = null
+        let distance = null
 
-        if (geoMatch?.centre?.coordinates) {
-          const [vLon, vLat] = geoMatch.centre.coordinates
-          distance = haversine(lat, lon, vLat, vLon)
-        } else {
+        // Calcule la distance si on a les coordonnées de la commune
+        if (lat !== null && lon !== null) {
           try {
             const r = await fetch(
               `https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(villeBm.nom)}&fields=nom,centre&limit=1`
@@ -167,18 +161,22 @@ export default function VilleSearchOverlay({
           } catch {}
         }
 
-        if (distance !== null && distance <= 50) {
-          const { count } = await supabase
-            .from('offres')
-            .select('id, commerces!inner(ville)', { count: 'exact', head: true })
-            .eq('statut', 'active')
-            .gt('date_fin', new Date().toISOString())
-            .eq('commerces.ville', villeBm.nom)
-          proches.push({ ...villeBm, distance, nbOffres: count || 0 })
-        }
+        const { count } = await supabase
+          .from('offres')
+          .select('id, commerces!inner(ville)', { count: 'exact', head: true })
+          .eq('statut', 'active')
+          .gt('date_fin', new Date().toISOString())
+          .eq('commerces.ville', villeBm.nom)
+        proches.push({ ...villeBm, distance, nbOffres: count || 0 })
       }
 
-      proches.sort((a, b) => a.distance - b.distance)
+      // Trie : distances connues d'abord (croissant), puis sans distance
+      proches.sort((a, b) => {
+        if (a.distance === null && b.distance === null) return 0
+        if (a.distance === null) return 1
+        if (b.distance === null) return -1
+        return a.distance - b.distance
+      })
       setVoisines(proches)
     } catch {}
 
@@ -316,7 +314,12 @@ export default function VilleSearchOverlay({
                         onClick={() => handleSelectCommune(c)}
                         className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-[#FFF0E0] transition-colors border-b border-[#F5F5F5] last:border-0 min-h-[52px]"
                       >
-                        <p className="text-sm font-bold text-[#3D3D3D] text-left">{c.nom}</p>
+                        <div className="text-left">
+                          <p className="text-sm font-bold text-[#3D3D3D]">{c.nom}</p>
+                          {c.codesPostaux?.[0] && (
+                            <p className="text-xs text-[#3D3D3D]/40">{c.codesPostaux[0]}</p>
+                          )}
+                        </div>
                         <span className="text-[11px] text-[#3D3D3D]/40 shrink-0 ml-2">Voir les villes proches →</span>
                       </button>
                     ))}
@@ -335,7 +338,7 @@ export default function VilleSearchOverlay({
 
                       {/* Option : Toutes mes villes */}
                       <button
-                        onClick={() => { try { localStorage.removeItem('bonmoment_ville') } catch {} router.push('/'); onClose() }}
+                        onClick={() => { try { localStorage.removeItem('bonmoment_ville') } catch {} router.push('/?view=all'); onClose() }}
                         className="w-full flex items-center gap-3 py-3.5 border-b border-[#F5F5F5] hover:bg-[#FFF0E0] rounded-xl px-2 transition-colors min-h-[48px]"
                       >
                         <span className="text-lg">🏠</span>
@@ -470,7 +473,7 @@ export default function VilleSearchOverlay({
               <div className="text-center py-8">
                 <p className="text-5xl mb-3">🗺️</p>
                 <p className="text-sm font-bold text-[#0A0A0A]">
-                  Aucune ville active dans un rayon de 20 km
+                  Aucune ville active sur BONMOMENT
                 </p>
                 <p className="text-xs text-[#3D3D3D]/50 mt-2">
                   Abonne-toi quand même pour être prévenu dès l'ouverture !
@@ -488,9 +491,11 @@ export default function VilleSearchOverlay({
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-[#0A0A0A]">
                       📍 {v.nom}
-                      <span className="text-xs font-normal text-[#3D3D3D]/50 ml-1.5">
-                        ({v.distance} km)
-                      </span>
+                      {v.distance !== null && (
+                        <span className="text-xs font-normal text-[#3D3D3D]/50 ml-1.5">
+                          ({v.distance} km)
+                        </span>
+                      )}
                     </p>
                     <p className="text-[11px] text-[#3D3D3D]/50">
                       {v.nbOffres > 0
