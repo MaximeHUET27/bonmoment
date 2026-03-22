@@ -83,6 +83,7 @@ export default function InscriptionCommercant() {
   const [showPredictions, setShowPredictions] = useState(false)
 
   // États d'envoi
+  const [showAllHoraires, setShowAllHoraires] = useState(false)
   const [submitting, setSubmitting]     = useState(false)
   const [duplicate, setDuplicate]       = useState(false)
   const [parrainInvalid, setParrainInvalid] = useState(false)
@@ -239,8 +240,8 @@ export default function InscriptionCommercant() {
       return
     }
 
-    // 5. Passage du user en rôle commerçant
-    await supabase.from('users').update({ role: 'commerçant' }).eq('id', user.id)
+    // 5. Passage du user en rôle commerçant (async, pas d'attente)
+    supabase.from('users').update({ role: 'commerçant' }).eq('id', user.id)
 
     router.push('/commercant/dashboard')
   }
@@ -416,13 +417,16 @@ export default function InscriptionCommercant() {
                     <div className="flex gap-2">
                       <span className="text-sm mt-0.5 shrink-0">🕐</span>
                       <div className="flex flex-col gap-0.5">
-                        {selectedPlace.horaires.slice(0, 3).map((h, i) => (
+                        {(showAllHoraires ? selectedPlace.horaires : selectedPlace.horaires.slice(0, 3)).map((h, i) => (
                           <p key={i} className="text-xs text-[#3D3D3D]">{h}</p>
                         ))}
                         {selectedPlace.horaires.length > 3 && (
-                          <p className="text-[10px] text-[#3D3D3D]/50">
-                            + {selectedPlace.horaires.length - 3} autres jours
-                          </p>
+                          <button
+                            onClick={() => setShowAllHoraires(v => !v)}
+                            className="text-[10px] text-[#FF6B00] font-semibold text-left mt-0.5"
+                          >
+                            {showAllHoraires ? '▲ Réduire' : `📅 Voir tous les horaires (${selectedPlace.horaires.length - 3} de plus)`}
+                          </button>
                         )}
                       </div>
                     </div>

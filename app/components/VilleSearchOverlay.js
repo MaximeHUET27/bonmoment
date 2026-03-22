@@ -328,22 +328,23 @@ export default function VilleSearchOverlay({
                 <div className="px-4 py-3 flex flex-col gap-1">
                   {villesAbonneesList.length > 0 ? (
                     <>
-                      {/* Option : Toutes les villes */}
+                      {/* Section Mes villes */}
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#3D3D3D]/40 mt-1 mb-1 px-2">
+                        📌 Mes villes
+                      </p>
+
+                      {/* Option : Toutes mes villes */}
                       <button
                         onClick={() => { router.push('/'); onClose() }}
                         className="w-full flex items-center gap-3 py-3.5 border-b border-[#F5F5F5] hover:bg-[#FFF0E0] rounded-xl px-2 transition-colors min-h-[48px]"
                       >
                         <span className="text-lg">🏠</span>
                         <div className="text-left">
-                          <p className="text-sm font-bold text-[#0A0A0A]">Toutes les villes</p>
+                          <p className="text-sm font-bold text-[#0A0A0A]">Toutes mes villes</p>
                           <p className="text-[11px] text-[#3D3D3D]/50">Offres de toutes mes villes</p>
                         </div>
                       </button>
 
-                      {/* Section Mes villes */}
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#3D3D3D]/40 mt-3 mb-1 px-2">
-                        Mes villes
-                      </p>
                       {villesAbonneesList.map(nom => {
                         const count = nbOffresMap.get(nom) ?? null
                         return (
@@ -525,14 +526,6 @@ export default function VilleSearchOverlay({
               )
             })}
 
-            {!loadingVoisines && nbNonAbonnes > 1 && (
-              <button
-                onClick={subscriberTout}
-                className="w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-bold text-sm py-3.5 rounded-2xl transition-colors"
-              >
-                S'abonner aux {nbNonAbonnes} villes proches
-              </button>
-            )}
           </div>
         )}
 

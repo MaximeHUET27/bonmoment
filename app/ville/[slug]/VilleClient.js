@@ -52,6 +52,9 @@ export default function VilleClient({ offres, villeNom, villes = [] }) {
 
   /* Filtrage */
   const offresActives  = (offres || []).filter(isActive)
+  const activesDansFiltre = filtre === 'tous'
+    ? offresActives
+    : offresActives.filter(o => getOffreFiltre(o) === filtre)
 
   const offresAffichees = (offres || [])
     .filter(o => {
@@ -118,11 +121,18 @@ export default function VilleClient({ offres, villeNom, villes = [] }) {
       {/* ── Grille d'offres ── */}
       <div className="px-4 py-6">
         {offresAffichees.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {offresAffichees.map(o => (
-              <OffreCard key={o.id} offre={o} />
-            ))}
-          </div>
+          <>
+            {filtre !== 'tous' && activesDansFiltre.length === 0 && (
+              <p className="text-sm font-semibold text-[#3D3D3D]/60 text-center mb-4">
+                Pas de {FILTERS.find(f => f.id === filtre)?.label.replace(/^\S+\s/, '')} en ce moment — tes commerçants préparent des surprises !
+              </p>
+            )}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {offresAffichees.map(o => (
+                <OffreCard key={o.id} offre={o} />
+              ))}
+            </div>
+          </>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="text-5xl mb-4">🕐</div>

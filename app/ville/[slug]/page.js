@@ -46,7 +46,6 @@ export default async function VillePage({ params }) {
       )
     `)
     .eq('commerces.ville', ville.nom)
-    .eq('statut', 'active')
     .order('date_fin', { ascending: true })
 
   return (

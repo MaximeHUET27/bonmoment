@@ -109,18 +109,6 @@ export default async function CommercantPage({ params }) {
 
       </section>
 
-      {/* Footer */}
-      <footer className="px-6 py-10 mt-4 text-center border-t border-[#F5F5F5]">
-        <p className="text-sm text-[#3D3D3D]">
-          Tu es commerçant ?{' '}
-          <a
-            href="/commercant"
-            className="font-semibold text-[#FF6B00] hover:text-[#CC5500] underline underline-offset-2 transition-colors"
-          >
-            Rejoins BONMOMENT
-          </a>
-        </p>
-      </footer>
 
     </main>
   )

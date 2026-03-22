@@ -170,7 +170,6 @@ export default function OffreCard({ offre }) {
 
   /* ── Affichage FullScreenBon après succès (1s de feedback vert) ── */
   useEffect(() => {
-    if (status === 'already_reserved') { setShowBon(true); return }
     if (status === 'success') {
       const t = setTimeout(() => setShowBon(true), 900)
       return () => clearTimeout(t)
@@ -214,10 +213,10 @@ export default function OffreCard({ offre }) {
 
   return (
     <>
-      <div className={`bg-white rounded-2xl border border-[#F0F0F0] shadow-sm overflow-hidden flex flex-col ${fini ? 'opacity-60 grayscale' : ''}`}>
+      <div className="bg-white rounded-2xl border border-[#F0F0F0] shadow-sm overflow-hidden flex flex-col">
 
         {/* ── Header : countdown + bons restants + partage ── */}
-        <div className={`flex items-center gap-1 px-2 py-1.5 ${
+        <div className={`flex items-center gap-1 px-2 py-1.5 ${fini ? 'opacity-60 grayscale' : ''} ${
           urgent && !fini ? 'bg-red-50' : 'bg-[#F5F5F5]'
         }`}>
           <Link href={`/offre/${offre.id}`} className="flex-1 flex items-center justify-between gap-1.5 px-1 py-1 min-w-0">
@@ -246,7 +245,7 @@ export default function OffreCard({ offre }) {
         </div>
 
         {/* ── Corps : cliquable → détail ── */}
-        <Link href={`/offre/${offre.id}`} className="block flex-1 px-3 py-4 flex flex-col gap-2.5">
+        <Link href={`/offre/${offre.id}`} className={`block flex-1 px-3 py-4 flex flex-col gap-2.5 ${fini ? 'opacity-60 grayscale' : ''}`}>
 
           {/* Badge remise */}
           <div className="flex items-center justify-center bg-[#FFF0E0] rounded-xl py-4">
@@ -333,7 +332,7 @@ export default function OffreCard({ offre }) {
           reservation={reservation}
           offre={offre}
           commerce={commerce}
-          onClose={() => { setShowBon(false); reset() }}
+          onClose={() => setShowBon(false)}
         />
       )}
 

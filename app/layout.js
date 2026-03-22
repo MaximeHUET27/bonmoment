@@ -2,7 +2,6 @@ import { Montserrat } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { AuthProvider } from "@/app/context/AuthContext";
-import FloatingBonButton from "@/app/components/FloatingBonButton";
 import AdminFooterLink from "@/app/components/AdminFooterLink";
 import ChatbotWidget from "@/app/components/ChatbotWidget";
 
@@ -23,7 +22,6 @@ export default function RootLayout({ children }) {
       <body className={`${montserrat.variable} antialiased`}>
         <AuthProvider>
           {children}
-          <FloatingBonButton />
           <ChatbotWidget />
           <footer className="w-full bg-[#F5F5F5] border-t border-[#EBEBEB] px-6 py-5 mt-auto">
             <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">

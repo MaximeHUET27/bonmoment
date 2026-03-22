@@ -59,7 +59,7 @@ export default function VilleAbonnement({ villeNom, className = '' }) {
 
     setAbonne(true)
     setLoading(false)
-    afficherToast(`🎉 Tu es abonné à ${villeNom} ! Tu recevras les bons plans chaque soir à 21h.`)
+    afficherToast(`🎉 Bienvenue à ${villeNom} ! Tu recevras les bons plans chaque soir à 21h.`)
     setShowNotif(true)
   }
 
@@ -123,7 +123,7 @@ export default function VilleAbonnement({ villeNom, className = '' }) {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-[#0A0A0A] text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-2xl max-w-[90vw] text-center animate-fade-in-up">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[90] bg-[#0A0A0A] text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-2xl max-w-[90vw] text-center animate-fade-in-up">
           {toast}
         </div>
       )}

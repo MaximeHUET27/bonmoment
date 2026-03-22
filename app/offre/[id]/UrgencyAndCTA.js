@@ -132,7 +132,6 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
 
   /* ── Show FullScreenBon après succès (1s de feedback ✓) ── */
   useEffect(() => {
-    if (status === 'already_reserved') { setShowBon(true); return }
     if (status === 'success') {
       const t = setTimeout(() => setShowBon(true), 900)
       return () => clearTimeout(t)
@@ -306,7 +305,7 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
           reservation={reservation}
           offre={offre}
           commerce={offre.commerces}
-          onClose={() => { setShowBon(false); reset() }}
+          onClose={() => setShowBon(false)}
         />
       )}
 

@@ -406,7 +406,7 @@ export default function ProfilPage() {
 
           {favorisDetails.length === 0 ? (
             <p className="text-sm text-[#3D3D3D]/50 text-center py-4">
-              Aucun commerce en favori pour l'instant.
+              Tu n'as pas encore de commerce favori. Clique sur ❤️ à côté d'un commerce pour le suivre !
             </p>
           ) : (
             <div className="flex flex-col gap-2">
