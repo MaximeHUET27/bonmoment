@@ -62,8 +62,6 @@ export default function VilleSearchOverlay({
     setCommuneChoisie(null)
     setVoisines([])
     setAbonnesLocal(new Set())
-    setTimeout(() => inputRef.current?.focus(), 80)
-
     // Charger les villes abonnées du user connecté
     if (user && supabase) {
       supabase.from('users').select('villes_abonnees').eq('id', user.id).single()
@@ -276,7 +274,133 @@ export default function VilleSearchOverlay({
         {/* ── Phase : recherche ── */}
         {phase === 'search' && (
           <>
-            <div className="px-4 py-3 border-b border-[#F0F0F0]">
+            {/* Contenu défilable */}
+            <div className="overflow-y-auto flex-1">
+
+              {/* ── Résultats de recherche (quand query >= 2) ── */}
+              {query.length >= 2 && (
+                <>
+                  {searching && (
+                    <div className="flex justify-center py-8">
+                      <span className="w-6 h-6 border-[3px] border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                  {!searching && results.length === 0 && localMatches.length === 0 && (
+                    <p className="text-center text-sm text-[#3D3D3D]/50 py-8">
+                      Aucune commune trouvée.
+                    </p>
+                  )}
+                  {/* Villes BONMOMENT correspondant à la recherche */}
+                  {!searching && localMatches.map(v => (
+                    <button
+                      key={`bm-${v.id}`}
+                      onClick={() => handleSelectCommune({ nom: v.nom, code: '' })}
+                      className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-[#FFF0E0] transition-colors border-b border-[#F5F5F5] last:border-0 min-h-[52px]"
+                    >
+                      <div className="text-left min-w-0">
+                        <p className="text-sm font-bold text-[#0A0A0A]">{v.nom}</p>
+                      </div>
+                      <span className="text-[10px] font-bold text-white bg-[#FF6B00] px-2 py-0.5 rounded-full shrink-0 ml-2">
+                        {nbOffresMap.has(v.nom) && nbOffresMap.get(v.nom) > 0
+                          ? `${nbOffresMap.get(v.nom)} offre${nbOffresMap.get(v.nom) > 1 ? 's' : ''} dispo`
+                          : 'Offres dispo'}
+                      </span>
+                    </button>
+                  ))}
+                  {/* Autres communes via geo API */}
+                  {!searching && resultsDedupliques
+                    .filter(c => !villesActivesSet.has(c.nom.toLowerCase()))
+                    .map(c => (
+                      <button
+                        key={c.code}
+                        onClick={() => handleSelectCommune(c)}
+                        className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-[#FFF0E0] transition-colors border-b border-[#F5F5F5] last:border-0 min-h-[52px]"
+                      >
+                        <p className="text-sm font-bold text-[#3D3D3D] text-left">{c.nom}</p>
+                        <span className="text-[11px] text-[#3D3D3D]/40 shrink-0 ml-2">Voir les villes proches →</span>
+                      </button>
+                    ))}
+                </>
+              )}
+
+              {/* ── Liste structurée (avant toute recherche) ── */}
+              {query.length < 2 && (
+                <div className="px-4 py-3 flex flex-col gap-1">
+                  {villesAbonneesList.length > 0 ? (
+                    <>
+                      {/* Option : Toutes les villes */}
+                      <button
+                        onClick={() => { router.push('/'); onClose() }}
+                        className="w-full flex items-center gap-3 py-3.5 border-b border-[#F5F5F5] hover:bg-[#FFF0E0] rounded-xl px-2 transition-colors min-h-[48px]"
+                      >
+                        <span className="text-lg">🏠</span>
+                        <div className="text-left">
+                          <p className="text-sm font-bold text-[#0A0A0A]">Toutes les villes</p>
+                          <p className="text-[11px] text-[#3D3D3D]/50">Offres de toutes mes villes</p>
+                        </div>
+                      </button>
+
+                      {/* Section Mes villes */}
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#3D3D3D]/40 mt-3 mb-1 px-2">
+                        Mes villes
+                      </p>
+                      {villesAbonneesList.map(nom => {
+                        const count = nbOffresMap.get(nom) ?? null
+                        return (
+                          <button
+                            key={`ab-${nom}`}
+                            onClick={() => { router.push(`/ville/${toSlug(nom)}`); onClose() }}
+                            className="w-full flex items-center justify-between py-3.5 border-b border-[#F5F5F5] last:border-0 hover:bg-[#FFF0E0] rounded-xl px-2 transition-colors min-h-[48px]"
+                          >
+                            <span className="text-sm font-bold text-[#0A0A0A]">📍 {nom}</span>
+                            <span className="text-xs text-[#3D3D3D]/60 shrink-0 ml-2">
+                              {count !== null
+                                ? `${count} offre${count !== 1 ? 's' : ''} active${count !== 1 ? 's' : ''}`
+                                : '—'}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </>
+                  ) : (
+                    <>
+                      {/* Pas de villes abonnées → Villes actives BONMOMENT */}
+                      {villesBonmomentUniq.length > 0 && (
+                        <>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#3D3D3D]/40 mb-1 px-2">
+                            Villes actives sur BONMOMENT
+                          </p>
+                          {villesBonmomentUniq.map(v => {
+                            const count = nbOffresMap.get(v.nom) ?? 0
+                            return (
+                              <button
+                                key={v.id}
+                                onClick={() => handleSelectCommune({ nom: v.nom, code: '' })}
+                                className="w-full flex items-center justify-between py-3.5 border-b border-[#F5F5F5] last:border-0 hover:bg-[#FFF0E0] rounded-xl px-2 transition-colors min-h-[48px]"
+                              >
+                                <span className="text-sm font-bold text-[#0A0A0A]">📍 {v.nom}</span>
+                                <span className="text-[10px] font-bold text-white bg-[#FF6B00] px-2 py-0.5 rounded-full shrink-0 ml-2">
+                                  {count > 0
+                                    ? `${count} offre${count > 1 ? 's' : ''} dispo`
+                                    : 'Offres dispo'}
+                                </span>
+                              </button>
+                            )
+                          })}
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
+            </div>
+
+            {/* ── Champ de recherche — toujours en bas ── */}
+            <div className="border-t border-[#F0F0F0] px-4 pt-3 pb-4 shrink-0">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#3D3D3D]/40 mb-2 px-1">
+                Rechercher une ville
+              </p>
               <div className="flex items-center gap-2 bg-[#F5F5F5] rounded-xl px-3 py-2.5">
                 <span>🔍</span>
                 <input
@@ -284,7 +408,7 @@ export default function VilleSearchOverlay({
                   type="text"
                   value={query}
                   onChange={e => setQuery(e.target.value)}
-                  placeholder="Recherche ta ville..."
+                  placeholder="Tape le nom d'une commune..."
                   className="flex-1 bg-transparent text-sm text-[#0A0A0A] placeholder-[#3D3D3D]/40 outline-none"
                   autoComplete="off"
                 />
@@ -297,100 +421,6 @@ export default function VilleSearchOverlay({
                   </button>
                 )}
               </div>
-            </div>
-
-            <div className="overflow-y-auto flex-1">
-              {searching && (
-                <div className="flex justify-center py-8">
-                  <span className="w-6 h-6 border-[3px] border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-
-              {!searching && query.length >= 2 && results.length === 0 && localMatches.length === 0 && (
-                <p className="text-center text-sm text-[#3D3D3D]/50 py-8">
-                  Aucune commune trouvée.
-                </p>
-              )}
-
-              {/* Liste initiale (avant recherche) : villes abonnées puis BONMOMENT actives */}
-              {!searching && query.length < 2 && villesBonmomentUniq.length > 0 && (
-                <div className="px-4 py-4 flex flex-col gap-1">
-                  {/* 1. Villes abonnées */}
-                  {villesAbonneesList.length > 0 && (
-                    <>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#3D3D3D]/40 mb-1">
-                        Mes villes
-                      </p>
-                      {villesAbonneesList.map(nom => (
-                        <button
-                          key={`ab-${nom}`}
-                          onClick={() => handleSelectCommune({ nom, code: '' })}
-                          className="w-full flex items-center justify-between py-3.5 border-b border-[#F5F5F5] last:border-0 hover:bg-[#FFF0E0] rounded-xl px-2 transition-colors min-h-[48px]"
-                        >
-                          <span className="text-sm font-bold text-[#0A0A0A]">📍 {nom}</span>
-                          <span className="text-[10px] font-bold text-[#FF6B00] bg-[#FFF0E0] px-2 py-0.5 rounded-full">
-                            ✅ Abonné
-                          </span>
-                        </button>
-                      ))}
-                    </>
-                  )}
-                  {/* 2. Autres villes BONMOMENT actives */}
-                  {villesBonmomentUniq.filter(v => !villesAbonneesList.includes(v.nom)).length > 0 && (
-                    <>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#3D3D3D]/40 mb-1 mt-2">
-                        Villes actives sur BONMOMENT
-                      </p>
-                      {villesBonmomentUniq.filter(v => !villesAbonneesList.includes(v.nom)).map(v => (
-                        <button
-                          key={v.id}
-                          onClick={() => handleSelectCommune({ nom: v.nom, code: '' })}
-                          className="w-full flex items-center justify-between py-3.5 border-b border-[#F5F5F5] last:border-0 hover:bg-[#FFF0E0] rounded-xl px-2 transition-colors min-h-[48px]"
-                        >
-                          <span className="text-sm font-bold text-[#0A0A0A]">📍 {v.nom}</span>
-                          <span className="text-[10px] font-bold text-white bg-[#FF6B00] px-2 py-0.5 rounded-full">
-                            {nbOffresMap.has(v.nom) && nbOffresMap.get(v.nom) > 0
-                              ? `${nbOffresMap.get(v.nom)} offre${nbOffresMap.get(v.nom) > 1 ? 's' : ''} dispos`
-                              : 'Offres dispo'}
-                          </span>
-                        </button>
-                      ))}
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Villes BONMOMENT correspondant à la recherche (toujours affichées — Bug 3) */}
-              {!searching && localMatches.map(v => (
-                <button
-                  key={`bm-${v.id}`}
-                  onClick={() => handleSelectCommune({ nom: v.nom, code: '' })}
-                  className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-[#FFF0E0] transition-colors border-b border-[#F5F5F5] last:border-0 min-h-[52px]"
-                >
-                  <div className="text-left min-w-0">
-                    <p className="text-sm font-bold text-[#0A0A0A]">{v.nom}</p>
-                  </div>
-                  <span className="text-[10px] font-bold text-white bg-[#FF6B00] px-2 py-0.5 rounded-full shrink-0 ml-2">
-                    {nbOffresMap.has(v.nom) && nbOffresMap.get(v.nom) > 0
-                      ? `${nbOffresMap.get(v.nom)} offre${nbOffresMap.get(v.nom) > 1 ? 's' : ''} dispos`
-                      : 'Offres dispo'}
-                  </span>
-                </button>
-              ))}
-
-              {/* Autres communes via geo API — dédupliquées, sans département ni habitants */}
-              {!searching && resultsDedupliques
-                .filter(c => !villesActivesSet.has(c.nom.toLowerCase()))
-                .map(c => (
-                  <button
-                    key={c.code}
-                    onClick={() => handleSelectCommune(c)}
-                    className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-[#FFF0E0] transition-colors border-b border-[#F5F5F5] last:border-0 min-h-[52px]"
-                  >
-                    <p className="text-sm font-bold text-[#3D3D3D] text-left">{c.nom}</p>
-                    <span className="text-[11px] text-[#3D3D3D]/40 shrink-0 ml-2">Voir les villes proches →</span>
-                  </button>
-                ))}
             </div>
           </>
         )}

@@ -21,11 +21,6 @@ function getBadgeProgress(badge, bonsValides) {
   return 100
 }
 
-function statutPastille(statut) {
-  if (statut === 'utilisee') return { color: '#22C55E', label: 'Utilisé' }
-  if (statut === 'reservee') return { color: '#FF6B00', label: 'Actif'   }
-  return                             { color: '#9CA3AF', label: 'Expiré'  }
-}
 
 function Toggle({ value, onChange, label, sublabel }) {
   return (
@@ -307,12 +302,6 @@ export default function ProfilPage() {
   const bonsValides = reservations.filter(r => r.statut === 'utilisee').length
   const progress = getBadgeProgress(profile.badge_niveau || 'habitant', bonsValides)
 
-  /* Tri des réservations : actives en haut, puis utilisées, puis expirées */
-  const resaSorted = [...reservations].sort((a, b) => {
-    const order = { reservee: 0, utilisee: 1, expiree: 2 }
-    return (order[a.statut] ?? 3) - (order[b.statut] ?? 3)
-  })
-
   return (
     <main className="min-h-screen bg-[#F5F5F5] flex flex-col">
 
@@ -465,50 +454,20 @@ export default function ProfilPage() {
         </section>
 
         {/* ── Mes bons ── */}
-        <section className="bg-white rounded-3xl px-5 py-6 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00] mb-4">Mes bons</p>
-
-          {resaSorted.length === 0 ? (
-            <p className="text-sm text-[#3D3D3D]/50 text-center py-4">
-              Aucune réservation pour l'instant.
+        <Link
+          href="/profil/bons"
+          className="w-full bg-white rounded-3xl px-5 py-5 shadow-sm flex items-center justify-between border border-[#F0F0F0] hover:border-[#FF6B00] transition-colors"
+        >
+          <div>
+            <p className="text-sm font-bold text-[#0A0A0A]">🎟️ Mes bons</p>
+            <p className="text-xs text-[#3D3D3D]/50 mt-0.5">
+              {reservations.length > 0
+                ? `${reservations.length} réservation${reservations.length > 1 ? 's' : ''}`
+                : 'Aucune réservation'}
             </p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {resaSorted.map(resa => {
-                const pastille = statutPastille(resa.statut)
-                return (
-                  <div key={resa.id} className="border border-[#F0F0F0] rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-[#0A0A0A] truncate">
-                        {resa.offres?.commerces?.nom || '—'}
-                      </p>
-                      <p className="text-xs text-[#3D3D3D]/60 truncate">{resa.offres?.titre}</p>
-                      <p className="text-[10px] text-[#3D3D3D]/40 mt-0.5">
-                        {new Date(resa.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1.5 shrink-0">
-                      <span
-                        className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
-                        style={{ backgroundColor: pastille.color }}
-                      >
-                        {pastille.label}
-                      </span>
-                      {resa.statut === 'reservee' && (
-                        <Link
-                          href={`/bon/${resa.id}`}
-                          className="text-[10px] font-bold text-[#FF6B00] underline underline-offset-1"
-                        >
-                          Voir mon bon
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </section>
+          </div>
+          <span className="text-[#FF6B00] font-bold text-lg">→</span>
+        </Link>
 
         {/* ── Aide ── */}
         <Link
