@@ -16,12 +16,12 @@ export default function DashboardPage() {
   const { user, loading, supabase } = useAuth()
   const router  = useRouter()
   const qrRef   = useRef(null)
-  const [commerce,      setCommerce]      = useState(null)
-  const [allCommerces,  setAllCommerces]  = useState([])
-  const [fetching,      setFetching]      = useState(true)
-  const [qrToast,       setQrToast]       = useState(null)
-  const [offres,        setOffres]        = useState([])
-  const [nbParticipants, setNbParticipants] = useState({}) // offre_id → count
+  const [commerce,       setCommerce]       = useState(null)
+  const [allCommerces,   setAllCommerces]   = useState([])
+  const [fetching,       setFetching]       = useState(true)
+  const [qrToast,        setQrToast]        = useState(null)
+  const [offres,         setOffres]         = useState([])
+  const [nbParticipants, setNbParticipants] = useState({})
 
   /* ── Auth guard ─────────────────────────────────────────────────────────── */
   useEffect(() => {
@@ -35,7 +35,7 @@ export default function DashboardPage() {
     const commerceId = params?.get('commerce')
     supabase
       .from('commerces')
-      .select('id, nom, categorie, ville, adresse, note_google')
+      .select('id, nom, categorie, ville, adresse, note_google, palier')
       .eq('owner_id', user.id)
       .then(({ data }) => {
         const list = data || []
@@ -61,11 +61,8 @@ export default function DashboardPage() {
       .limit(20)
       .then(({ data }) => {
         setOffres(data || [])
-
-        // Compter les participants validés pour chaque concours expiré
         const concours = (data || []).filter(o => o.type_remise === 'concours' && o.statut === 'expiree')
         if (!concours.length) return
-
         Promise.all(
           concours.map(o =>
             supabase
@@ -75,44 +72,31 @@ export default function DashboardPage() {
               .eq('statut', 'utilisee')
               .then(({ count }) => [o.id, count ?? 0])
           )
-        ).then(entries => {
-          setNbParticipants(Object.fromEntries(entries))
-        })
+        ).then(entries => setNbParticipants(Object.fromEntries(entries)))
       })
   }, [commerce, supabase])
 
   if (loading || fetching) {
     return (
       <main className="min-h-screen bg-[#F5F5F5] flex flex-col">
-        {/* Header */}
         <header className="w-full bg-white border-b border-[#EBEBEB] px-6 py-4 flex items-center justify-between">
           <div className="w-[120px] h-8 bg-[#E0E0E0] rounded-xl animate-pulse" />
         </header>
-
         <div className="flex-1 w-full max-w-xl mx-auto px-5 py-6 flex flex-col gap-5 animate-pulse">
-
-          {/* Bouton vérifier (placeholder) */}
           <div className="w-full h-[72px] bg-[#FFD9B8] rounded-3xl" />
-
-          {/* Bloc bienvenue */}
-          <div className="bg-white rounded-3xl px-6 py-8 flex flex-col gap-3 shadow-sm">
-            <div className="h-3 w-24 bg-[#E0E0E0] rounded" />
-            <div className="h-8 w-48 bg-[#E0E0E0] rounded-xl" />
-            <div className="h-4 w-full bg-[#E0E0E0] rounded" />
-            <div className="h-4 w-3/4 bg-[#E0E0E0] rounded" />
+          <div className="bg-white rounded-3xl px-6 py-6 h-28 shadow-sm" />
+          <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-3 shadow-sm">
+            <div className="h-4 w-36 bg-[#E0E0E0] rounded" />
+            <div className="grid grid-cols-3 gap-3">
+              {[...Array(3)].map((_, i) => <div key={i} className="bg-[#F5F5F5] rounded-2xl h-16" />)}
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[...Array(3)].map((_, i) => <div key={i} className="bg-[#F5F5F5] rounded-2xl h-16" />)}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {[...Array(2)].map((_, i) => <div key={i} className="bg-[#F5F5F5] rounded-2xl h-16" />)}
+            </div>
           </div>
-
-          {/* 3 blocs KPI en ligne */}
-          <div className="grid grid-cols-3 gap-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl px-4 py-5 h-20 shadow-sm flex flex-col gap-2">
-                <div className="h-3 w-12 bg-[#E0E0E0] rounded" />
-                <div className="h-5 w-8 bg-[#E0E0E0] rounded" />
-              </div>
-            ))}
-          </div>
-
-          {/* Bloc offres actives */}
           <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
             <div className="h-4 w-40 bg-[#E0E0E0] rounded" />
             {[...Array(2)].map((_, i) => (
@@ -125,31 +109,12 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
-
-          {/* Bloc offres expirées */}
-          <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
-            <div className="h-4 w-52 bg-[#E0E0E0] rounded" />
-            {[...Array(2)].map((_, i) => (
-              <div key={i} className="flex items-center justify-between gap-3 py-1 opacity-60">
-                <div className="flex-1 flex flex-col gap-1.5">
-                  <div className="h-4 w-2/3 bg-[#E0E0E0] rounded" />
-                  <div className="h-3 w-1/3 bg-[#E0E0E0] rounded" />
-                </div>
-                <div className="h-5 w-10 bg-[#E0E0E0] rounded shrink-0" />
-              </div>
-            ))}
-          </div>
-
         </div>
       </main>
     )
   }
 
   if (!user) return null
-
-  const prenom = user.user_metadata?.full_name?.split(' ')[0]
-    ?? user.user_metadata?.name?.split(' ')[0]
-    ?? 'commerçant'
 
   const offresActives  = offres.filter(o => o.statut === 'active')
   const offresExpirees = offres.filter(o => o.statut === 'expiree')
@@ -176,25 +141,7 @@ export default function DashboardPage() {
       {/* ── Corps ────────────────────────────────────────────────────────── */}
       <div className="flex-1 w-full max-w-xl mx-auto px-5 py-6 flex flex-col gap-5">
 
-        {/* ── Message de bienvenue ──────────────────────────────────────── */}
-        <div className="bg-white rounded-3xl px-6 py-8 flex flex-col gap-2 shadow-sm">
-          <p className="text-xs font-semibold text-[#FF6B00] uppercase tracking-widest">Mon commerce</p>
-          <h1 className="text-2xl font-black text-[#0A0A0A] leading-tight">
-            Bienvenue,&nbsp;{prenom}&nbsp;!&nbsp;🎉
-          </h1>
-          {commerce ? (
-            <p className="text-sm text-[#3D3D3D]/70 mt-1">
-              Ton commerce <span className="font-bold text-[#0A0A0A]">{commerce.nom}</span> est bien enregistré.
-              Tu peux dès maintenant créer ta première offre.
-            </p>
-          ) : (
-            <p className="text-sm text-[#3D3D3D]/70 mt-1">
-              Ton inscription est en cours de traitement. Recharge la page dans quelques instants.
-            </p>
-          )}
-        </div>
-
-        {/* ── Actions principales côte à côte ──────────────────────────── */}
+        {/* 1. Boutons principaux ──────────────────────────────────────────── */}
         {commerce && (
           <div className="flex gap-4">
             <Link
@@ -212,11 +159,10 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* ── Infos commerce ───────────────────────────────────────────── */}
+        {/* 2. TON ÉTABLISSEMENT ──────────────────────────────────────────── */}
         {commerce && (
           <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
             <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">Ton établissement</h2>
-
             <div className="flex flex-col gap-2">
               {commerce.categorie && (
                 <div className="flex items-center gap-3">
@@ -236,16 +182,25 @@ export default function DashboardPage() {
                 <p className="text-xs text-[#3D3D3D]/60">⭐ {commerce.note_google} / 5 sur Google</p>
               )}
             </div>
-
           </div>
         )}
 
-        {/* ── Parrainage ────────────────────────────────────────────────── */}
+        {/* 3. TES STATISTIQUES ────────────────────────────────────────────── */}
+        {commerce && (
+          <StatsSection commerce={commerce} supabase={supabase} />
+        )}
+
+        {/* 4. PARRAINAGE ──────────────────────────────────────────────────── */}
         {commerce && (
           <ParrainageSection commerce={commerce} supabase={supabase} />
         )}
 
-        {/* ── Offres actives ────────────────────────────────────────────── */}
+        {/* 5. QR CODE VITRINE ─────────────────────────────────────────────── */}
+        {commerce?.ville && (
+          <QRVitrine commerce={commerce} toast={qrToast} setToast={setQrToast} />
+        )}
+
+        {/* 6. OFFRES ACTIVES ──────────────────────────────────────────────── */}
         {offresActives.length > 0 && (
           <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
             <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">
@@ -257,7 +212,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* ── Concours expirés à tirer au sort ─────────────────────────── */}
+        {/* 7. OFFRES EXPIRÉES ─────────────────────────────────────────────── */}
         {offresExpirees.some(o => o.type_remise === 'concours') && (
           <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-5 shadow-sm">
             <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">
@@ -283,7 +238,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* ── Offres expirées récentes (non-concours) ───────────────────── */}
         {offresExpirees.filter(o => o.type_remise !== 'concours').length > 0 && (
           <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-3 shadow-sm">
             <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">
@@ -298,12 +252,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* ── QR code vitrine ──────────────────────────────────────────── */}
-        {commerce?.ville && (
-          <QRVitrine commerce={commerce} toast={qrToast} setToast={setQrToast} />
-        )}
-
-        {/* ── Supprimer ce commerce ─────────────────────────────────────────── */}
+        {/* 8. Supprimer ce commerce ───────────────────────────────────────── */}
         {commerce && user && (
           <DeleteCommerceButton commerceId={commerce.id} ownerUserId={user.id} />
         )}
@@ -311,6 +260,254 @@ export default function DashboardPage() {
       </div>
 
     </main>
+  )
+}
+
+/* ── Carte KPI ───────────────────────────────────────────────────────────── */
+
+function KpiCard({ emoji, label, value, sub, valueColor }) {
+  return (
+    <div className="bg-white rounded-2xl px-3 py-4 shadow-sm border border-[#F0F0F0] flex flex-col gap-0.5">
+      <p className={`text-2xl font-black leading-none ${valueColor || 'text-[#0A0A0A]'}`}>
+        {value}
+      </p>
+      <p className="text-[11px] text-gray-400 leading-tight mt-1">
+        {emoji} {label}
+      </p>
+      {sub && <p className="text-[10px] text-gray-400 leading-none">{sub}</p>}
+    </div>
+  )
+}
+
+/* ── Section statistiques ────────────────────────────────────────────────── */
+
+function StatsSection({ commerce, supabase }) {
+  const [stats, setStats] = useState(null)
+
+  useEffect(() => {
+    if (!commerce || !supabase) return
+    loadStats()
+  }, [commerce.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function loadStats() {
+    const now              = new Date()
+    const debutMois        = new Date(now.getFullYear(), now.getMonth(), 1)
+    const debutMoisDernier = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    const finMoisDernier   = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999)
+
+    // Récupère tous les IDs d'offres du commerce
+    const { data: offresData } = await supabase
+      .from('offres')
+      .select('id')
+      .eq('commerce_id', commerce.id)
+    const offreIds = (offresData || []).map(o => o.id)
+
+    if (offreIds.length === 0) {
+      setStats({
+        bonReservesMois: 0, bonUtilisesMois: 0,
+        offresPubileesMois: 0, nbAbonnes: 0,
+        heurePlusActive: null, bonReservesMoisDernier: 0, meilleureOffre: null,
+      })
+      return
+    }
+
+    const [
+      { count: bonReservesMois },
+      { count: bonUtilisesMois },
+      { count: offresPubileesMois },
+      { count: nbAbonnes },
+      { count: bonReservesMoisDernier },
+      { data: toutesReservations },
+      { data: utiliseesMois },
+    ] = await Promise.all([
+      // Bons réservés ce mois
+      supabase.from('reservations')
+        .select('id', { count: 'exact', head: true })
+        .in('offre_id', offreIds)
+        .gte('created_at', debutMois.toISOString()),
+      // Bons utilisés ce mois
+      supabase.from('reservations')
+        .select('id', { count: 'exact', head: true })
+        .in('offre_id', offreIds)
+        .eq('statut', 'utilisee')
+        .gte('created_at', debutMois.toISOString()),
+      // Offres publiées ce mois
+      supabase.from('offres')
+        .select('id', { count: 'exact', head: true })
+        .eq('commerce_id', commerce.id)
+        .gte('created_at', debutMois.toISOString()),
+      // Abonnés (users avec ce commerce dans commerces_abonnes)
+      supabase.from('users')
+        .select('id', { count: 'exact', head: true })
+        .contains('commerces_abonnes', [commerce.id]),
+      // Bons réservés mois dernier
+      supabase.from('reservations')
+        .select('id', { count: 'exact', head: true })
+        .in('offre_id', offreIds)
+        .gte('created_at', debutMoisDernier.toISOString())
+        .lte('created_at', finMoisDernier.toISOString()),
+      // Toutes les réservations (pour heure la plus active)
+      supabase.from('reservations')
+        .select('created_at')
+        .in('offre_id', offreIds),
+      // Utilisées ce mois avec titre offre (pour meilleure offre)
+      supabase.from('reservations')
+        .select('offre_id, offres(titre)')
+        .in('offre_id', offreIds)
+        .eq('statut', 'utilisee')
+        .gte('created_at', debutMois.toISOString()),
+    ])
+
+    // Heure la plus active
+    let heurePlusActive = null
+    if (toutesReservations && toutesReservations.length > 0) {
+      const hMap = {}
+      for (const r of toutesReservations) {
+        const h = new Date(r.created_at).getHours()
+        hMap[h] = (hMap[h] || 0) + 1
+      }
+      const best = Object.entries(hMap).sort((a, b) => b[1] - a[1])[0]
+      if (best) heurePlusActive = parseInt(best[0])
+    }
+
+    // Meilleure offre du mois (par bons utilisés)
+    let meilleureOffre = null
+    if (utiliseesMois && utiliseesMois.length > 0) {
+      const offreMap = {}
+      for (const r of utiliseesMois) {
+        offreMap[r.offre_id] = (offreMap[r.offre_id] || 0) + 1
+      }
+      const bestId = Object.entries(offreMap).sort((a, b) => b[1] - a[1])[0]?.[0]
+      if (bestId) {
+        const entry = utiliseesMois.find(r => r.offre_id === bestId)
+        meilleureOffre = entry?.offres?.titre || null
+      }
+    }
+
+    setStats({
+      bonReservesMois:        bonReservesMois ?? 0,
+      bonUtilisesMois:        bonUtilisesMois ?? 0,
+      offresPubileesMois:     offresPubileesMois ?? 0,
+      nbAbonnes:              nbAbonnes ?? 0,
+      heurePlusActive,
+      bonReservesMoisDernier: bonReservesMoisDernier ?? 0,
+      meilleureOffre,
+    })
+  }
+
+  const quotaOffres = commerce.palier === 2 ? 8 : commerce.palier === 3 ? 16 : 4
+
+  const taux = stats && stats.bonReservesMois > 0
+    ? Math.round((stats.bonUtilisesMois / stats.bonReservesMois) * 100)
+    : null
+
+  const tauxColor = taux === null ? 'text-[#0A0A0A]'
+    : taux > 50 ? 'text-green-600'
+    : taux >= 20 ? 'text-orange-500'
+    : 'text-red-500'
+
+  const tendance = stats ? (() => {
+    const curr = stats.bonReservesMois
+    const prev = stats.bonReservesMoisDernier
+    if (prev === 0 && curr === 0) return null
+    if (prev === 0) return { pct: null, up: true }
+    const pct = Math.round(((curr - prev) / prev) * 100)
+    return { pct, up: pct >= 0 }
+  })() : null
+
+  return (
+    <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
+      <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">Tes statistiques</h2>
+
+      {!stats ? (
+        <div className="flex flex-col gap-3 animate-pulse">
+          <div className="grid grid-cols-3 gap-3">
+            {[...Array(3)].map((_, i) => <div key={i} className="bg-[#F5F5F5] rounded-2xl h-16" />)}
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {[...Array(3)].map((_, i) => <div key={i} className="bg-[#F5F5F5] rounded-2xl h-16" />)}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[...Array(2)].map((_, i) => <div key={i} className="bg-[#F5F5F5] rounded-2xl h-16" />)}
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+
+          {/* Ligne 1 : bons réservés, utilisés, taux */}
+          <div className="grid grid-cols-3 gap-3">
+            <KpiCard
+              emoji="🎟️"
+              label="Bons réservés"
+              value={stats.bonReservesMois}
+              sub="ce mois"
+            />
+            <KpiCard
+              emoji="✅"
+              label="Bons utilisés"
+              value={stats.bonUtilisesMois}
+              sub="ce mois"
+            />
+            <KpiCard
+              emoji="📊"
+              label="Taux d'utilisation"
+              value={taux !== null ? `${taux}%` : '—'}
+              valueColor={tauxColor}
+            />
+          </div>
+
+          {/* Ligne 2 : offres publiées, abonnés, heure */}
+          <div className="grid grid-cols-3 gap-3">
+            <KpiCard
+              emoji="📝"
+              label="Offres publiées"
+              value={`${stats.offresPubileesMois}/${quotaOffres}`}
+              sub="ce mois"
+            />
+            <KpiCard
+              emoji="❤️"
+              label="Abonnés"
+              value={stats.nbAbonnes}
+            />
+            <KpiCard
+              emoji="⏰"
+              label="Heure la plus active"
+              value={stats.heurePlusActive !== null ? `${stats.heurePlusActive}h` : '—'}
+            />
+          </div>
+
+          {/* Ligne 3 : tendance + meilleure offre */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white rounded-2xl px-3 py-4 shadow-sm border border-[#F0F0F0] flex flex-col gap-0.5">
+              {tendance ? (
+                <>
+                  <p className={`text-2xl font-black leading-none ${tendance.up ? 'text-green-600' : 'text-red-500'}`}>
+                    {tendance.up ? '↗️' : '↘️'}{' '}
+                    {tendance.pct !== null
+                      ? `${tendance.pct >= 0 ? '+' : ''}${tendance.pct}%`
+                      : 'Nouveau !'}
+                  </p>
+                  <p className="text-[11px] text-gray-400 leading-tight mt-1">📈 Ce mois vs mois dernier</p>
+                  <p className="text-[10px] text-gray-400">{stats.bonReservesMois} vs {stats.bonReservesMoisDernier} bons</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-2xl font-black leading-none text-[#0A0A0A]">—</p>
+                  <p className="text-[11px] text-gray-400 leading-tight mt-1">📈 Ce mois vs mois dernier</p>
+                </>
+              )}
+            </div>
+            <div className="bg-white rounded-2xl px-3 py-4 shadow-sm border border-[#F0F0F0] flex flex-col gap-0.5">
+              <p className="text-base font-black leading-snug text-[#FF6B00] line-clamp-2 min-h-[2.5rem]">
+                {stats.meilleureOffre || '—'}
+              </p>
+              <p className="text-[11px] text-gray-400 leading-tight mt-1">🏆 Meilleure offre du mois</p>
+            </div>
+          </div>
+
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -343,7 +540,6 @@ function ParrainageSection({ commerce, supabase }) {
     setLoaded(true)
   }
 
-  /* Compteur du mois en cours */
   const debutMois = new Date(); debutMois.setDate(1); debutMois.setHours(0, 0, 0, 0)
   const countMois = codes.filter(c => new Date(c.created_at) >= debutMois).length
 
@@ -351,7 +547,6 @@ function ParrainageSection({ commerce, supabase }) {
     setLimitMsg(null)
     setGenerating(true)
 
-    /* Vérification fraîche côté serveur */
     const { count } = await supabase
       .from('codes_parrainage')
       .select('id', { count: 'exact', head: true })
@@ -364,7 +559,6 @@ function ParrainageSection({ commerce, supabase }) {
       return
     }
 
-    /* Génération d'un code unique */
     let code = genCode8()
     for (let i = 0; i < 5; i++) {
       const { data: ex } = await supabase.from('codes_parrainage').select('id').eq('code', code).maybeSingle()
@@ -415,7 +609,6 @@ function ParrainageSection({ commerce, supabase }) {
         <p className="text-xs text-red-500 font-semibold bg-red-50 px-3 py-2 rounded-xl">{limitMsg}</p>
       )}
 
-      {/* Code fraîchement généré */}
       {newCode && (
         <div className="bg-[#FFF0E0] border border-[#FF6B00]/20 rounded-2xl px-4 py-4 flex flex-col gap-2">
           <p className="text-[10px] font-semibold text-[#FF6B00] uppercase tracking-widest">Code généré ✓</p>
@@ -448,7 +641,6 @@ function ParrainageSection({ commerce, supabase }) {
           : '🎁 Générer un code de parrainage'}
       </button>
 
-      {/* Historique */}
       {sortedCodes.length > 0 && (
         <div className="flex flex-col gap-0.5 mt-1">
           <p className="text-[10px] font-semibold text-[#3D3D3D]/40 uppercase tracking-widest mb-1">Historique</p>
@@ -468,9 +660,9 @@ function ParrainageSection({ commerce, supabase }) {
                 </span>
               </div>
               <span className="text-xs font-bold shrink-0">
-                {c.statut === 'actif'    ? '🟢 Actif'
-               : c.statut === 'utilise'  ? '🟠 Utilisé'
-               :                          '🔴 Expiré'}
+                {c.statut === 'actif'   ? '🟢 Actif'
+               : c.statut === 'utilise' ? '🟠 Utilisé'
+               :                         '🔴 Expiré'}
               </span>
             </div>
           ))}
@@ -594,7 +786,6 @@ function QRVitrine({ commerce, toast, setToast }) {
           <span className="font-bold text-[#0A0A0A]">{commerce.nom}</span> sur BONMOMENT.
         </p>
 
-        {/* Bouton 1 : afficher overlay */}
         <button
           onClick={() => setShowOverlay(true)}
           className="w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-semibold text-sm py-3 rounded-lg transition-colors min-h-[48px]"
@@ -602,7 +793,6 @@ function QRVitrine({ commerce, toast, setToast }) {
           📲 Afficher mon QR code vitrine
         </button>
 
-        {/* Bouton 2 : télécharger */}
         <button
           onClick={telechargerQR}
           className="w-full bg-[#0A0A0A] hover:bg-[#1A1A1A] text-white font-semibold text-sm py-3 rounded-lg transition-colors min-h-[48px]"
@@ -613,7 +803,6 @@ function QRVitrine({ commerce, toast, setToast }) {
         <p className="text-[10px] text-[#3D3D3D]/40 text-center">Format A5 • Prêt pour l'impression</p>
       </div>
 
-      {/* QR canvas caché (pour génération téléchargement) */}
       <div className="hidden">
         <QRCodeCanvas
           id="qr-vitrine-canvas"
@@ -626,7 +815,6 @@ function QRVitrine({ commerce, toast, setToast }) {
         />
       </div>
 
-      {/* Overlay plein écran */}
       {showOverlay && (
         <div className="fixed inset-0 z-[90] bg-white flex flex-col items-center justify-center px-6">
           <button
