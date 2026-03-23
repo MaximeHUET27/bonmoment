@@ -47,7 +47,7 @@ export async function POST(request) {
     .from('reservations')
     .select(`
       id, statut, utilise_at, code_validation, user_id,
-      offres!inner(id, commerce_id, statut, date_fin, type_remise, titre, valeur)
+      offres!inner(id, commerce_id, statut, date_debut, date_fin, type_remise, titre, valeur)
     `)
 
   if (reservation_id) q = q.eq('id', reservation_id)
@@ -77,6 +77,19 @@ export async function POST(request) {
   const now = new Date()
   if (offre.statut !== 'active' || new Date(offre.date_fin) < now)
     return NextResponse.json({ error: 'Cette offre est expirée' }, { status: 410 })
+
+  // 3b. Offre pas encore commencée ?
+  if (new Date(offre.date_debut) > now) {
+    const dateStr = new Date(offre.date_debut).toLocaleDateString('fr-FR', {
+      weekday: 'long', day: 'numeric', month: 'long',
+    }) + ' à ' + new Date(offre.date_debut).toLocaleTimeString('fr-FR', {
+      hour: '2-digit', minute: '2-digit',
+    })
+    return NextResponse.json(
+      { error: `Ce bon n'est pas encore valable. Il sera actif à partir du ${dateStr}.`, not_yet: true, date_debut: offre.date_debut },
+      { status: 425 }
+    )
+  }
 
   // 4. Bon périmé ?
   if (res.statut === 'expiree')

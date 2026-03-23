@@ -8,6 +8,7 @@ import { getCategorieFiltre } from './OffreCard'
 import VilleAbonnement from '@/app/components/VilleAbonnement'
 import VilleSearchOverlay from '@/app/components/VilleSearchOverlay'
 import { toSlug } from '@/lib/utils'
+import { getOffreStatus } from '@/lib/offreStatus'
 
 /* ── Filtres ─────────────────────────────────────────────────────────────── */
 
@@ -56,6 +57,8 @@ export default function VilleClient({ offres, villeNom, villes = [] }) {
     ? offresActives
     : offresActives.filter(o => getOffreFiltre(o) === filtre)
 
+  const STATUS_ORDER = { en_cours: 0, programmee: 1, expiree: 2 }
+
   const offresAffichees = (offres || [])
     .filter(o => {
       if (filtre === 'tous') return true
@@ -63,14 +66,20 @@ export default function VilleClient({ offres, villeNom, villes = [] }) {
       return getOffreFiltre(o) === filtre
     })
     .sort((a, b) => {
-      // Actives en premier, triées par urgence décroissante, puis expirées
-      const aActive = isActive(a) ? 1 : 0
-      const bActive = isActive(b) ? 1 : 0
-      if (bActive !== aActive) return bActive - aActive
-      const aUrg = isUrgent(a) ? 1 : 0
-      const bUrg = isUrgent(b) ? 1 : 0
-      if (bUrg !== aUrg) return bUrg - aUrg
-      return new Date(a.date_fin) - new Date(b.date_fin)
+      // EN COURS (date_fin croissante) → PROGRAMMÉES (date_debut croissante) → EXPIRÉES (date_fin décroissante)
+      const aStatus = getOffreStatus(a)
+      const bStatus = getOffreStatus(b)
+      const aOrder  = STATUS_ORDER[aStatus] ?? 2
+      const bOrder  = STATUS_ORDER[bStatus] ?? 2
+      if (aOrder !== bOrder) return aOrder - bOrder
+      if (aStatus === 'en_cours') {
+        const aUrg = isUrgent(a) ? 1 : 0
+        const bUrg = isUrgent(b) ? 1 : 0
+        if (bUrg !== aUrg) return bUrg - aUrg
+        return new Date(a.date_fin) - new Date(b.date_fin)
+      }
+      if (aStatus === 'programmee') return new Date(a.date_debut) - new Date(b.date_debut)
+      return new Date(b.date_fin) - new Date(a.date_fin)
     })
 
   if (isLoading) {

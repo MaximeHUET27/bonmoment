@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import ShareButton from '@/app/components/ShareButton'
 import { useAuth } from '@/app/context/AuthContext'
+import { formatDebut } from '@/lib/offreStatus'
 
 /* QRCodeSVG chargé dynamiquement (évite SSR) */
 const QRCodeSVG = dynamic(
@@ -120,14 +121,15 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
     }
   }
 
-  const qrUrl   = reservation?.qr_code_data
+  const qrUrl      = reservation?.qr_code_data
     || `${typeof window !== 'undefined' ? window.location.origin : 'https://bonmoment.app'}/bon/${reservation?.id}`
 
-  const mapsUrl = commerce?.adresse
+  const mapsUrl    = commerce?.adresse
     ? `https://maps.google.com/?q=${encodeURIComponent(`${commerce.adresse}, ${commerce.ville || ''}`)}`
     : null
 
-  const timerRed = timeLeft && timeLeft.diff < 1_800_000
+  const programmee = offre?.date_debut && new Date(offre.date_debut) > new Date()
+  const timerRed   = !programmee && timeLeft && timeLeft.diff < 1_800_000
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col sm:items-center sm:justify-center sm:bg-black/60">
@@ -199,7 +201,13 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
 
         {/* ── Timer expiration ── */}
         <div className="text-center">
-          {timeLeft ? (
+          {programmee ? (
+            <>
+              <p className="text-xl font-black text-blue-600">📅 Valable à partir du</p>
+              <p className="text-base font-bold text-blue-600 mt-1">{formatDebut(offre.date_debut)}</p>
+              <p className="text-[11px] text-blue-400 mt-1 font-medium">Ce bon n'est pas encore actif</p>
+            </>
+          ) : timeLeft ? (
             <>
               <p className={`text-2xl font-black tabular-nums tracking-tight ${timerRed ? 'text-red-500' : 'text-[#0A0A0A]'}`}>
                 {String(timeLeft.h).padStart(2, '0')}h{' '}

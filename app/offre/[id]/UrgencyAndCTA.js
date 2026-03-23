@@ -8,6 +8,7 @@ import FullScreenBon from '@/app/components/FullScreenBon'
 import FavoriButton from '@/app/components/FavoriButton'
 import { useReservation } from '@/app/hooks/useReservation'
 import { useFavoris } from '@/app/context/FavorisContext'
+import { formatDebut } from '@/lib/offreStatus'
 
 const PENDING_KEY = 'bonmoment_pending_reservation'
 
@@ -139,13 +140,14 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
     await reserver(offre)
   }
 
+  const programmee  = new Date(offre.date_debut) > new Date()
   const expired     = !timeLeft
   const epuise      = offre.nb_bons_restants !== null &&
                       offre.nb_bons_restants !== 9999 &&
                       offre.nb_bons_restants <= 0
   const fini        = expired || epuise
-  const urgentTime  = timeLeft && timeLeft.diff < 30 * 60_000
-  const urgentStock = offre.nb_bons_restants !== null &&
+  const urgentTime  = !programmee && timeLeft && timeLeft.diff < 30 * 60_000
+  const urgentStock = !programmee && offre.nb_bons_restants !== null &&
                       offre.nb_bons_restants !== 9999 &&
                       offre.nb_bons_restants <= 5
   const urgent      = urgentTime || urgentStock
@@ -185,44 +187,56 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
       {/* ── Barre d'urgence ── */}
       <div
         className={`flex items-center justify-between px-4 py-3 rounded-2xl ${
+          programmee ? 'bg-blue-50' :
           urgent && !fini ? '' : 'bg-[#F5F5F5]'
         }`}
-        style={urgent && !fini ? { backgroundColor: '#FF6B00', color: 'white' } : {}}
+        style={!programmee && urgent && !fini ? { backgroundColor: '#FF6B00', color: 'white' } : {}}
       >
-        {/* Countdown */}
-        <div className="flex items-center gap-2">
-          <span className="text-lg">⏱</span>
-          {expired ? (
-            <span className="text-sm font-bold text-red-500">Trop tard !</span>
-          ) : (
-            <span className={`text-base font-black tabular-nums tracking-tight ${
-              urgent && !fini ? 'text-white' : 'text-[#0A0A0A]'
-            }`}>
-              {String(timeLeft.h).padStart(2, '0')}h{' '}
-              {String(timeLeft.m).padStart(2, '0')}m{' '}
-              {String(timeLeft.s).padStart(2, '0')}s
+        {programmee ? (
+          <div className="flex items-center gap-2 w-full">
+            <span className="text-lg">📅</span>
+            <span className="text-sm font-bold text-blue-700">
+              Cette offre commence le {formatDebut(offre.date_debut)}
             </span>
-          )}
-        </div>
+          </div>
+        ) : (
+          <>
+            {/* Countdown */}
+            <div className="flex items-center gap-2">
+              <span className="text-lg">⏱</span>
+              {expired ? (
+                <span className="text-sm font-bold text-red-500">Trop tard !</span>
+              ) : (
+                <span className={`text-base font-black tabular-nums tracking-tight ${
+                  urgent && !fini ? 'text-white' : 'text-[#0A0A0A]'
+                }`}>
+                  {String(timeLeft.h).padStart(2, '0')}h{' '}
+                  {String(timeLeft.m).padStart(2, '0')}m{' '}
+                  {String(timeLeft.s).padStart(2, '0')}s
+                </span>
+              )}
+            </div>
 
-        {/* Bons restants */}
-        <div className="text-right">
-          <p className={`text-sm font-black ${
-            urgent && !fini ? 'text-white' :
-            urgentStock ? 'text-red-500 animate-pulse' : 'text-[#0A0A0A]'
-          }`}>
-            {offre.nb_bons_restants === null || offre.nb_bons_restants === 9999
-              ? '∞ bons'
-              : `🎫 ${offre.nb_bons_restants} restant${offre.nb_bons_restants > 1 ? 's' : ''}`}
-          </p>
-          {urgent && !fini && (
-            <p className="text-[10px] text-white/80 font-semibold">
-              {urgentTime && urgentStock ? 'Fin imminente !'
-                : urgentTime ? 'Expire bientôt !'
-                : 'Presque épuisé !'}
-            </p>
-          )}
-        </div>
+            {/* Bons restants */}
+            <div className="text-right">
+              <p className={`text-sm font-black ${
+                urgent && !fini ? 'text-white' :
+                urgentStock ? 'text-red-500 animate-pulse' : 'text-[#0A0A0A]'
+              }`}>
+                {offre.nb_bons_restants === null || offre.nb_bons_restants === 9999
+                  ? '∞ bons'
+                  : `🎫 ${offre.nb_bons_restants} restant${offre.nb_bons_restants > 1 ? 's' : ''}`}
+              </p>
+              {urgent && !fini && (
+                <p className="text-[10px] text-white/80 font-semibold">
+                  {urgentTime && urgentStock ? 'Fin imminente !'
+                    : urgentTime ? 'Expire bientôt !'
+                    : 'Presque épuisé !'}
+                </p>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── CTA principal ── */}

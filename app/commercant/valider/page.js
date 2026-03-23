@@ -88,6 +88,9 @@ export default function ValiderPage() {
       } else if (res.status === 410) {
         vibrate(200)
         setResult({ type: 'expired', msg: data.error })
+      } else if (res.status === 425) {
+        vibrate([100, 100, 100])
+        setResult({ type: 'not_yet', date_debut: data.date_debut })
       } else {
         vibrate(200)
         setResult({ type: 'invalid' })
@@ -296,9 +299,9 @@ export default function ValiderPage() {
 function ResultScreen({ result, onBack }) {
   const timerRef = useRef(null)
 
-  /* Auto-retour après 3s pour succès */
+  /* Auto-retour après 3s pour succès et not_yet */
   useEffect(() => {
-    if (result.type === 'success') {
+    if (result.type === 'success' || result.type === 'not_yet') {
       timerRef.current = setTimeout(onBack, 3000)
     }
     return () => clearTimeout(timerRef.current)
@@ -310,6 +313,7 @@ function ResultScreen({ result, onBack }) {
     invalid:       { bg: '#EF4444', icon: '✕',  title: 'Code invalide',                           iconAnim: 'popIn' },
     wrong_commerce:{ bg: '#EF4444', icon: '✕',  title: 'Ce bon appartient à un autre commerce',  iconAnim: 'popIn' },
     expired:       { bg: '#6B7280', icon: '⌛', title: result.msg ?? 'Ce bon est périmé',         iconAnim: 'popIn' },
+    not_yet:       { bg: '#3B82F6', icon: '📅', title: 'Ce bon n\'est pas encore valable',        iconAnim: 'popIn' },
   }[result.type] ?? { bg: '#EF4444', icon: '✕', title: 'Erreur', iconAnim: 'popIn' }
 
   return (
@@ -376,8 +380,14 @@ function ResultScreen({ result, onBack }) {
         </p>
       )}
 
-      {/* Countdown pour succès */}
-      {result.type === 'success' && (
+      {result.type === 'not_yet' && result.date_debut && (
+        <p className="text-white/90 text-base font-semibold text-center">
+          Actif à partir du {formatDateTime(result.date_debut)}
+        </p>
+      )}
+
+      {/* Countdown pour succès et not_yet */}
+      {(result.type === 'success' || result.type === 'not_yet') && (
         <CountdownDots totalMs={3000} />
       )}
 

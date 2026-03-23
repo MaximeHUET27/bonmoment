@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
+import { formatDebut } from '@/lib/offreStatus'
 
 const QRCodeSVG = dynamic(
   () => import('qrcode.react').then(m => m.QRCodeSVG),
@@ -74,12 +75,13 @@ export default function BonDisplay({ reservation, offre, commerce }) {
     return () => { wakeLock.current?.release().catch(() => {}) }
   }, [])
 
-  const qrUrl   = reservation?.qr_code_data || `${typeof window !== 'undefined' ? window.location.href : ''}`
-  const mapsUrl = commerce?.adresse
+  const qrUrl      = reservation?.qr_code_data || `${typeof window !== 'undefined' ? window.location.href : ''}`
+  const mapsUrl    = commerce?.adresse
     ? `https://maps.google.com/?q=${encodeURIComponent(`${commerce.adresse}, ${commerce.ville || ''}`)}`
     : null
-  const timerRed = timeLeft && timeLeft.diff < 1_800_000
-  const expired  = !timeLeft
+  const programmee = offre?.date_debut && new Date(offre.date_debut) > new Date()
+  const timerRed   = !programmee && timeLeft && timeLeft.diff < 1_800_000
+  const expired    = !timeLeft
 
   return (
     <main className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-10">
@@ -129,7 +131,13 @@ export default function BonDisplay({ reservation, offre, commerce }) {
 
         {/* Timer */}
         <div className="text-center">
-          {expired ? (
+          {programmee ? (
+            <>
+              <p className="text-xl font-black text-blue-600">📅 Valable à partir du</p>
+              <p className="text-base font-bold text-blue-600 mt-1">{formatDebut(offre.date_debut)}</p>
+              <p className="text-[11px] text-blue-400 mt-1 font-medium">Ce bon n'est pas encore actif</p>
+            </>
+          ) : expired ? (
             <p className="text-base font-black text-red-500">Trop tard — bon expiré</p>
           ) : (
             <>

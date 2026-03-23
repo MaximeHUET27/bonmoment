@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/app/context/AuthContext'
+import { formatDebut } from '@/lib/offreStatus'
 
 const PENDING_KEY = 'bonmoment_pending_reservation'
 import AuthBottomSheet from '@/app/components/AuthBottomSheet'
@@ -74,15 +75,16 @@ function formatBadge(offre) {
 /* ── Composant ───────────────────────────────────────────────────────────── */
 
 export default function OffreCard({ offre }) {
-  const timeLeft = useCountdown(offre.date_fin)
-  const commerce = offre.commerces
-  const expired  = !timeLeft
-  const epuise   = offre.nb_bons_restants !== null &&
-                   offre.nb_bons_restants !== 9999 &&
-                   offre.nb_bons_restants <= 0
-  const fini     = expired || epuise
+  const timeLeft   = useCountdown(offre.date_fin)
+  const commerce   = offre.commerces
+  const programmee = new Date(offre.date_debut) > new Date()
+  const expired    = !timeLeft
+  const epuise     = offre.nb_bons_restants !== null &&
+                     offre.nb_bons_restants !== 9999 &&
+                     offre.nb_bons_restants <= 0
+  const fini       = expired || epuise
 
-  const urgent   = timeLeft && (
+  const urgent     = !programmee && timeLeft && (
     timeLeft.diff < 3_600_000 ||
     (offre.nb_bons_restants !== null && offre.nb_bons_restants < 5)
   )
@@ -211,22 +213,34 @@ export default function OffreCard({ offre }) {
 
         {/* ── Header : countdown + bons restants + partage ── */}
         <div className={`flex items-center gap-1 px-2 py-1.5 ${
+          programmee ? 'bg-blue-50' :
           urgent && !fini ? 'bg-red-50' : 'bg-[#F5F5F5]'
         }`}>
           <Link href={`/offre/${offre.id}`} className="flex-1 flex items-center justify-between gap-1.5 px-1 py-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm">⏱</span>
-              {timeLeft ? (
-                <span className={`text-xs font-black tabular-nums ${
-                  urgent && !fini ? 'text-red-500' : 'text-[#0A0A0A]'
-                }`}>
-                  {urgent && !fini && <span className="font-semibold mr-1 text-[10px]">Urgent —</span>}
-                  {String(timeLeft.h).padStart(2, '0')}h{' '}
-                  {String(timeLeft.m).padStart(2, '0')}m{' '}
-                  {String(timeLeft.s).padStart(2, '0')}s
-                </span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              {programmee ? (
+                <>
+                  <span className="text-sm">📅</span>
+                  <span className="text-xs font-bold text-indigo-600 truncate">
+                    Début le {formatDebut(offre.date_debut)}
+                  </span>
+                </>
               ) : (
-                <span className="text-xs font-black text-[#3D3D3D]/60">Trop tard !</span>
+                <>
+                  <span className="text-sm">⏱</span>
+                  {timeLeft ? (
+                    <span className={`text-xs font-black tabular-nums ${
+                      urgent && !fini ? 'text-red-500' : 'text-[#0A0A0A]'
+                    }`}>
+                      {urgent && !fini && <span className="font-semibold mr-1 text-[10px]">Urgent —</span>}
+                      {String(timeLeft.h).padStart(2, '0')}h{' '}
+                      {String(timeLeft.m).padStart(2, '0')}m{' '}
+                      {String(timeLeft.s).padStart(2, '0')}s
+                    </span>
+                  ) : (
+                    <span className="text-xs font-black text-[#3D3D3D]/60">Trop tard !</span>
+                  )}
+                </>
               )}
             </div>
             <span className={`text-[11px] font-bold ${nbPulse ? 'text-red-500 animate-pulse' : 'text-[#3D3D3D]'}`}>
