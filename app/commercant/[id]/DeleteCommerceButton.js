@@ -1,41 +1,43 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@/app/context/AuthContext'
 
-/**
- * Bouton "Supprimer ce commerce" visible uniquement par le propriétaire.
- * Double confirmation avant suppression.
- */
-export default function DeleteCommerceButton({ commerceId, ownerUserId }) {
+export default function DeleteCommerceButton({ commerceId, commerceNom, ownerUserId }) {
   const { user, supabase } = useAuth()
-  const router = useRouter()
-  const [step,    setStep]    = useState(0) // 0=hidden, 1=confirm1, 2=confirm2
+  const [step,    setStep]    = useState(0)
   const [loading, setLoading] = useState(false)
-  const [toast,   setToast]   = useState(null)
 
-  // N'affiche rien si l'utilisateur n'est pas le propriétaire
   if (!user || user.id !== ownerUserId) return null
 
   async function handleDelete() {
     setLoading(true)
     try {
-      // Annule toutes les offres actives
+      // a. Annule toutes les offres actives
       await supabase
         .from('offres')
         .update({ statut: 'annulee' })
         .eq('commerce_id', commerceId)
         .eq('statut', 'active')
 
-      // Détache le commerce du propriétaire
+      // b. Détache le commerce du propriétaire
       await supabase
         .from('commerces')
         .update({ abonnement_actif: false, owner_id: null })
         .eq('id', commerceId)
 
-      setToast('Commerce supprimé de ton compte.')
-      setTimeout(() => router.push('/'), 1500)
+      // c. Vérifie les commerces restants
+      const { data: restants } = await supabase
+        .from('commerces')
+        .select('id')
+        .eq('owner_id', user.id)
+
+      // d/e. Redirect hard pour forcer le rafraîchissement du menu
+      if (!restants || restants.length === 0) {
+        window.location.href = '/'
+      } else {
+        window.location.href = `/commercant/dashboard?commerce=${restants[0].id}`
+      }
     } catch {
       setLoading(false)
       setStep(0)
@@ -55,9 +57,11 @@ export default function DeleteCommerceButton({ commerceId, ownerUserId }) {
 
       {step === 1 && (
         <div className="mt-6 bg-red-50 border border-red-100 rounded-2xl px-4 py-4 flex flex-col gap-3">
-          <p className="text-sm font-bold text-red-600">Supprimer ce commerce ?</p>
+          <p className="text-sm font-bold text-red-600">
+            Tu veux vraiment supprimer {commerceNom ? `« ${commerceNom} »` : 'ce commerce'} ?
+          </p>
           <p className="text-xs text-[#3D3D3D]/60">
-            Toutes les offres actives seront annulées et le commerce sera retiré de ton compte. Cette action est irréversible.
+            Cette action est irréversible. Toutes les offres actives seront annulées.
           </p>
           <div className="flex gap-2">
             <button
@@ -80,7 +84,7 @@ export default function DeleteCommerceButton({ commerceId, ownerUserId }) {
         <div className="mt-6 bg-red-50 border border-red-200 rounded-2xl px-4 py-4 flex flex-col gap-3">
           <p className="text-sm font-black text-red-700">Dernière confirmation</p>
           <p className="text-xs text-[#3D3D3D]/60">
-            Tu es sûr ? Cette action ne peut pas être annulée.
+            Cette action ne peut pas être annulée. Le commerce sera définitivement retiré de ton compte.
           </p>
           <div className="flex gap-2">
             <button
@@ -99,12 +103,6 @@ export default function DeleteCommerceButton({ commerceId, ownerUserId }) {
                 : 'Oui, supprimer'}
             </button>
           </div>
-        </div>
-      )}
-
-      {toast && (
-        <div className="fixed bottom-8 left-4 right-4 z-50 bg-[#0A0A0A] text-white text-sm font-semibold px-4 py-3 rounded-2xl shadow-xl text-center">
-          {toast}
         </div>
       )}
     </>

@@ -35,7 +35,7 @@ export default function DashboardPage() {
     const commerceId = params?.get('commerce')
     supabase
       .from('commerces')
-      .select('id, nom, categorie, ville, adresse, note_google, palier')
+      .select('id, nom, categorie, ville, adresse, note_google, palier, photo_url')
       .eq('owner_id', user.id)
       .then(({ data }) => {
         const list = data || []
@@ -161,7 +161,20 @@ export default function DashboardPage() {
 
         {/* 2. TON ÉTABLISSEMENT ──────────────────────────────────────────── */}
         {commerce && (
-          <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
+          <div className="bg-white rounded-3xl overflow-hidden flex flex-col gap-4 shadow-sm">
+            {/* Photo */}
+            {commerce.photo_url ? (
+              <img
+                src={commerce.photo_url}
+                alt={commerce.nom}
+                className="w-full h-[200px] object-cover"
+              />
+            ) : (
+              <div className="w-full h-[200px] bg-[#F5F5F5] flex items-center justify-center">
+                <span className="text-5xl">🏪</span>
+              </div>
+            )}
+            <div className="px-6 pb-6 flex flex-col gap-4">
             <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">Ton établissement</h2>
             <div className="flex flex-col gap-2">
               {commerce.categorie && (
@@ -182,6 +195,7 @@ export default function DashboardPage() {
                 <p className="text-xs text-[#3D3D3D]/60">⭐ {commerce.note_google} / 5 sur Google</p>
               )}
             </div>
+            </div>
           </div>
         )}
 
@@ -195,8 +209,8 @@ export default function DashboardPage() {
           <ParrainageSection commerce={commerce} supabase={supabase} />
         )}
 
-        {/* 5. QR CODE VITRINE ─────────────────────────────────────────────── */}
-        {commerce?.ville && (
+        {/* 5. QR CODE ─────────────────────────────────────────────────────── */}
+        {commerce && (
           <QRVitrine commerce={commerce} toast={qrToast} setToast={setQrToast} />
         )}
 
@@ -254,7 +268,7 @@ export default function DashboardPage() {
 
         {/* 8. Supprimer ce commerce ───────────────────────────────────────── */}
         {commerce && user && (
-          <DeleteCommerceButton commerceId={commerce.id} ownerUserId={user.id} />
+          <DeleteCommerceButton commerceId={commerce.id} commerceNom={commerce.nom} ownerUserId={user.id} />
         )}
 
       </div>
@@ -287,6 +301,11 @@ function StatsSection({ commerce, supabase }) {
   useEffect(() => {
     if (!commerce || !supabase) return
     loadStats()
+    function onVisible() {
+      if (document.visibilityState === 'visible') loadStats()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [commerce.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadStats() {
@@ -780,17 +799,13 @@ function QRVitrine({ commerce, toast, setToast }) {
   return (
     <>
       <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-3 shadow-sm">
-        <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">Mon QR code vitrine</h2>
-        <p className="text-xs text-[#3D3D3D]/60">
-          Tes clients scannent et découvrent directement{' '}
-          <span className="font-bold text-[#0A0A0A]">{commerce.nom}</span> sur BONMOMENT.
-        </p>
+        <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">Mon QR code</h2>
 
         <button
           onClick={() => setShowOverlay(true)}
           className="w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-semibold text-sm py-3 rounded-lg transition-colors min-h-[48px]"
         >
-          📲 Afficher mon QR code vitrine
+          📲 Afficher mon QR code
         </button>
 
         <button
@@ -799,8 +814,6 @@ function QRVitrine({ commerce, toast, setToast }) {
         >
           📥 Télécharger mon QR code
         </button>
-
-        <p className="text-[10px] text-[#3D3D3D]/40 text-center">Format A5 • Prêt pour l'impression</p>
       </div>
 
       <div className="hidden">

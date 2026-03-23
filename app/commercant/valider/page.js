@@ -234,12 +234,6 @@ export default function ValiderPage() {
               />
             )}
 
-            <button
-              onClick={switchToManual}
-              className="text-center text-sm text-[#FF6B00] font-semibold hover:underline min-h-[44px] flex items-center justify-center"
-            >
-              Saisir le code manuellement →
-            </button>
           </div>
         )}
 
@@ -279,13 +273,6 @@ export default function ValiderPage() {
                 <p className="text-sm text-[#3D3D3D]/60 font-semibold">Vérification…</p>
               </div>
             )}
-
-            <button
-              onClick={() => { setMode('scanner'); setScannerKey(k => k + 1) }}
-              className="text-center text-sm text-[#FF6B00] font-semibold hover:underline min-h-[44px] flex items-center justify-center"
-            >
-              Scanner un QR code →
-            </button>
           </div>
         )}
 
