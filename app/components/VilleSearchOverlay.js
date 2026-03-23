@@ -52,8 +52,9 @@ export default function VilleSearchOverlay({
   const [coordsBonmoment, setCoordsBonmoment] = useState(new Map())
 
   const inputRef       = useRef(null)
-  const debounce       = useRef(null)
+  const debounceTimer  = useRef(null)
   const coordsLoaded   = useRef(false)
+  const requestId      = useRef(0)
   const abortCtrl      = useRef(null)
 
   const villesActivesSet = new Set(villesBonmoment.map(v => v.nom.toLowerCase()))
@@ -120,58 +121,75 @@ export default function VilleSearchOverlay({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
-  /* Debounce search geo.api.gouv.fr avec AbortController */
+  /* Recherche geo.api.gouv.fr — requestId anti-stale + debounce 400ms */
   useEffect(() => {
-    if (debounce.current) clearTimeout(debounce.current)
-    if (abortCtrl.current) { abortCtrl.current.abort(); abortCtrl.current = null }
+    if (debounceTimer.current) clearTimeout(debounceTimer.current)
 
-    if (!query.trim() || query.length < 2) { setResults([]); setSearching(false); return }
+    if (query.length < 2) {
+      setResults([])
+      setSearching(false)
+      return
+    }
 
-    setSearching(true)  // visible immédiatement dès la frappe
+    setSearching(true)
 
-    debounce.current = setTimeout(async () => {
-      const ctrl = new AbortController()
-      abortCtrl.current = ctrl
+    debounceTimer.current = setTimeout(async () => {
+      const currentRequest = ++requestId.current
+
+      if (abortCtrl.current) abortCtrl.current.abort()
+      abortCtrl.current = new AbortController()
+
       try {
-        const isNumeric = /^\d/.test(query.trim())
-        const calls = [
-          fetch(
-            `https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(query)}&fields=nom,code,codeDepartement,codesPostaux,population&boost=population&limit=15`,
-            { signal: ctrl.signal }
-          ),
-        ]
-        if (isNumeric) {
-          calls.push(fetch(
-            `https://geo.api.gouv.fr/communes?codePostal=${encodeURIComponent(query)}&fields=nom,code,codeDepartement,codesPostaux,population&boost=population&limit=15`,
-            { signal: ctrl.signal }
-          ))
-        }
-        const responses = await Promise.all(calls)
-        const datasets  = await Promise.all(responses.map(r => r.json()))
+        const normalizedQuery = query.trim()
+        const params = new URLSearchParams({
+          nom:    normalizedQuery,
+          fields: 'nom,code,codeDepartement,codesPostaux,population',
+          boost:  'population',
+          limit:  '15',
+        })
 
-        // Merge + dédup par code
-        const seen = new Set()
-        const merged = []
-        for (const data of datasets) {
-          for (const c of data) {
-            if (!seen.has(c.code)) { seen.add(c.code); merged.push(c) }
-          }
+        const res = await fetch(
+          `https://geo.api.gouv.fr/communes?${params}`,
+          { signal: abortCtrl.current.signal }
+        )
+        if (currentRequest !== requestId.current) return
+
+        const data = await res.json()
+        if (currentRequest !== requestId.current) return
+
+        let mergedData = [...data]
+
+        if (/^\d+$/.test(normalizedQuery)) {
+          const resCP = await fetch(
+            `https://geo.api.gouv.fr/communes?codePostal=${encodeURIComponent(normalizedQuery)}&fields=nom,code,codeDepartement,codesPostaux,population&limit=15`,
+            { signal: abortCtrl.current.signal }
+          )
+          if (currentRequest !== requestId.current) return
+          const dataCP = await resCP.json()
+          if (currentRequest !== requestId.current) return
+          const seen = new Set(mergedData.map(c => c.code))
+          dataCP.forEach(c => { if (!seen.has(c.code)) mergedData.push(c) })
         }
 
-        // Tri : villes actives d'abord, puis population décroissante
-        merged.sort((a, b) => {
+        mergedData.sort((a, b) => {
           const aA = villesActivesSet.has(a.nom.toLowerCase()) ? 0 : 1
           const bA = villesActivesSet.has(b.nom.toLowerCase()) ? 0 : 1
           if (aA !== bA) return aA - bA
           return (b.population || 0) - (a.population || 0)
         })
-        setResults(merged)
+
+        if (currentRequest !== requestId.current) return
+        setResults(mergedData)
         setSearching(false)
-      } catch (e) {
-        if (e.name !== 'AbortError') setSearching(false)
-        // AbortError = nouvelle frappe a annulé la requête → ne pas modifier l'état
+      } catch (err) {
+        if (err.name === 'AbortError') return
+        if (currentRequest === requestId.current) setSearching(false)
       }
-    }, 300)
+    }, 400)
+
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query])
 
@@ -345,19 +363,8 @@ export default function VilleSearchOverlay({
               {/* ── Résultats de recherche (quand query >= 2) ── */}
               {query.length >= 2 && (
                 <>
-                  {searching && (
-                    <p className="text-center text-sm text-[#3D3D3D]/50 py-8 flex items-center justify-center gap-2">
-                      <span className="w-4 h-4 border-2 border-[#FF6B00] border-t-transparent rounded-full animate-spin inline-block" />
-                      Recherche...
-                    </p>
-                  )}
-                  {!searching && results.length === 0 && localMatches.length === 0 && (
-                    <p className="text-center text-sm text-[#3D3D3D]/50 py-8">
-                      Aucune commune trouvée.
-                    </p>
-                  )}
-                  {/* Villes BONMOMENT correspondant à la recherche */}
-                  {!searching && localMatches.map(v => (
+                  {/* Villes BONMOMENT — affichées immédiatement (synchrone), même pendant searching */}
+                  {localMatches.map(v => (
                     <button
                       key={`bm-${v.id}`}
                       onClick={() => handleSelectCommune({ nom: v.nom, code: '' })}
@@ -374,7 +381,20 @@ export default function VilleSearchOverlay({
                       })()}
                     </button>
                   ))}
-                  {/* Autres communes via geo API */}
+                  {/* Spinner — sous les localMatches, pendant le chargement API */}
+                  {searching && (
+                    <p className="text-center text-sm text-[#3D3D3D]/50 py-6 flex items-center justify-center gap-2">
+                      <span className="w-4 h-4 border-2 border-[#FF6B00] border-t-transparent rounded-full animate-spin inline-block" />
+                      Recherche...
+                    </p>
+                  )}
+                  {/* Message "aucun résultat" — uniquement quand l'API a répondu et rien trouvé */}
+                  {!searching && results.length === 0 && localMatches.length === 0 && (
+                    <p className="text-center text-sm text-[#3D3D3D]/50 py-8">
+                      Aucun résultat pour «&nbsp;{query}&nbsp;»
+                    </p>
+                  )}
+                  {/* Autres communes via geo API — uniquement quand l'API a répondu */}
                   {!searching && resultsDedupliques
                     .filter(c => !villesActivesSet.has(c.nom.toLowerCase()))
                     .map(c => (
