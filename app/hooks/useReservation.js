@@ -29,19 +29,20 @@ export function useReservation() {
       }
       console.log('[réservation] ✔ User authentifié:', authUser.id)
 
-      /* 1 — Déjà réservé ? (filtre statut='reservee' : une annulée/expirée ne bloque pas) */
+      /* 1 — Cherche une réservation existante, quel que soit le statut.
+             La table a une contrainte UNIQUE(user_id, offre_id) : on ne peut pas
+             insérer deux lignes. Si une ancienne existe (annulée/expirée) → UPDATE. */
       const { data: existing, error: existErr } = await supabase
         .from('reservations')
-        .select('id, code_validation, qr_code_data')
+        .select('id, code_validation, qr_code_data, statut')
         .eq('user_id',  authUser.id)
         .eq('offre_id', offre.id)
-        .eq('statut',   'reservee')
         .maybeSingle()
 
       if (existErr) console.error('[réservation] ✗ Check existing:', existErr.message)
 
-      if (existing) {
-        console.log('[réservation] ↩ Déjà réservé:', existing.id)
+      if (existing?.statut === 'reservee') {
+        console.log('[réservation] ↩ Déjà réservé (actif):', existing.id)
         setReservation(existing)
         setStatus('already_reserved')
         return existing
@@ -70,43 +71,46 @@ export function useReservation() {
       if (!code) throw new Error('Impossible de générer un code unique.')
       console.log('[réservation] ✔ Code généré:', code)
 
-      /* 4 — INSERT sans .select() pour éviter PGRST116 si la policy RLS SELECT
-             ne couvre pas la ligne juste insérée */
-      console.log('[réservation] → INSERT reservations — user_id:', authUser.id, 'offre_id:', offre.id)
-      const { error: insertErr } = await supabase
-        .from('reservations')
-        .insert({
-          user_id:         authUser.id,
-          offre_id:        offre.id,
-          code_validation: code,
-          qr_code_data:    '',
-          statut:          'reservee',
-        })
-
-      if (insertErr) {
-        console.error('[réservation] ✗ Erreur INSERT —',
-          'code:', insertErr.code,
-          'message:', insertErr.message,
-          'details:', insertErr.details,
-          'hint:', insertErr.hint,
-        )
-        throw insertErr
+      /* 4 — INSERT ou UPDATE selon qu'une ligne existe déjà (contrainte unique_user_offre) */
+      let writeErr = null
+      if (existing) {
+        // Réactivation d'une réservation annulée/expirée
+        console.log('[réservation] → UPDATE réactivation (statut précédent:', existing.statut, ')')
+        const { error } = await supabase
+          .from('reservations')
+          .update({ statut: 'reservee', code_validation: code, qr_code_data: '', utilise_at: null })
+          .eq('id', existing.id)
+        writeErr = error
+      } else {
+        console.log('[réservation] → INSERT reservations — user_id:', authUser.id, 'offre_id:', offre.id)
+        const { error } = await supabase
+          .from('reservations')
+          .insert({ user_id: authUser.id, offre_id: offre.id, code_validation: code, qr_code_data: '', statut: 'reservee' })
+        writeErr = error
       }
-      console.log('[réservation] ✔ INSERT OK')
 
-      /* 5 — SELECT séparé pour récupérer l'id de la ligne créée */
+      if (writeErr) {
+        console.error('[réservation] ✗ Erreur écriture —',
+          'code:', writeErr.code,
+          'message:', writeErr.message,
+          'details:', writeErr.details,
+          'hint:', writeErr.hint,
+        )
+        throw writeErr
+      }
+      console.log('[réservation] ✔ Écriture OK')
+
+      /* 5 — SELECT pour récupérer l'id de la ligne créée/réactivée */
       const { data: newRes, error: selectErr } = await supabase
         .from('reservations')
         .select('id, code_validation, qr_code_data')
         .eq('user_id',  authUser.id)
         .eq('offre_id', offre.id)
         .eq('statut',   'reservee')
-        .order('created_at', { ascending: false })
-        .limit(1)
         .single()
 
       if (selectErr) {
-        console.error('[réservation] ⚠ SELECT après INSERT:', selectErr.code, selectErr.message)
+        console.error('[réservation] ⚠ SELECT après écriture:', selectErr.code, selectErr.message)
       } else {
         console.log('[réservation] ✔ SELECT OK — id:', newRes.id)
       }
