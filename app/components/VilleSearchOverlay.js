@@ -31,6 +31,7 @@ export default function VilleSearchOverlay({
   onClose,
   villesBonmoment = [],
   onSelectActive  = null,
+  onSelectAll     = null,
   onSubscribed    = null,
 }) {
   const router              = useRouter()
@@ -338,7 +339,7 @@ export default function VilleSearchOverlay({
 
                       {/* Option : Toutes mes villes */}
                       <button
-                        onClick={() => { try { localStorage.removeItem('bonmoment_ville') } catch {} router.push('/?view=all'); onClose() }}
+                        onClick={() => { try { localStorage.removeItem('bonmoment_ville') } catch {} onSelectAll?.(); router.push('/?view=all'); onClose() }}
                         className="w-full flex items-center gap-3 py-3.5 border-b border-[#F5F5F5] hover:bg-[#FFF0E0] rounded-xl px-2 transition-colors min-h-[48px]"
                       >
                         <span className="text-lg">🏠</span>

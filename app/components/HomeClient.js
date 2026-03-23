@@ -76,8 +76,15 @@ export default function HomeClient({ offres, villes }) {
   /* Quand l'utilisateur sélectionne une ville active dans l'overlay */
   function handleVilleSelect(nomVille) {
     setVille(nomVille)
+    setViewAll(false)
     localStorage.setItem('bonmoment_ville', nomVille)
     router.push(`/ville/${toSlug(nomVille)}`)
+  }
+
+  /* Quand l'utilisateur choisit "Toutes mes villes" dans l'overlay */
+  function handleSelectAll() {
+    setViewAll(true)
+    setVille(null)
   }
 
   /* ── Filtrage ── */
@@ -126,7 +133,17 @@ export default function HomeClient({ offres, villes }) {
           onClick={() => setShowOverlay(true)}
           className="flex items-center gap-1.5 text-sm font-bold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors min-h-[44px]"
         >
-          <span>📍 {viewAll ? 'Toutes mes villes' : (ville || 'Ta ville')}</span>
+          <span>📍 {
+            viewAll
+              ? 'Toutes mes villes'
+              : ville
+              ? ville
+              : (!user || villesAbonnees.length === 0)
+              ? 'Choisir une ville'
+              : villesAbonnees.length === 1
+              ? villesAbonnees[0]
+              : 'Toutes mes villes'
+          }</span>
           <span className="text-[#FF6B00] text-xs font-semibold">Changer ▼</span>
         </button>
 
@@ -178,6 +195,7 @@ export default function HomeClient({ offres, villes }) {
         onClose={() => setShowOverlay(false)}
         villesBonmoment={villes}
         onSelectActive={handleVilleSelect}
+        onSelectAll={handleSelectAll}
       />
 
     </div>
