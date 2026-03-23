@@ -171,7 +171,7 @@ export default function VilleSearchOverlay({
         if (e.name !== 'AbortError') setSearching(false)
         // AbortError = nouvelle frappe a annulé la requête → ne pas modifier l'état
       }
-    }, 400)
+    }, 600)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query])
 
@@ -366,11 +366,12 @@ export default function VilleSearchOverlay({
                       <div className="text-left min-w-0">
                         <p className="text-sm font-bold text-[#0A0A0A]">{v.nom}</p>
                       </div>
-                      <span className="text-[10px] font-bold text-white bg-[#FF6B00] px-2 py-0.5 rounded-full shrink-0 ml-2">
-                        {nbOffresMap.has(v.nom) && nbOffresMap.get(v.nom) > 0
-                          ? `${nbOffresMap.get(v.nom)} offre${nbOffresMap.get(v.nom) > 1 ? 's' : ''} dispo`
-                          : 'Offres dispo'}
-                      </span>
+                      {(() => {
+                        const n = nbOffresMap.get(v.nom) ?? 0
+                        return n > 0
+                          ? <span className="text-[10px] font-bold text-white bg-[#FF6B00] px-2 py-0.5 rounded-full shrink-0 ml-2">{n} offre{n > 1 ? 's' : ''}</span>
+                          : <span className="text-[10px] text-[#3D3D3D]/40 shrink-0 ml-2">0 offre</span>
+                      })()}
                     </button>
                   ))}
                   {/* Autres communes via geo API */}
@@ -451,11 +452,10 @@ export default function VilleSearchOverlay({
                                 className="w-full flex items-center justify-between py-3.5 border-b border-[#F5F5F5] last:border-0 hover:bg-[#FFF0E0] rounded-xl px-2 transition-colors min-h-[48px]"
                               >
                                 <span className="text-sm font-bold text-[#0A0A0A]">📍 {v.nom}</span>
-                                <span className="text-[10px] font-bold text-white bg-[#FF6B00] px-2 py-0.5 rounded-full shrink-0 ml-2">
-                                  {count > 0
-                                    ? `${count} offre${count > 1 ? 's' : ''} dispo`
-                                    : 'Offres dispo'}
-                                </span>
+                                {count > 0
+                                  ? <span className="text-[10px] font-bold text-white bg-[#FF6B00] px-2 py-0.5 rounded-full shrink-0 ml-2">{count} offre{count > 1 ? 's' : ''}</span>
+                                  : <span className="text-[10px] text-[#3D3D3D]/40 shrink-0 ml-2">0 offre</span>
+                                }
                               </button>
                             )
                           })}
