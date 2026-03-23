@@ -53,7 +53,7 @@ export default async function VillePage({ params }) {
     <main className="min-h-screen bg-white flex flex-col">
 
       {/* ── Header ─── */}
-      <header className="bg-white border-b border-[#F0F0F0] px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+      <header className="bg-white border-b border-[#F0F0F0] px-4 py-3 flex items-center justify-between sticky top-0 z-40">
         <Link href="/">
           <Image
             src="/LOGO.png"

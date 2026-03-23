@@ -35,9 +35,6 @@ export default function AuthBottomSheet({ isOpen, onClose, redirectAfter = '/' }
           <h2 className="text-xl font-black text-[#0A0A0A] leading-tight">
             Connecte-toi pour réserver ton bon 🎟️
           </h2>
-          <p className="text-xs text-[#3D3D3D]/60 mt-1">
-            Gratuit · Sans mot de passe · 10 secondes
-          </p>
         </div>
 
         {/* Boutons OAuth + mention légale */}
