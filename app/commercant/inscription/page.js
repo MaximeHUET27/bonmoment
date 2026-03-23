@@ -87,6 +87,8 @@ export default function InscriptionCommercant() {
   const [submitting, setSubmitting]     = useState(false)
   const [duplicate, setDuplicate]       = useState(false)
   const [parrainInvalid, setParrainInvalid] = useState(false)
+  const [parrainExpire,  setParrainExpire]  = useState(false)
+  const [parrainUtilise, setParrainUtilise] = useState(false)
   const [submitError, setSubmitError]   = useState(null)
 
   // Multi-commerce
@@ -193,6 +195,8 @@ export default function InscriptionCommercant() {
     setSubmitting(true)
     setDuplicate(false)
     setParrainInvalid(false)
+    setParrainExpire(false)
+    setParrainUtilise(false)
     setSubmitError(null)
 
     // 1. Vérification du doublon
@@ -209,55 +213,60 @@ export default function InscriptionCommercant() {
     }
 
     // 2. Validation du code de parrainage (si renseigné)
-    let parrainId = null
+    let parrainCodeId = null
     const cleanCode = codeParrainage.trim().toUpperCase()
     if (cleanCode) {
-      const { data: parrain } = await supabase
-        .from('commerces')
-        .select('id')
-        .eq('code_parrainage', cleanCode)
+      const { data: codeRow } = await supabase
+        .from('codes_parrainage')
+        .select('id, statut, expire_at')
+        .eq('code', cleanCode)
         .maybeSingle()
-      if (!parrain) {
+
+      if (!codeRow) {
         setParrainInvalid(true)
         setSubmitting(false)
         return
       }
-      parrainId = parrain.id
+      if (codeRow.statut === 'utilise') {
+        setParrainUtilise(true)
+        setSubmitting(false)
+        return
+      }
+      if (codeRow.statut === 'expire' || new Date(codeRow.expire_at) < new Date()) {
+        setParrainExpire(true)
+        setSubmitting(false)
+        return
+      }
+      parrainCodeId = codeRow.id
     }
 
-    // 3. Génération du code de parrainage unique
-    let code = generateCodeParrainage()
-    // Vérification unicité (extrêmement rare mais prudent)
-    const { data: codeConflict } = await supabase
-      .from('commerces').select('id').eq('code_parrainage', code).maybeSingle()
-    if (codeConflict) code = generateCodeParrainage() // retry once
-
-    // Expiration dans 3 mois
-    const codeExpireAt = new Date()
-    codeExpireAt.setMonth(codeExpireAt.getMonth() + 3)
-
-    // 4. Insertion du commerce
+    // 3. Insertion du commerce
     const { error: insertError } = await supabase.from('commerces').insert({
-      owner_id:                  user.id,
-      place_id:                  selectedPlace.place_id,
-      nom:                       selectedPlace.nom,
-      adresse:                   selectedPlace.adresse,
-      ville:                     selectedPlace.ville,
-      categorie:                 selectedPlace.categorie,
-      photo_url:                 selectedPlace.photo_url,
-      telephone:                 selectedPlace.telephone,
-      note_google:               selectedPlace.note_google,
-      horaires:                  selectedPlace.horaires,
-      abonnement_actif:          true,
-      code_parrainage:           code,
-      code_parrainage_expire_at: codeExpireAt.toISOString(),
-      parrain_id:                parrainId,
+      owner_id:         user.id,
+      place_id:         selectedPlace.place_id,
+      nom:              selectedPlace.nom,
+      adresse:          selectedPlace.adresse,
+      ville:            selectedPlace.ville,
+      categorie:        selectedPlace.categorie,
+      photo_url:        selectedPlace.photo_url,
+      telephone:        selectedPlace.telephone,
+      note_google:      selectedPlace.note_google,
+      horaires:         selectedPlace.horaires,
+      abonnement_actif: true,
     })
 
     if (insertError) {
       setSubmitError(insertError.message)
       setSubmitting(false)
       return
+    }
+
+    // 4. Marquer le code de parrainage comme utilisé
+    if (parrainCodeId) {
+      supabase
+        .from('codes_parrainage')
+        .update({ utilise_par: user.id, statut: 'utilise' })
+        .eq('id', parrainCodeId)
     }
 
     // 5. Passage du user en rôle commerçant (async, pas d'attente)
@@ -518,14 +527,24 @@ export default function InscriptionCommercant() {
               <input
                 type="text"
                 value={codeParrainage}
-                onChange={e => { setCodeParrainage(e.target.value.toUpperCase()); setParrainInvalid(false) }}
+                onChange={e => { setCodeParrainage(e.target.value.toUpperCase()); setParrainInvalid(false); setParrainExpire(false); setParrainUtilise(false) }}
                 placeholder="Ex : BMABC123"
                 maxLength={8}
                 className="w-full px-4 py-3.5 bg-[#F5F5F5] rounded-2xl border-2 border-transparent focus:border-[#FF6B00] focus:bg-white outline-none text-sm font-mono font-bold text-[#0A0A0A] tracking-widest placeholder:font-sans placeholder:tracking-normal placeholder:text-[#3D3D3D]/40 transition-all"
               />
               {parrainInvalid && (
                 <p className="mt-2 text-xs text-red-500 font-semibold">
-                  ❌ Code de parrainage invalide ou expiré.
+                  ❌ Code de parrainage introuvable. Vérifie le code.
+                </p>
+              )}
+              {parrainExpire && (
+                <p className="mt-2 text-xs text-red-500 font-semibold">
+                  ❌ Ce code est expiré.
+                </p>
+              )}
+              {parrainUtilise && (
+                <p className="mt-2 text-xs text-red-500 font-semibold">
+                  ❌ Ce code a déjà été utilisé.
                 </p>
               )}
             </div>

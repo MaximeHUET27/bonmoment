@@ -35,7 +35,7 @@ export default function DashboardPage() {
     const commerceId = params?.get('commerce')
     supabase
       .from('commerces')
-      .select('id, nom, categorie, ville, adresse, code_parrainage, code_parrainage_expire_at, note_google')
+      .select('id, nom, categorie, ville, adresse, note_google')
       .eq('owner_id', user.id)
       .then(({ data }) => {
         const list = data || []
@@ -237,27 +237,12 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Code parrainage */}
-            {commerce.code_parrainage && (
-              <div className="bg-[#F5F5F5] rounded-2xl px-4 py-4 flex flex-col gap-1 mt-2">
-                <p className="text-[10px] font-semibold text-[#3D3D3D]/60 uppercase tracking-widest">
-                  Ton code parrainage
-                </p>
-                <p className="text-xl font-black text-[#FF6B00] tracking-wider">{commerce.code_parrainage}</p>
-                {commerce.code_parrainage_expire_at && (
-                  <p className="text-[10px] text-[#3D3D3D]/50">
-                    Valable jusqu&apos;au{' '}
-                    {new Date(commerce.code_parrainage_expire_at).toLocaleDateString('fr-FR', {
-                      day: 'numeric', month: 'long', year: 'numeric',
-                    })}
-                  </p>
-                )}
-                <p className="text-[10px] text-[#3D3D3D]/40 mt-1">
-                  Partage ce code à d&apos;autres commerçants pour bénéficier d&apos;avantages.
-                </p>
-              </div>
-            )}
           </div>
+        )}
+
+        {/* ── Parrainage ────────────────────────────────────────────────── */}
+        {commerce && (
+          <ParrainageSection commerce={commerce} supabase={supabase} />
         )}
 
         {/* ── Offres actives ────────────────────────────────────────────── */}
@@ -326,6 +311,172 @@ export default function DashboardPage() {
       </div>
 
     </main>
+  )
+}
+
+/* ── Section parrainage ──────────────────────────────────────────────────── */
+
+const PARRAIN_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+
+function genCode8() {
+  let c = ''
+  for (let i = 0; i < 8; i++) c += PARRAIN_CHARS[Math.floor(Math.random() * PARRAIN_CHARS.length)]
+  return c
+}
+
+function ParrainageSection({ commerce, supabase }) {
+  const [codes,      setCodes]      = useState([])
+  const [loaded,     setLoaded]     = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [newCode,    setNewCode]    = useState(null)
+  const [limitMsg,   setLimitMsg]   = useState(null)
+
+  useEffect(() => { loadCodes() }, [])  // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function loadCodes() {
+    const { data } = await supabase
+      .from('codes_parrainage')
+      .select('id, code, created_at, expire_at, statut, utilise_par')
+      .eq('commerce_id', commerce.id)
+      .order('created_at', { ascending: false })
+    setCodes(data || [])
+    setLoaded(true)
+  }
+
+  /* Compteur du mois en cours */
+  const debutMois = new Date(); debutMois.setDate(1); debutMois.setHours(0, 0, 0, 0)
+  const countMois = codes.filter(c => new Date(c.created_at) >= debutMois).length
+
+  async function genererCode() {
+    setLimitMsg(null)
+    setGenerating(true)
+
+    /* Vérification fraîche côté serveur */
+    const { count } = await supabase
+      .from('codes_parrainage')
+      .select('id', { count: 'exact', head: true })
+      .eq('commerce_id', commerce.id)
+      .gte('created_at', debutMois.toISOString())
+
+    if ((count ?? 0) >= 3) {
+      setLimitMsg('Tu as atteint la limite de 3 parrainages ce mois.')
+      setGenerating(false)
+      return
+    }
+
+    /* Génération d'un code unique */
+    let code = genCode8()
+    for (let i = 0; i < 5; i++) {
+      const { data: ex } = await supabase.from('codes_parrainage').select('id').eq('code', code).maybeSingle()
+      if (!ex) break
+      code = genCode8()
+    }
+
+    const expireAt = new Date(); expireAt.setMonth(expireAt.getMonth() + 3)
+    const { data, error } = await supabase
+      .from('codes_parrainage')
+      .insert({ commerce_id: commerce.id, code, expire_at: expireAt.toISOString(), statut: 'actif' })
+      .select().single()
+
+    if (!error && data) {
+      setNewCode(data)
+      await loadCodes()
+    }
+    setGenerating(false)
+  }
+
+  async function partagerCode(code) {
+    try {
+      await navigator.share({
+        text: `Rejoins BONMOMENT avec mon code ${code} et profite d'une remise ! 👉 bonmoment.app`,
+      })
+    } catch {}
+  }
+
+  const sortedCodes = [...codes].sort((a, b) => {
+    const order = { actif: 0, utilise: 1, expire: 2 }
+    return (order[a.statut] ?? 3) - (order[b.statut] ?? 3)
+  })
+
+  return (
+    <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">Parrainage</h2>
+        <span className="text-xs font-semibold text-[#3D3D3D]/60">
+          Ce mois : {loaded ? countMois : '…'}/3
+        </span>
+      </div>
+
+      <p className="text-xs text-[#3D3D3D]/60 -mt-2">
+        Génère un code à partager à un autre commerçant. Limite : 3 codes par mois, valables 3 mois.
+      </p>
+
+      {limitMsg && (
+        <p className="text-xs text-red-500 font-semibold bg-red-50 px-3 py-2 rounded-xl">{limitMsg}</p>
+      )}
+
+      {/* Code fraîchement généré */}
+      {newCode && (
+        <div className="bg-[#FFF0E0] border border-[#FF6B00]/20 rounded-2xl px-4 py-4 flex flex-col gap-2">
+          <p className="text-[10px] font-semibold text-[#FF6B00] uppercase tracking-widest">Code généré ✓</p>
+          <p
+            className="text-3xl font-black text-[#FF6B00] tracking-[0.25em] leading-none"
+            style={{ fontFamily: 'Courier New, monospace' }}
+          >
+            {newCode.code}
+          </p>
+          <p className="text-[11px] text-[#3D3D3D]/50">
+            Valable jusqu&apos;au{' '}
+            {new Date(newCode.expire_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
+          <button
+            onClick={() => partagerCode(newCode.code)}
+            className="mt-1 w-full flex items-center justify-center gap-1.5 bg-[#FF6B00] hover:bg-[#CC5500] text-white font-bold text-sm py-2.5 rounded-xl transition-colors"
+          >
+            📤 Partager ce code
+          </button>
+        </div>
+      )}
+
+      <button
+        onClick={genererCode}
+        disabled={generating || countMois >= 3}
+        className="w-full flex items-center justify-center gap-2 bg-[#FF6B00] hover:bg-[#CC5500] disabled:bg-[#D0D0D0] disabled:cursor-not-allowed text-white font-bold text-sm py-3 rounded-xl transition-colors min-h-[44px]"
+      >
+        {generating
+          ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          : '🎁 Générer un code de parrainage'}
+      </button>
+
+      {/* Historique */}
+      {sortedCodes.length > 0 && (
+        <div className="flex flex-col gap-0.5 mt-1">
+          <p className="text-[10px] font-semibold text-[#3D3D3D]/40 uppercase tracking-widest mb-1">Historique</p>
+          {sortedCodes.map(c => (
+            <div key={c.id} className="flex items-center justify-between gap-3 py-2.5 border-b border-[#F5F5F5] last:border-0">
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <span
+                  className="font-bold text-sm text-[#0A0A0A] tracking-widest"
+                  style={{ fontFamily: 'Courier New, monospace' }}
+                >
+                  {c.code}
+                </span>
+                <span className="text-[10px] text-[#3D3D3D]/40">
+                  Créé le {new Date(c.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                  {' · '}
+                  Expire le {new Date(c.expire_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: '2-digit' })}
+                </span>
+              </div>
+              <span className="text-xs font-bold shrink-0">
+                {c.statut === 'actif'    ? '🟢 Actif'
+               : c.statut === 'utilise'  ? '🟠 Utilisé'
+               :                          '🔴 Expiré'}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
