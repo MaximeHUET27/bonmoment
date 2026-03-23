@@ -22,11 +22,30 @@ export default function FavoriButton({ commerceId, commerceNom, className = '' }
 
   const favori = isFavori(commerceId)
 
+  useEffect(() => {
+    if (!user || !commerceId) return
+    const pendingId = sessionStorage.getItem('bonmoment_pending_favori')
+    if (pendingId === commerceId) {
+      sessionStorage.removeItem('bonmoment_pending_favori')
+      toggleFavori(commerceId).then(isNow => {
+        if (isNow) {
+          setToast(`❤️ Tu seras alerté dès que ${commerceNom} publie une offre !`)
+          setTimeout(() => setToast(null), 4_000)
+        }
+      })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
   async function handleClick(e) {
     e.preventDefault()
     e.stopPropagation()
 
-    if (!user) { setShowAuth(true); return }
+    if (!user) {
+      sessionStorage.setItem('bonmoment_pending_favori', commerceId)
+      setShowAuth(true)
+      return
+    }
 
     setPulse(true)
     setTimeout(() => setPulse(false), 400)

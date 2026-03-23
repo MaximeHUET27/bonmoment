@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import Script from 'next/script'
 import { useAuth } from '@/app/context/AuthContext'
+import AuthBottomSheet from '@/app/components/AuthBottomSheet'
 
 /* ── Constantes ─────────────────────────────────────────────────────────── */
 
@@ -95,12 +96,13 @@ export default function InscriptionCommercant() {
   const [existingCommerces, setExistingCommerces] = useState([])
   const [showExistingWarning, setShowExistingWarning] = useState(false)
 
-  // Redirection si non connecté
+  // Auth bottom sheet si non connecté
+  const [showAuth, setShowAuth] = useState(false)
   useEffect(() => {
     if (!loading && !user) {
-      router.replace('/')
+      setShowAuth(true)
     }
-  }, [user, loading, router])
+  }, [user, loading])
 
   // Reset accordion horaires quand on change de commerce sélectionné
   useEffect(() => { setShowAllHoraires(false) }, [selectedPlace])
@@ -278,9 +280,16 @@ export default function InscriptionCommercant() {
   // ── Rendu ────────────────────────────────────────────────────────────────
   if (loading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <span className="w-8 h-8 border-[3px] border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
-      </div>
+      <>
+        <div className="min-h-screen flex items-center justify-center bg-white">
+          <span className="w-8 h-8 border-[3px] border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
+        </div>
+        <AuthBottomSheet
+          isOpen={showAuth}
+          onClose={() => setShowAuth(false)}
+          redirectAfter="/commercant/inscription"
+        />
+      </>
     )
   }
 

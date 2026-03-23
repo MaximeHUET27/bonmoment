@@ -47,6 +47,7 @@ export default function NotifBottomSheet({ isOpen, onClose, villeNom }) {
   }
 
   async function handleTogglePush() {
+    if (!user) return
     if (!pushOn) {
       const granted = await demandePush()
       if (granted) {

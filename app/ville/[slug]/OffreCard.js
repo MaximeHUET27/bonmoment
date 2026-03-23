@@ -143,11 +143,27 @@ export default function OffreCard({ offre }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
+  /* ── Après connexion OAuth : exécuter l'abonnement commerçant en attente ── */
+  useEffect(() => {
+    if (!user || !commerce?.id) return
+    const pendingId = sessionStorage.getItem('bonmoment_pending_abonne_comm')
+    if (pendingId === commerce.id) {
+      sessionStorage.removeItem('bonmoment_pending_abonne_comm')
+      setAbonneCommLoading(true)
+      toggleFavori(commerce.id).then(() => setAbonneCommLoading(false))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
   /* ── Toggle favori commerce (depuis bouton offre expirée) ── */
   async function handleAbonnerComm(e) {
     e.preventDefault()
     e.stopPropagation()
-    if (!user) { setShowAuth(true); return }
+    if (!user) {
+      sessionStorage.setItem('bonmoment_pending_abonne_comm', commerce.id)
+      setShowAuth(true)
+      return
+    }
     setAbonneCommLoading(true)
     await toggleFavori(commerce.id)
     setAbonneCommLoading(false)

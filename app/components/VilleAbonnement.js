@@ -84,6 +84,7 @@ export default function VilleAbonnement({ villeNom, className = '' }) {
 
   async function handleClick() {
     if (!user) {
+      if (villeNom) sessionStorage.setItem('pendingAbonnementVille', villeNom)
       setShowAuth(true)
       return
     }
@@ -133,9 +134,6 @@ export default function VilleAbonnement({ villeNom, className = '' }) {
         isOpen={showAuth}
         onClose={() => setShowAuth(false)}
         redirectAfter={typeof window !== 'undefined' ? window.location.pathname : '/'}
-        onBeforeRedirect={() => {
-          if (villeNom) sessionStorage.setItem('pendingAbonnementVille', villeNom)
-        }}
       />
 
       {/* Notif bottom sheet après abonnement */}

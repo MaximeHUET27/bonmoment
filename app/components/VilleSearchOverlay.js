@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/app/context/AuthContext'
 import { toSlug } from '@/lib/utils'
+import AuthBottomSheet from './AuthBottomSheet'
 
 /* ── Haversine ────────────────────────────────────────────────────────────── */
 function haversine(lat1, lon1, lat2, lon2) {
@@ -50,6 +51,7 @@ export default function VilleSearchOverlay({
   const [villesAbonneesList, setVillesAbonneesList] = useState([])
 
   const [coordsBonmoment, setCoordsBonmoment] = useState(new Map())
+  const [showAuth,      setShowAuth]      = useState(false)
 
   const inputRef       = useRef(null)
   const debounceTimer  = useRef(null)
@@ -261,9 +263,25 @@ export default function VilleSearchOverlay({
     setLoadingVoisines(false)
   }
 
+  /* ── Après connexion OAuth : exécuter l'abonnement en attente ── */
+  useEffect(() => {
+    if (!user || !supabase) return
+    const pending = sessionStorage.getItem('bonmoment_pending_ville_overlay')
+    if (pending) {
+      sessionStorage.removeItem('bonmoment_pending_ville_overlay')
+      subscriberVille(pending)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
   /* ── Abonnement ── */
   async function subscriberVille(nomVille) {
-    if (!user || !supabase) return
+    if (!supabase) return
+    if (!user) {
+      sessionStorage.setItem('bonmoment_pending_ville_overlay', nomVille)
+      setShowAuth(true)
+      return
+    }
     setAbonnement(nomVille)
 
     const { data: current } = await supabase
@@ -611,6 +629,12 @@ export default function VilleSearchOverlay({
         )}
 
       </div>
+
+      <AuthBottomSheet
+        isOpen={showAuth}
+        onClose={() => setShowAuth(false)}
+        redirectAfter={typeof window !== 'undefined' ? window.location.pathname : '/'}
+      />
     </div>
   )
 }
