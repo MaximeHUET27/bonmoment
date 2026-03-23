@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { toSlug } from '@/lib/utils'
 import UrgencyAndCTA from './UrgencyAndCTA'
 import ShareButton from '@/app/components/ShareButton'
+import FavoriButton from '@/app/components/FavoriButton'
 
 const OG_DEFAULT_IMAGE = 'https://bonmoment.app/og-default.jpg'
 
@@ -169,12 +170,17 @@ export default async function OffrePage({ params }) {
               🏪
             </div>
             <div>
-              <Link
-                href={`/commercant/${commerce?.id || ''}`}
-                className="text-base font-black text-[#0A0A0A] hover:text-[#FF6B00] transition-colors"
-              >
-                {commerce?.nom}
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/commercant/${commerce?.id || ''}`}
+                  className="text-base font-black text-[#0A0A0A] hover:text-[#FF6B00] transition-colors"
+                >
+                  {commerce?.nom}
+                </Link>
+                {commerce?.id && (
+                  <FavoriButton commerceId={commerce.id} commerceNom={commerce.nom || ''} className="!min-h-[28px] !min-w-[28px]" />
+                )}
+              </div>
               {commerce?.categorie && (
                 <div className="mt-1">
                   <span className="text-[10px] font-semibold text-[#FF6B00] uppercase tracking-widest bg-[#FFF0E0] px-2 py-0.5 rounded-full">

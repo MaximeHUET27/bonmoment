@@ -280,17 +280,6 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
         </p>
       )}
 
-      {/* ── Favori commerce ── */}
-      {offre.commerces?.id && (
-        <div className="flex items-center justify-center gap-2">
-          <FavoriButton
-            commerceId={offre.commerces.id}
-            commerceNom={offre.commerces.nom || ''}
-          />
-          <span className="text-xs text-[#3D3D3D]/60">Suivre {offre.commerces.nom}</span>
-        </div>
-      )}
-
       {/* ── Mention concours ── */}
       {offre.type_remise === 'concours' && (
         <p className="text-center text-[11px] text-[#3D3D3D]/50 bg-[#F5F5F5] px-4 py-3 rounded-xl">
