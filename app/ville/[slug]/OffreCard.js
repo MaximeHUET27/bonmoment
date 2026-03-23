@@ -213,7 +213,7 @@ export default function OffreCard({ offre }) {
 
         {/* ── Header : countdown + bons restants + partage ── */}
         <div className={`flex items-center gap-1 px-2 py-1.5 ${
-          programmee ? 'bg-blue-50' :
+          programmee ? 'bg-[#FFF0E0]' :
           urgent && !fini ? 'bg-red-50' : 'bg-[#F5F5F5]'
         }`}>
           <Link href={`/offre/${offre.id}`} className="flex-1 flex items-center justify-between gap-1.5 px-1 py-1 min-w-0">
@@ -221,7 +221,7 @@ export default function OffreCard({ offre }) {
               {programmee ? (
                 <>
                   <span className="text-sm">📅</span>
-                  <span className="text-xs font-bold text-indigo-600 truncate">
+                  <span className="text-xs font-bold text-[#FF6B00] truncate">
                     Début le {formatDebut(offre.date_debut)}
                   </span>
                 </>

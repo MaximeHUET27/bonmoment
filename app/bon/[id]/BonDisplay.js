@@ -133,9 +133,9 @@ export default function BonDisplay({ reservation, offre, commerce }) {
         <div className="text-center">
           {programmee ? (
             <>
-              <p className="text-xl font-black text-blue-600">📅 Valable à partir du</p>
-              <p className="text-base font-bold text-blue-600 mt-1">{formatDebut(offre.date_debut)}</p>
-              <p className="text-[11px] text-blue-400 mt-1 font-medium">Ce bon n'est pas encore actif</p>
+              <p className="text-xl font-black text-[#FF6B00]">📅 Valable à partir du</p>
+              <p className="text-base font-bold text-[#FF6B00] mt-1">{formatDebut(offre.date_debut)}</p>
+              <p className="text-[11px] text-[#FF6B00]/70 mt-1 font-medium">Ce bon n'est pas encore actif</p>
             </>
           ) : expired ? (
             <p className="text-base font-black text-red-500">Trop tard — bon expiré</p>

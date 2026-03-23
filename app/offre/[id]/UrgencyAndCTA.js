@@ -187,7 +187,7 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
       {/* ── Barre d'urgence ── */}
       <div
         className={`flex items-center justify-between px-4 py-3 rounded-2xl ${
-          programmee ? 'bg-blue-50' :
+          programmee ? 'bg-[#FFF0E0]' :
           urgent && !fini ? '' : 'bg-[#F5F5F5]'
         }`}
         style={!programmee && urgent && !fini ? { backgroundColor: '#FF6B00', color: 'white' } : {}}
@@ -195,7 +195,7 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
         {programmee ? (
           <div className="flex items-center gap-2 w-full">
             <span className="text-lg">📅</span>
-            <span className="text-sm font-bold text-blue-700">
+            <span className="text-sm font-bold text-[#FF6B00]">
               Cette offre commence le {formatDebut(offre.date_debut)}
             </span>
           </div>

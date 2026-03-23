@@ -313,7 +313,7 @@ function ResultScreen({ result, onBack }) {
     invalid:       { bg: '#EF4444', icon: '✕',  title: 'Code invalide',                           iconAnim: 'popIn' },
     wrong_commerce:{ bg: '#EF4444', icon: '✕',  title: 'Ce bon appartient à un autre commerce',  iconAnim: 'popIn' },
     expired:       { bg: '#6B7280', icon: '⌛', title: result.msg ?? 'Ce bon est périmé',         iconAnim: 'popIn' },
-    not_yet:       { bg: '#3B82F6', icon: '📅', title: 'Ce bon n\'est pas encore valable',        iconAnim: 'popIn' },
+    not_yet:       { bg: '#FF6B00', icon: '📅', title: 'Ce bon n\'est pas encore valable',        iconAnim: 'popIn' },
   }[result.type] ?? { bg: '#EF4444', icon: '✕', title: 'Erreur', iconAnim: 'popIn' }
 
   return (

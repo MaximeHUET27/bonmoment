@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/app/context/AuthContext'
 import FullScreenBon from '@/app/components/FullScreenBon'
+import { formatDebut } from '@/lib/offreStatus'
 
 /* ── Helpers ──────────────────────────────────────────────────────────────── */
 
@@ -45,12 +46,13 @@ function useCountdown(dateFin) {
 /* ── Carte bon actif ──────────────────────────────────────────────────────── */
 
 function BonActifCard({ resa, supabase, onCancelled }) {
-  const timeLeft = useCountdown(resa.offres?.date_fin)
+  const timeLeft   = useCountdown(resa.offres?.date_fin)
+  const programmee = resa.offres?.date_debut && new Date(resa.offres.date_debut) > new Date()
   const [showBon,       setShowBon]       = useState(false)
   const [confirmCancel, setConfirmCancel] = useState(false)
   const [cancelling,    setCancelling]    = useState(false)
   const [walletUrl,     setWalletUrl]     = useState(null)
-  const timerRed = timeLeft && timeLeft.diff < 1_800_000
+  const timerRed   = !programmee && timeLeft && timeLeft.diff < 1_800_000
 
   useEffect(() => {
     if (!/Android/i.test(navigator.userAgent)) return
@@ -92,8 +94,12 @@ function BonActifCard({ resa, supabase, onCancelled }) {
         </div>
       </div>
 
-      {/* Timer */}
-      {timeLeft ? (
+      {/* Timer / statut temporel */}
+      {programmee ? (
+        <div className="inline-flex items-center gap-1.5 bg-[#FFF0E0] text-[#FF6B00] text-sm font-bold px-3 py-1.5 rounded-full self-start">
+          📅 Actif le {formatDebut(resa.offres.date_debut)}
+        </div>
+      ) : timeLeft ? (
         <p className={`text-xl font-black tabular-nums tracking-tight ${timerRed ? 'text-red-500' : 'text-[#0A0A0A]'}`}>
           ⏱ {String(timeLeft.h).padStart(2, '0')}h {String(timeLeft.m).padStart(2, '0')}m {String(timeLeft.s).padStart(2, '0')}s
         </p>
@@ -201,6 +207,7 @@ export default function MesBonsPage() {
             titre,
             type_remise,
             valeur,
+            date_debut,
             date_fin,
             commerces (
               nom,
@@ -231,10 +238,19 @@ export default function MesBonsPage() {
     setReservations(prev => prev.filter(r => r.id !== id))
   }
 
-  const now      = new Date()
-  const actifs   = reservations.filter(r => r.statut === 'reservee' && new Date(r.offres?.date_fin) > now)
-  const utilises = reservations.filter(r => r.statut === 'utilisee')
-  const expires  = reservations.filter(r =>
+  const now        = new Date()
+  const enCours    = reservations.filter(r =>
+    r.statut === 'reservee' &&
+    new Date(r.offres?.date_fin) > now &&
+    (!r.offres?.date_debut || new Date(r.offres.date_debut) <= now)
+  )
+  const programmes = reservations.filter(r =>
+    r.statut === 'reservee' &&
+    r.offres?.date_debut &&
+    new Date(r.offres.date_debut) > now
+  )
+  const utilises   = reservations.filter(r => r.statut === 'utilisee')
+  const expires    = reservations.filter(r =>
     r.statut === 'expiree' || r.statut === 'annulee' ||
     (r.statut === 'reservee' && new Date(r.offres?.date_fin) <= now)
   )
@@ -292,13 +308,25 @@ export default function MesBonsPage() {
           </div>
         )}
 
-        {/* ── Bons actifs ── */}
-        {actifs.length > 0 && (
+        {/* ── Bons en cours ── */}
+        {enCours.length > 0 && (
           <section className="flex flex-col gap-3">
             <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00]">
               Bons actifs
             </p>
-            {actifs.map(resa => (
+            {enCours.map(resa => (
+              <BonActifCard key={resa.id} resa={resa} supabase={supabase} onCancelled={handleCancelled} />
+            ))}
+          </section>
+        )}
+
+        {/* ── Bons programmés ── */}
+        {programmes.length > 0 && (
+          <section className="flex flex-col gap-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00]">
+              Bons programmés
+            </p>
+            {programmes.map(resa => (
               <BonActifCard key={resa.id} resa={resa} supabase={supabase} onCancelled={handleCancelled} />
             ))}
           </section>
