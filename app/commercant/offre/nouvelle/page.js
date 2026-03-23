@@ -1,15 +1,5 @@
 'use client'
 
-/**
- * SQL à exécuter dans Supabase si ces colonnes n'existent pas encore :
- *
- *   ALTER TABLE offres ADD COLUMN IF NOT EXISTS date_debut TIMESTAMPTZ;
- *   ALTER TABLE offres ADD COLUMN IF NOT EXISTS est_recurrente BOOLEAN DEFAULT false;
- *   ALTER TABLE offres ADD COLUMN IF NOT EXISTS jours_recurrence TEXT[];
- *   ALTER TABLE commerces ADD COLUMN IF NOT EXISTS palier TEXT DEFAULT 'decouverte';
- *   ALTER TABLE commerces ADD COLUMN IF NOT EXISTS tutoriel_complete BOOLEAN DEFAULT false;
- */
-
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -31,26 +21,22 @@ function writeTutState(state) {
 /* ── Constantes ─────────────────────────────────────────────────────────── */
 
 const TYPES = [
-  { id: 'pourcentage',    label: 'Remise %',    icon: '%'  },
-  { id: 'montant_fixe',   label: 'Remise €',    icon: '€'  },
-  { id: 'cadeau',         label: 'Cadeau',      icon: '🎁' },
-  { id: 'produit_offert', label: 'Produit',     icon: '📦' },
-  { id: 'service_offert', label: 'Service',     icon: '✂️' },
-  { id: 'concours',       label: 'Concours',    icon: '🎰' },
-  { id: 'atelier',        label: 'Atelier',     icon: '🎨' },
+  { id: 'pourcentage',    label: 'Remise %', icon: '%'  },
+  { id: 'montant_fixe',   label: 'Remise €', icon: '€'  },
+  { id: 'cadeau',         label: 'Offert',   icon: '🎁' },
+  { id: 'service_offert', label: 'Service',  icon: '✂️' },
+  { id: 'concours',       label: 'Concours', icon: '🎰' },
+  { id: 'atelier',        label: 'Atelier',  icon: '🎨' },
 ]
 
 const PLACEHOLDERS = {
   pourcentage:    "Ex : Sur toutes les coupes aujourd'hui",
   montant_fixe:   'Ex : Sur ton repas du soir',
   cadeau:         "Ex : Un croissant à l'achat d'une baguette",
-  produit_offert: 'Ex : Une boisson offerte pour tout menu',
   service_offert: 'Ex : Diagnostic capillaire gratuit',
   concours:       "Ex : Gagnez un soin complet d'une valeur de 50€",
   atelier:        'Ex : Initiation à la pâtisserie — places limitées',
 }
-
-const BONS_RAPIDES = [5, 10, 15, 20, 50]
 
 const JOURS = [
   { id: 'lundi',    label: 'L' },
@@ -71,8 +57,8 @@ function toDateStr(d) {
 }
 
 function nextQuarterHour() {
-  const now = new Date()
-  const m   = now.getMinutes()
+  const now  = new Date()
+  const m    = now.getMinutes()
   const next = Math.ceil((m + 1) / 15) * 15
   const h    = now.getHours() + (next >= 60 ? 1 : 0)
   const min  = next >= 60 ? 0 : next
@@ -89,9 +75,9 @@ function buildISO(dateStr, timeStr) {
   return new Date(`${dateStr}T${timeStr}:00`).toISOString()
 }
 
-function diffHours(dateDebut, heureDebut, dateFin, heureFin) {
-  const start = new Date(`${dateDebut}T${heureDebut}:00`)
-  const end   = new Date(`${dateFin}T${heureFin}:00`)
+function diffHours(dateStr, heureDebut, heureFin) {
+  const start = new Date(`${dateStr}T${heureDebut}:00`)
+  const end   = new Date(`${dateStr}T${heureFin}:00`)
   return (end - start) / 3_600_000
 }
 
@@ -109,23 +95,27 @@ function NouvelleOffrePageInner() {
   const [quotaAtteint,  setQuotaAtteint]  = useState(false)
   const [quotaInfo,     setQuotaInfo]     = useState({ used: 0, limite: 4, palier: 'decouverte' })
 
-  /* ── État tutoriel ── */
-  // substep: 0-4 (4A-4E) | 'apercu' | 'publier' | 'waiting_publish' | null
-  const [tutSubstep,    setTutSubstep]    = useState(null)
+  /* ── Modal première offre ── */
+  const [showFirstModal,  setShowFirstModal]  = useState(false)
+  const [forceTutoriel,   setForceTutoriel]   = useState(false)
+
+  const tutActive = isTutoriel || forceTutoriel
+
+  /* ── État tutoriel substep ── */
+  const [tutSubstep, setTutSubstep] = useState(null)
 
   /* ── État formulaire ── */
-  const today           = toDateStr(new Date())
-  const defaultDebut    = nextQuarterHour()
-  const defaultFin      = addMinutes(defaultDebut, 180)   // +3h
+  const today        = toDateStr(new Date())
+  const defaultDebut = nextQuarterHour()
+  const defaultFin   = addMinutes(defaultDebut, 180)  // +3h
 
   const [typeRemise,      setTypeRemise]      = useState('pourcentage')
   const [valeur,          setValeur]          = useState('')
   const [titre,           setTitre]           = useState('')
   const [nbBons,          setNbBons]          = useState(15)
   const [illimite,        setIllimite]        = useState(false)
-  const [dateDebut,       setDateDebut]       = useState(today)
+  const [dateOffre,       setDateOffre]       = useState(today)
   const [heureDebut,      setHeureDebut]      = useState(defaultDebut)
-  const [dateFin,         setDateFin]         = useState(today)
   const [heureFin,        setHeureFin]        = useState(defaultFin)
   const [estRecurrente,   setEstRecurrente]   = useState(false)
   const [joursRecurrence, setJoursRecurrence] = useState([])
@@ -140,7 +130,7 @@ function NouvelleOffrePageInner() {
     if (!loading && !user) router.replace('/')
   }, [user, loading, router])
 
-  /* ── Chargement commerce + quota ── */
+  /* ── Chargement commerce + quota + première offre ── */
   useEffect(() => {
     if (!user) return
     ;(async () => {
@@ -150,41 +140,51 @@ function NouvelleOffrePageInner() {
         .select('id, nom, categorie, ville, adresse, palier')
         .eq('owner_id', user.id)
 
-      const all = list || []
+      const all  = list || []
       const data = (commerceId ? all.find(c => c.id === commerceId) : null) || all[0] || null
 
       if (!data) { router.replace('/'); return }
       setCommerce(data)
 
-      const palier = data.palier || 'decouverte'
-      const limite = QUOTA_PAR_PALIER[palier] ?? 4
+      const palier    = data.palier || 'decouverte'
+      const limite    = QUOTA_PAR_PALIER[palier] ?? 4
       const debutMois = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
 
-      const { count } = await supabase
-        .from('offres')
-        .select('id', { count: 'exact', head: true })
-        .eq('commerce_id', data.id)
-        .gte('created_at', debutMois)
+      const [{ count: used }, { count: total }] = await Promise.all([
+        supabase.from('offres').select('id', { count: 'exact', head: true })
+          .eq('commerce_id', data.id).gte('created_at', debutMois),
+        supabase.from('offres').select('id', { count: 'exact', head: true })
+          .eq('commerce_id', data.id),
+      ])
 
-      const used = count ?? 0
-      setQuotaInfo({ used, limite, palier })
-      if (used >= limite) setQuotaAtteint(true)
+      setQuotaInfo({ used: used ?? 0, limite, palier })
+      if ((used ?? 0) >= limite) setQuotaAtteint(true)
+
+      // Modal tutoriel si aucune offre publiée jusqu'ici
+      if ((total ?? 0) === 0 && !isTutoriel) setShowFirstModal(true)
+
       setFetching(false)
     })()
-  }, [user, supabase, router])
+  }, [user, supabase, router]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Init tutorial substep ── */
+  /* ── Init tutorial substep depuis URL ── */
   useEffect(() => {
     if (!isTutoriel) return
     const saved = readTutState()
     if (saved?.active && saved.step === 4) {
       setTutSubstep(saved.substep ?? 0)
-    } else if (isTutoriel) {
-      // Fresh start from ?tutoriel=true
+    } else {
       writeTutState({ active: true, step: 4, substep: 0 })
       setTutSubstep(0)
     }
   }, [isTutoriel])
+
+  /* ── Init tutorial substep depuis modal ── */
+  useEffect(() => {
+    if (!forceTutoriel) return
+    writeTutState({ active: true, step: 4, substep: 0 })
+    setTutSubstep(0)
+  }, [forceTutoriel])
 
   /* ── Tutorial advance handler ── */
   function handleTutAdvance() {
@@ -199,7 +199,6 @@ function NouvelleOffrePageInner() {
       writeTutState({ active: true, step: 6, substep: null })
       setTutSubstep('publier')
     } else if (tutSubstep === 'publier') {
-      // Hide tooltip, let user interact with publish button
       setTutSubstep('waiting_publish')
     }
   }
@@ -207,6 +206,7 @@ function NouvelleOffrePageInner() {
   async function handleTutSkip() {
     writeTutState(null)
     setTutSubstep(null)
+    setForceTutoriel(false)
     if (commerce) {
       await supabase.from('commerces').update({ tutoriel_complete: true }).eq('id', commerce.id)
     }
@@ -226,32 +226,36 @@ function NouvelleOffrePageInner() {
     return suggestionsData[commerce.categorie] || suggestionsData['default'] || []
   })()
 
-  /* ── Validation plage horaire (en temps réel) ── */
-  const diff = diffHours(dateDebut, heureDebut, dateFin, heureFin)
-  const erreurHoraire =
-    diff <= 0 ? "L'heure de fin doit être après l'heure de début." :
-    diff > 24  ? 'Une offre ne peut pas dépasser 24h.'              :
-    null
+  /* ── Validation plage horaire (temps réel) ── */
+  const diff = diffHours(dateOffre, heureDebut, heureFin)
+  const erreurHoraire = diff <= 0 ? "L'heure de fin doit être après l'heure de début." : null
 
-  /* ── Toggle jour de récurrence ── */
+  /* ── Durée formatée ── */
+  const dureeLabel = diff > 0
+    ? diff < 1
+      ? `${Math.round(diff * 60)} min`
+      : `${diff % 1 === 0 ? diff : diff.toFixed(1)}h`
+    : null
+
+  /* ── Toggle jour ── */
   function toggleJour(id) {
     setJoursRecurrence(prev =>
       prev.includes(id) ? prev.filter(j => j !== id) : [...prev, id]
     )
   }
 
-  /* ── Objet preview en temps réel ── */
+  /* ── Preview temps réel ── */
   const previewOffre = {
-    type_remise:     typeRemise,
-    valeur:          valeur ? Number(valeur) : null,
-    titre:           titre.trim() || 'Décris ton offre...',
+    type_remise:      typeRemise,
+    valeur:           valeur ? Number(valeur) : null,
+    titre:            titre.trim() || 'Décris ton offre...',
     nb_bons_restants: illimite ? 9999 : (nbBons || 0),
-    nb_bons_total:   illimite ? null : nbBons,
-    date_fin:        buildISO(dateFin, heureFin),
+    nb_bons_total:    illimite ? null : nbBons,
+    date_fin:         buildISO(dateOffre, heureFin),
     commerces: {
-      nom:      commerce?.nom      || 'Mon commerce',
+      nom:       commerce?.nom       || 'Mon commerce',
       categorie: commerce?.categorie || null,
-      ville:    commerce?.ville    || null,
+      ville:     commerce?.ville     || null,
     },
   }
 
@@ -289,13 +293,14 @@ function NouvelleOffrePageInner() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          commerce_id:       commerce.id,
           type_remise:       typeRemise,
           valeur:            (typeRemise === 'pourcentage' || typeRemise === 'montant_fixe') ? Number(valeur) : null,
           titre:             titre.trim(),
           nb_bons_total:     nbTotal,
           nb_bons_restants:  illimite ? 9999 : nbBons,
-          date_debut:        buildISO(dateDebut, heureDebut),
-          date_fin:          buildISO(dateFin, heureFin),
+          date_debut:        buildISO(dateOffre, heureDebut),
+          date_fin:          buildISO(dateOffre, heureFin),
           est_recurrente:    estRecurrente,
           jours_recurrence:  estRecurrente ? joursRecurrence : null,
         }),
@@ -313,13 +318,12 @@ function NouvelleOffrePageInner() {
     }
 
     setSuccess(true)
-    if (!isTutoriel) {
+    if (!tutActive) {
       setTimeout(() => router.replace('/commercant/dashboard'), 2200)
     }
-    // In tutorial mode: TutorialOffre handles the success screen + redirect
   }
 
-  /* ── États de chargement / garde ── */
+  /* ── Loading ── */
   if (loading || fetching) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -330,8 +334,8 @@ function NouvelleOffrePageInner() {
 
   if (!user || !commerce) return null
 
-  /* ── Écran de succès (mode normal uniquement) ── */
-  if (success && !isTutoriel) {
+  /* ── Succès (mode normal) ── */
+  if (success && !tutActive) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white text-center px-6 gap-4">
         <div className="text-6xl">🎉</div>
@@ -342,7 +346,8 @@ function NouvelleOffrePageInner() {
     )
   }
 
-  /* ── Rendu principal ── */
+  const inputBase = 'border-2 border-[#E0E0E0] rounded-xl px-3 py-2.5 text-sm font-semibold text-[#0A0A0A] focus:border-[#FF6B00] focus:outline-none transition-colors min-h-[44px] w-full'
+
   return (
     <main className="min-h-screen bg-[#F5F5F5] flex flex-col">
 
@@ -366,9 +371,7 @@ function NouvelleOffrePageInner() {
         />
         <div className="ml-auto flex items-center gap-2 text-[11px]">
           <span className={`font-bold px-2.5 py-1 rounded-full ${
-            quotaAtteint
-              ? 'bg-red-100 text-red-600'
-              : 'bg-[#FFF0E0] text-[#FF6B00]'
+            quotaAtteint ? 'bg-red-100 text-red-600' : 'bg-[#FFF0E0] text-[#FF6B00]'
           }`}>
             {quotaInfo.used}/{quotaInfo.limite} offres
           </span>
@@ -384,8 +387,7 @@ function NouvelleOffrePageInner() {
               Tu as utilisé toutes tes offres du mois.
             </p>
             <p className="text-xs text-amber-700">
-              Palier actuel : <strong>{quotaInfo.palier}</strong> ({quotaInfo.limite} offres/mois).
-              Passe au palier supérieur pour en publier plus !{' '}
+              Palier actuel : <strong>{quotaInfo.palier}</strong> ({quotaInfo.limite} offres/mois).{' '}
               <Link href="/commercant/abonnement" className="underline font-semibold hover:text-[#FF6B00]">
                 Gérer mon abonnement →
               </Link>
@@ -398,7 +400,7 @@ function NouvelleOffrePageInner() {
           <p className="text-[11px] font-bold uppercase tracking-widest text-[#3D3D3D]/50 mb-3">
             Type d'offre
           </p>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {TYPES.map(t => (
               <button
                 key={t.id}
@@ -423,7 +425,8 @@ function NouvelleOffrePageInner() {
             <p className="text-[11px] font-bold uppercase tracking-widest text-[#3D3D3D]/50 mb-3">
               {typeRemise === 'pourcentage' ? 'Remise en %' : 'Montant de la remise'}
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center gap-3">
+              <span className="text-4xl font-black text-[#FF6B00] select-none">−</span>
               <input
                 type="number"
                 inputMode="numeric"
@@ -432,14 +435,14 @@ function NouvelleOffrePageInner() {
                 min={1}
                 max={typeRemise === 'pourcentage' ? 100 : undefined}
                 placeholder={typeRemise === 'pourcentage' ? '20' : '5'}
-                className="flex-1 text-4xl font-black text-[#0A0A0A] text-center border-2 border-[#E0E0E0] rounded-2xl py-3 focus:border-[#FF6B00] focus:outline-none transition-colors min-h-[64px]"
+                className="w-full max-w-[200px] text-4xl font-black text-[#0A0A0A] text-center border-2 border-[#E0E0E0] rounded-2xl py-3 focus:border-[#FF6B00] focus:outline-none transition-colors min-h-[64px]"
               />
-              <span className="text-4xl font-black text-[#FF6B00] w-10 text-center">
+              <span className="text-4xl font-black text-[#FF6B00] w-10 text-center select-none">
                 {typeRemise === 'pourcentage' ? '%' : '€'}
               </span>
             </div>
             {errors.valeur && (
-              <p className="text-xs text-red-500 mt-2 font-semibold">⚠ {errors.valeur}</p>
+              <p className="text-xs text-red-500 mt-2 font-semibold text-center">⚠ {errors.valeur}</p>
             )}
           </section>
         )}
@@ -473,35 +476,47 @@ function NouvelleOffrePageInner() {
           <p className="text-[11px] font-bold uppercase tracking-widest text-[#3D3D3D]/50 mb-3">
             Nombre de bons
           </p>
-          <div className="flex items-center gap-2 flex-wrap">
-            {BONS_RAPIDES.map(n => (
+          <div className="flex items-center gap-3">
+            {/* Stepper − / valeur / + */}
+            <div className={`flex items-center gap-3 ${illimite ? 'opacity-40 pointer-events-none' : ''}`}>
               <button
-                key={n}
                 type="button"
-                onClick={() => { setNbBons(n); setIllimite(false) }}
-                className={`w-11 h-11 rounded-xl border-2 font-black text-sm transition-all ${
-                  !illimite && nbBons === n
-                    ? 'bg-[#FF6B00] border-[#FF6B00] text-white shadow-md shadow-orange-200'
-                    : 'border-[#E0E0E0] text-[#3D3D3D] hover:border-[#FF6B00] hover:text-[#FF6B00]'
-                }`}
+                onClick={() => setNbBons(v => Math.max(1, v - 1))}
+                disabled={illimite}
+                className="w-11 h-11 flex items-center justify-center bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-xl rounded-lg transition-colors shrink-0"
               >
-                {n}
+                −
               </button>
-            ))}
+              <input
+                type="number"
+                min={1}
+                value={nbBons}
+                onChange={e => setNbBons(Math.max(1, parseInt(e.target.value) || 1))}
+                disabled={illimite}
+                className="w-16 text-2xl font-black text-[#0A0A0A] text-center border-2 border-[#E0E0E0] rounded-xl py-2 focus:border-[#FF6B00] focus:outline-none transition-colors min-h-[44px]"
+              />
+              <button
+                type="button"
+                onClick={() => setNbBons(v => v + 1)}
+                disabled={illimite}
+                className="w-11 h-11 flex items-center justify-center bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-xl rounded-lg transition-colors shrink-0"
+              >
+                +
+              </button>
+            </div>
+
+            {/* Toggle illimité */}
             <button
               type="button"
               onClick={() => setIllimite(v => !v)}
-              className={`px-4 h-11 rounded-xl border-2 font-black text-xs transition-all ${
+              className={`ml-auto px-4 h-11 rounded-xl border-2 font-bold text-sm transition-all whitespace-nowrap ${
                 illimite
                   ? 'bg-[#FF6B00] border-[#FF6B00] text-white shadow-md shadow-orange-200'
                   : 'border-[#E0E0E0] text-[#3D3D3D] hover:border-[#FF6B00] hover:text-[#FF6B00]'
               }`}
             >
-              Illimité
+              ♾️ Illimité
             </button>
-            <span className="ml-auto text-3xl font-black text-[#FF6B00] min-w-[2.5rem] text-right tabular-nums">
-              {illimite ? '∞' : nbBons}
-            </span>
           </div>
           {errors.nbBons && (
             <p className="text-xs text-red-500 mt-2 font-semibold">⚠ {errors.nbBons}</p>
@@ -513,54 +528,48 @@ function NouvelleOffrePageInner() {
           <p className="text-[11px] font-bold uppercase tracking-widest text-[#3D3D3D]/50 mb-3">
             Plage horaire
           </p>
-          <div className="flex flex-col gap-3">
-
-            {/* Début */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#3D3D3D]/50 w-9 shrink-0">Début</span>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
+                📅 Date
+              </label>
               <input
                 type="date"
-                value={dateDebut}
+                value={dateOffre}
                 min={today}
-                onChange={e => setDateDebut(e.target.value)}
-                className="flex-1 border-2 border-[#E0E0E0] rounded-xl px-3 py-2.5 text-sm font-semibold text-[#0A0A0A] focus:border-[#FF6B00] focus:outline-none transition-colors min-h-[44px]"
+                onChange={e => setDateOffre(e.target.value)}
+                className={inputBase}
               />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
+                ⏰ De
+              </label>
               <input
                 type="time"
                 value={heureDebut}
                 step="900"
                 onChange={e => setHeureDebut(e.target.value)}
-                className="w-[7.5rem] border-2 border-[#E0E0E0] rounded-xl px-3 py-2.5 text-sm font-semibold text-[#0A0A0A] focus:border-[#FF6B00] focus:outline-none transition-colors min-h-[44px]"
+                className={inputBase}
               />
             </div>
-
-            {/* Fin */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#3D3D3D]/50 w-9 shrink-0">Fin</span>
-              <input
-                type="date"
-                value={dateFin}
-                min={dateDebut}
-                onChange={e => setDateFin(e.target.value)}
-                className="flex-1 border-2 border-[#E0E0E0] rounded-xl px-3 py-2.5 text-sm font-semibold text-[#0A0A0A] focus:border-[#FF6B00] focus:outline-none transition-colors min-h-[44px]"
-              />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
+                ⏰ À
+              </label>
               <input
                 type="time"
                 value={heureFin}
                 step="900"
                 onChange={e => setHeureFin(e.target.value)}
-                className="w-[7.5rem] border-2 border-[#E0E0E0] rounded-xl px-3 py-2.5 text-sm font-semibold text-[#0A0A0A] focus:border-[#FF6B00] focus:outline-none transition-colors min-h-[44px]"
+                className={inputBase}
               />
             </div>
-
           </div>
 
-          {/* Durée indicative */}
-          {!erreurHoraire && diff > 0 && (
+          {dureeLabel && !erreurHoraire && (
             <p className="text-[11px] text-[#3D3D3D]/50 mt-2 font-medium">
-              ⏱ Durée : {diff < 1
-                ? `${Math.round(diff * 60)} min`
-                : `${diff % 1 === 0 ? diff : diff.toFixed(1)}h`}
+              ⏱ Durée : {dureeLabel}
             </p>
           )}
           {(erreurHoraire || errors.horaire) && (
@@ -594,7 +603,7 @@ function NouvelleOffrePageInner() {
 
           {estRecurrente && (
             <div className="mt-4 flex gap-2">
-              {JOURS.map((j, i) => (
+              {JOURS.map(j => (
                 <button
                   key={j.id}
                   type="button"
@@ -649,15 +658,45 @@ function NouvelleOffrePageInner() {
         <div className="h-6" />
       </form>
 
-      {/* ── Tutorial overlay (steps 4-6) ─────────────────────────────────── */}
-      {isTutoriel && (
+      {/* ── Modal première offre ─────────────────────────────────────────── */}
+      {showFirstModal && (
+        <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" />
+          <div className="relative w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl px-6 py-8 flex flex-col gap-5">
+            <div className="text-center">
+              <p className="text-4xl mb-3">🎉</p>
+              <h2 className="text-xl font-black text-[#0A0A0A] leading-tight">
+                C'est ta première offre !
+              </h2>
+              <p className="text-sm text-[#3D3D3D]/60 mt-2">
+                Souhaites-tu être accompagné étape par étape ?
+              </p>
+            </div>
+            <button
+              onClick={() => { setShowFirstModal(false); setForceTutoriel(true) }}
+              className="w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-base py-4 rounded-2xl transition-colors shadow-lg shadow-orange-200/60"
+            >
+              Oui, guide-moi !
+            </button>
+            <button
+              onClick={() => setShowFirstModal(false)}
+              className="w-full text-[#3D3D3D]/60 font-semibold text-sm py-2 hover:text-[#0A0A0A] transition-colors"
+            >
+              Non merci, je remplis seul
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Tutorial overlay ─────────────────────────────────────────────── */}
+      {tutActive && (
         <TutorialOffre
           substep={tutSubstep}
           onAdvance={handleTutAdvance}
           onSkip={handleTutSkip}
           onApplySugg={(text) => setTitre(text)}
           suggestions={suggestions}
-          success={success && isTutoriel}
+          success={success && tutActive}
           onFinish={handleTutFinish}
         />
       )}

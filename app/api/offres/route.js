@@ -15,10 +15,18 @@ export async function POST(request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Non connecté' }, { status: 401 })
 
-  /* ── Commerce du commerçant ──────────────────────────────────────────── */
+  /* ── Body ── */
+  const body = await request.json()
+
+  /* ── Commerce — vérifié par ID + owner_id (fix multi-commerce) ───────── */
+  const commerceId = body.commerce_id
+  if (!commerceId)
+    return NextResponse.json({ error: 'commerce_id manquant' }, { status: 400 })
+
   const { data: commerce, error: commerceErr } = await admin
     .from('commerces')
     .select('id, palier')
+    .eq('id', commerceId)
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -26,8 +34,8 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Commerce introuvable' }, { status: 403 })
 
   /* ── Vérification quota ──────────────────────────────────────────────── */
-  const palier = commerce.palier || 'decouverte'
-  const limite = QUOTA_PAR_PALIER[palier] ?? 4
+  const palier    = commerce.palier || 'decouverte'
+  const limite    = QUOTA_PAR_PALIER[palier] ?? 4
   const debutMois = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
 
   const { count } = await admin
@@ -44,8 +52,6 @@ export async function POST(request) {
   }
 
   /* ── Insertion ───────────────────────────────────────────────────────── */
-  const body = await request.json()
-
   const { error: insertErr } = await admin.from('offres').insert({
     commerce_id:      commerce.id,
     type_remise:      body.type_remise,
