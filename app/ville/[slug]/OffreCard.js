@@ -291,7 +291,7 @@ export default function OffreCard({ offre }) {
             <button
               onClick={handleAbonnerComm}
               disabled={abonneCommLoading}
-              className={`w-full text-white font-bold text-xs py-2.5 rounded-full transition-all duration-200 min-h-[40px] flex items-center justify-center gap-1.5 ${
+              className={`w-full text-white font-bold text-[10px] leading-tight py-2.5 rounded-full transition-all duration-200 min-h-[40px] flex items-center justify-center text-center gap-1 ${
                 abonneComm
                   ? 'bg-green-500'
                   : 'bg-[#F08040] hover:bg-[#D06830] active:scale-[0.97]'
