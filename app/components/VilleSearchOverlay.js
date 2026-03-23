@@ -49,8 +49,11 @@ export default function VilleSearchOverlay({
   const [nbOffresMap,       setNbOffresMap]       = useState(new Map())
   const [villesAbonneesList, setVillesAbonneesList] = useState([])
 
-  const inputRef = useRef(null)
-  const debounce = useRef(null)
+  const [coordsBonmoment, setCoordsBonmoment] = useState(new Map())
+
+  const inputRef       = useRef(null)
+  const debounce       = useRef(null)
+  const coordsLoaded   = useRef(false)
 
   const villesActivesSet = new Set(villesBonmoment.map(v => v.nom.toLowerCase()))
 
@@ -70,6 +73,30 @@ export default function VilleSearchOverlay({
     } else {
       setVillesAbonneesList([])
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen])
+
+  /* Cache coordonnées GPS des villes BONMOMENT au premier montage */
+  useEffect(() => {
+    if (!isOpen || villesBonmoment.length === 0 || coordsLoaded.current) return
+    coordsLoaded.current = true
+    Promise.all(
+      villesBonmoment.map(async v => {
+        try {
+          const r = await fetch(
+            `https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(v.nom)}&fields=nom,centre&limit=1`
+          )
+          const d = await r.json()
+          const c = d[0]?.centre?.coordinates
+          if (c) return [v.nom, { lat: c[1], lon: c[0] }]
+        } catch {}
+        return null
+      })
+    ).then(entries => {
+      const map = new Map()
+      entries.filter(Boolean).forEach(([nom, coords]) => map.set(nom, coords))
+      setCoordsBonmoment(map)
+    })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
@@ -98,19 +125,36 @@ export default function VilleSearchOverlay({
     debounce.current = setTimeout(async () => {
       setSearching(true)
       try {
-        const res  = await fetch(
-          `https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(query)}&fields=nom,code,codeDepartement,codesPostaux,population&boost=population&limit=10`
-        )
-        const data = await res.json()
-        data.sort((a, b) => {
+        const isNumeric = /^\d/.test(query.trim())
+        const calls = [
+          fetch(`https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(query)}&fields=nom,code,codeDepartement,codesPostaux,population&boost=population&limit=15`),
+        ]
+        if (isNumeric) {
+          calls.push(fetch(`https://geo.api.gouv.fr/communes?codePostal=${encodeURIComponent(query)}&fields=nom,code,codeDepartement,codesPostaux,population&boost=population&limit=15`))
+        }
+        const responses = await Promise.all(calls)
+        const datasets  = await Promise.all(responses.map(r => r.json()))
+
+        // Merge + dédup par code
+        const seen = new Set()
+        const merged = []
+        for (const data of datasets) {
+          for (const c of data) {
+            if (!seen.has(c.code)) { seen.add(c.code); merged.push(c) }
+          }
+        }
+
+        // Tri : villes actives d'abord, puis population décroissante
+        merged.sort((a, b) => {
           const aA = villesActivesSet.has(a.nom.toLowerCase()) ? 0 : 1
           const bA = villesActivesSet.has(b.nom.toLowerCase()) ? 0 : 1
-          return aA - bA
+          if (aA !== bA) return aA - bA
+          return (b.population || 0) - (a.population || 0)
         })
-        setResults(data)
+        setResults(merged)
       } catch {}
       setSearching(false)
-    }, 300)
+    }, 200)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query])
 
@@ -134,7 +178,7 @@ export default function VilleSearchOverlay({
     setVoisines([])
 
     try {
-      // Récupère les coordonnées de la commune choisie (pour calculer les distances)
+      // Récupère les coordonnées de la commune choisie
       let lat = null, lon = null
       try {
         const centreRes  = await fetch(
@@ -145,39 +189,42 @@ export default function VilleSearchOverlay({
         if (coords) { lon = coords[0]; lat = coords[1] }
       } catch {}
 
-      // Montre TOUTES les villes BONMOMENT (pas de filtre par distance)
+      // Filtre strictement < 20km (utilise le cache coordsBonmoment)
       const proches = []
-      for (const villeBm of villesBonmoment) {
-        let distance = null
+      if (lat !== null && lon !== null) {
+        for (const villeBm of villesBonmoment) {
+          let bmLat = null, bmLon = null
 
-        // Calcule la distance si on a les coordonnées de la commune
-        if (lat !== null && lon !== null) {
-          try {
-            const r = await fetch(
-              `https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(villeBm.nom)}&fields=nom,centre&limit=1`
-            )
-            const d = await r.json()
-            const c = d[0]?.centre?.coordinates
-            if (c) distance = haversine(lat, lon, c[1], c[0])
-          } catch {}
+          const cached = coordsBonmoment.get(villeBm.nom)
+          if (cached) {
+            bmLat = cached.lat; bmLon = cached.lon
+          } else {
+            try {
+              const r = await fetch(
+                `https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(villeBm.nom)}&fields=nom,centre&limit=1`
+              )
+              const d = await r.json()
+              const c = d[0]?.centre?.coordinates
+              if (c) { bmLon = c[0]; bmLat = c[1] }
+            } catch {}
+          }
+
+          if (bmLat === null) continue  // coords inconnues → skip
+          const distance = haversine(lat, lon, bmLat, bmLon)
+          if (distance >= 20) continue  // > 20km → skip
+
+          const { count } = await supabase
+            .from('offres')
+            .select('id, commerces!inner(ville)', { count: 'exact', head: true })
+            .eq('statut', 'active')
+            .gt('date_fin', new Date().toISOString())
+            .eq('commerces.ville', villeBm.nom)
+          proches.push({ ...villeBm, distance, nbOffres: count || 0 })
         }
-
-        const { count } = await supabase
-          .from('offres')
-          .select('id, commerces!inner(ville)', { count: 'exact', head: true })
-          .eq('statut', 'active')
-          .gt('date_fin', new Date().toISOString())
-          .eq('commerces.ville', villeBm.nom)
-        proches.push({ ...villeBm, distance, nbOffres: count || 0 })
       }
+      // Si lat/lon non trouvées → proches vide → message "Aucune ville active..."
 
-      // Trie : distances connues d'abord (croissant), puis sans distance
-      proches.sort((a, b) => {
-        if (a.distance === null && b.distance === null) return 0
-        if (a.distance === null) return 1
-        if (b.distance === null) return -1
-        return a.distance - b.distance
-      })
+      proches.sort((a, b) => a.distance - b.distance)
       setVoisines(proches)
     } catch {}
 
@@ -204,6 +251,7 @@ export default function VilleSearchOverlay({
     }
 
     setAbonnesLocal(prev => new Set([...prev, nomVille]))
+    setVillesAbonneesList(prev => prev.includes(nomVille) ? prev : [...prev, nomVille])
     setAbonnement(null)
     onSubscribed?.(nomVille)
   }
@@ -214,14 +262,20 @@ export default function VilleSearchOverlay({
     }
   }
 
-  /* Déduplique villesBonmoment par nom (point 3) */
+  /* Helper normalisation accents */
+  function normalize(s) {
+    return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  }
+
+  /* Déduplique villesBonmoment par nom */
   const villesBonmomentUniq = villesBonmoment.filter(
     (v, i, arr) => arr.findIndex(x => x.nom.toLowerCase() === v.nom.toLowerCase()) === i
   )
 
-  /* Villes BONMOMENT correspondant à la recherche (Bug 3 : toujours trouvées) */
+  /* Villes BONMOMENT correspondant à la recherche (insensible aux accents) */
+  const normQuery    = normalize(query)
   const localMatches = query.length >= 2
-    ? villesBonmomentUniq.filter(v => v.nom.toLowerCase().includes(query.toLowerCase()))
+    ? villesBonmomentUniq.filter(v => normalize(v.nom).includes(normQuery))
     : []
 
   /* Résultats géo dédupliqués par code (point 3) */
@@ -447,21 +501,27 @@ export default function VilleSearchOverlay({
               <p className="text-xs text-[#3D3D3D]/60">
                 Abonne-toi pour être prévenu dès l'ouverture, ou choisis une ville proche :
               </p>
-              <button
-                onClick={() => subscriberVille(communeChoisie?.nom)}
-                disabled={abonnesLocal.has(communeChoisie?.nom) || abonnement === communeChoisie?.nom}
-                className={`w-full font-bold text-sm py-3 rounded-2xl transition-colors min-h-[48px] ${
-                  abonnesLocal.has(communeChoisie?.nom)
-                    ? 'bg-green-500 text-white'
-                    : 'bg-[#FF6B00] hover:bg-[#CC5500] text-white'
-                } disabled:opacity-60`}
-              >
-                {abonnement === communeChoisie?.nom
-                  ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
-                  : abonnesLocal.has(communeChoisie?.nom)
-                  ? `✅ Abonné à ${communeChoisie?.nom}`
-                  : `📌 S'abonner pour être averti`}
-              </button>
+              {(() => {
+                const nomC       = communeChoisie?.nom
+                const dejaAbonne = villesAbonneesList.includes(nomC) || abonnesLocal.has(nomC)
+                return (
+                  <button
+                    onClick={() => subscriberVille(nomC)}
+                    disabled={dejaAbonne || abonnement === nomC}
+                    className={`w-full font-bold text-sm py-3 rounded-2xl transition-colors min-h-[48px] ${
+                      dejaAbonne
+                        ? 'bg-green-500 text-white'
+                        : 'bg-[#FF6B00] hover:bg-[#CC5500] text-white'
+                    } disabled:opacity-60`}
+                  >
+                    {abonnement === nomC
+                      ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+                      : dejaAbonne
+                      ? `✅ Déjà abonné`
+                      : `📌 S'abonner pour être averti`}
+                  </button>
+                )
+              })()}
             </div>
 
             {loadingVoisines && (
@@ -471,19 +531,13 @@ export default function VilleSearchOverlay({
             )}
 
             {!loadingVoisines && voisines.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-5xl mb-3">🗺️</p>
-                <p className="text-sm font-bold text-[#0A0A0A]">
-                  Aucune ville active sur BONMOMENT
-                </p>
-                <p className="text-xs text-[#3D3D3D]/50 mt-2">
-                  Abonne-toi quand même pour être prévenu dès l'ouverture !
-                </p>
-              </div>
+              <p className="text-center text-sm text-[#3D3D3D]/50 py-4">
+                Aucune ville active près de chez toi pour le moment.
+              </p>
             )}
 
             {!loadingVoisines && voisines.map(v => {
-              const isAbonne = abonnesLocal.has(v.nom)
+              const isAbonne = villesAbonneesList.includes(v.nom) || abonnesLocal.has(v.nom)
               return (
                 <div
                   key={v.id}
@@ -509,13 +563,13 @@ export default function VilleSearchOverlay({
                     disabled={isAbonne || abonnement === v.nom}
                     className={`text-xs font-bold px-3 py-1.5 rounded-full transition-colors min-h-[36px] shrink-0 ${
                       isAbonne
-                        ? 'bg-[#FF6B00] text-white'
+                        ? 'bg-green-500 text-white'
                         : 'border border-[#FF6B00] text-[#FF6B00] hover:bg-[#FFF0E0]'
                     } disabled:opacity-60`}
                   >
                     {abonnement === v.nom ? (
                       <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin inline-block" />
-                    ) : isAbonne ? '✅ Abonné' : "S'abonner"}
+                    ) : isAbonne ? '✅ Déjà abonné' : "S'abonner"}
                   </button>
                 </div>
               )
