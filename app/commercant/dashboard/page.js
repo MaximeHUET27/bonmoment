@@ -198,13 +198,13 @@ export default function DashboardPage() {
         {commerce && (
           <div className="flex gap-4">
             <Link
-              href="/commercant/valider"
+              href={`/commercant/valider?commerce=${commerce.id}`}
               className="flex-1 bg-[#FF6B00] hover:bg-[#CC5500] text-white font-semibold text-lg py-4 rounded-xl transition-colors flex items-center justify-center text-center"
             >
               ✅ Vérifier un bon
             </Link>
             <Link
-              href="/commercant/offre/nouvelle"
+              href={`/commercant/offre/nouvelle?commerce=${commerce.id}`}
               className="flex-1 border-2 border-[#FF6B00] text-[#FF6B00] bg-white hover:bg-[#FFF0E0] font-semibold text-lg py-4 rounded-xl transition-colors flex items-center justify-center text-center"
             >
               ✨ Créer une offre

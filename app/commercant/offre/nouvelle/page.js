@@ -144,11 +144,14 @@ function NouvelleOffrePageInner() {
   useEffect(() => {
     if (!user) return
     ;(async () => {
-      const { data } = await supabase
+      const commerceId = searchParams.get('commerce')
+      const { data: list } = await supabase
         .from('commerces')
         .select('id, nom, categorie, ville, adresse, palier')
         .eq('owner_id', user.id)
-        .maybeSingle()
+
+      const all = list || []
+      const data = (commerceId ? all.find(c => c.id === commerceId) : null) || all[0] || null
 
       if (!data) { router.replace('/'); return }
       setCommerce(data)
