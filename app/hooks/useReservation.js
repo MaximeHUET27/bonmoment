@@ -29,12 +29,13 @@ export function useReservation() {
       }
       console.log('[réservation] ✔ User authentifié:', authUser.id)
 
-      /* 1 — Déjà réservé ? */
+      /* 1 — Déjà réservé ? (filtre statut='reservee' : une annulée/expirée ne bloque pas) */
       const { data: existing, error: existErr } = await supabase
         .from('reservations')
         .select('id, code_validation, qr_code_data')
         .eq('user_id',  authUser.id)
         .eq('offre_id', offre.id)
+        .eq('statut',   'reservee')
         .maybeSingle()
 
       if (existErr) console.error('[réservation] ✗ Check existing:', existErr.message)
@@ -122,10 +123,14 @@ export function useReservation() {
         else console.log('[réservation] ✔ qr_code_data mis à jour')
       }
 
-      /* 7 — Décrémente le stock — erreur non fatale (le bon est réservé) */
+      /* 7 — Décrémente le stock via UPDATE direct (.gt empêche de passer en négatif) */
       if (nb !== null && nb !== 9999) {
-        const { error: rpcErr } = await supabase.rpc('decrement_bons_restants', { p_offre_id: offre.id })
-        if (rpcErr) console.error('[réservation] ⚠ RPC decrement_bons_restants:', rpcErr.message)
+        const { error: decrErr } = await supabase
+          .from('offres')
+          .update({ nb_bons_restants: nb - 1 })
+          .eq('id', offre.id)
+          .gt('nb_bons_restants', 0)
+        if (decrErr) console.error('[réservation] ⚠ Décrémentation stock:', decrErr.message)
         else console.log('[réservation] ✔ Stock décrémenté')
       }
 

@@ -239,18 +239,21 @@ export default function MesBonsPage() {
     setReservations(prev => prev.filter(r => r.id !== id))
   }
 
-  const now        = new Date()
-  const enCours    = reservations.filter(r =>
+  const now         = new Date()
+  // Tous les bons actifs (reservee + date_fin future) — inclut les programmés
+  const enCours     = reservations.filter(r =>
     r.statut === 'reservee' &&
-    new Date(r.offres?.date_fin) > now &&
-    (!r.offres?.date_debut || new Date(r.offres.date_debut) <= now)
+    new Date(r.offres?.date_fin) > now
   )
-  const programmes = reservations.filter(r =>
-    r.statut === 'reservee' &&
-    r.offres?.date_debut &&
-    new Date(r.offres.date_debut) > now
+  // Sous-ensemble : offre déjà commencée (ou sans date_debut)
+  const vraiEnCours = enCours.filter(r =>
+    !r.offres?.date_debut || new Date(r.offres.date_debut) <= now
   )
-  const utilises   = reservations.filter(r => r.statut === 'utilisee')
+  // Sous-ensemble : offre pas encore commencée
+  const programmes  = enCours.filter(r =>
+    r.offres?.date_debut && new Date(r.offres.date_debut) > now
+  )
+  const utilises    = reservations.filter(r => r.statut === 'utilisee')
   const expires    = reservations.filter(r =>
     r.statut === 'expiree' || r.statut === 'annulee' ||
     (r.statut === 'reservee' && new Date(r.offres?.date_fin) <= now)
@@ -310,12 +313,12 @@ export default function MesBonsPage() {
         )}
 
         {/* ── Bons en cours ── */}
-        {enCours.length > 0 && (
+        {vraiEnCours.length > 0 && (
           <section className="flex flex-col gap-3">
             <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00]">
               Bons actifs
             </p>
-            {enCours.map(resa => (
+            {vraiEnCours.map(resa => (
               <BonActifCard key={resa.id} resa={resa} supabase={supabase} onCancelled={handleCancelled} />
             ))}
           </section>
