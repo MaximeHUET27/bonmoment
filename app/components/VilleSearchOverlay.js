@@ -171,7 +171,7 @@ export default function VilleSearchOverlay({
         if (e.name !== 'AbortError') setSearching(false)
         // AbortError = nouvelle frappe a annulé la requête → ne pas modifier l'état
       }
-    }, 600)
+    }, 300)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query])
 
