@@ -63,6 +63,7 @@ export default function ChatbotWidget() {
   const router = useRouter()
 
   const [isOpen,       setIsOpen]       = useState(false)
+  const [hidden,       setHidden]       = useState(false)
   const [messages,     setMessages]     = useState([])     // {type:'bot'|'user', text}[]
   const [isTyping,     setIsTyping]     = useState(false)
   const [buttons,      setButtons]      = useState([])
@@ -70,6 +71,18 @@ export default function ChatbotWidget() {
   const [locked,       setLocked]       = useState(false)  // prevent double clicks
 
   const endRef = useRef(null)
+
+  /* Masquage quand un bottom sheet est ouvert */
+  useEffect(() => {
+    const show = () => setHidden(true)
+    const hide = () => setHidden(false)
+    window.addEventListener('bonmoment:bottomsheet-open',  show)
+    window.addEventListener('bonmoment:bottomsheet-close', hide)
+    return () => {
+      window.removeEventListener('bonmoment:bottomsheet-open',  show)
+      window.removeEventListener('bonmoment:bottomsheet-close', hide)
+    }
+  }, [])
 
   /* Auto-scroll */
   useEffect(() => {
@@ -165,7 +178,7 @@ export default function ChatbotWidget() {
   return (
     <>
       {/* ── Floating button ─────────────────────────────────────────────── */}
-      {!isOpen && (
+      {!isOpen && !hidden && (
         <button
           onClick={handleOpen}
           aria-label="Ouvrir le chatbot d'aide"

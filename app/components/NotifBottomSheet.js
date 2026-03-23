@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/app/context/AuthContext'
 
 /**
@@ -12,6 +12,14 @@ export default function NotifBottomSheet({ isOpen, onClose, villeNom }) {
   const [emailOn, setEmailOn]   = useState(true)
   const [pushOn,  setPushOn]    = useState(false)
   const [saving,  setSaving]    = useState(false)
+
+  useEffect(() => {
+    if (isOpen) {
+      window.dispatchEvent(new Event('bonmoment:bottomsheet-open'))
+    } else {
+      window.dispatchEvent(new Event('bonmoment:bottomsheet-close'))
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
