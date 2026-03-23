@@ -100,6 +100,7 @@ export default async function OffrePage({ params }) {
 
   const commerce  = offre.commerces
   const villeSlug = commerce?.ville ? toSlug(commerce.ville) : null
+  const expired   = offre.statut === 'expiree' || new Date(offre.date_fin) < new Date()
   const mapsUrl   = commerce?.adresse
     ? `https://maps.google.com/?q=${encodeURIComponent(`${commerce.adresse}, ${commerce.ville || ''}`)}`
     : null
@@ -135,11 +136,14 @@ export default async function OffrePage({ params }) {
       <section className="flex-1 px-4 py-4 flex flex-col gap-4 max-w-lg mx-auto w-full">
 
         {/* 1. Badge remise — accroche visuelle forte */}
-        <div className="flex flex-col items-center justify-center bg-[#FFF0E0] rounded-3xl py-8 px-4">
-          <span className="text-5xl sm:text-6xl font-black text-[#FF6B00] tracking-tight leading-none text-center">
+        <div className={`flex flex-col items-center justify-center rounded-3xl py-8 px-4 ${expired ? 'bg-[#F0F0F0]' : 'bg-[#FFF0E0]'}`}>
+          <span className={`text-5xl sm:text-6xl font-black tracking-tight leading-none text-center ${expired ? 'text-[#B0B0B0]' : 'text-[#FF6B00]'}`}>
             {formatBadge(offre)}
           </span>
-          {formatSubBadge(offre) && (
+          {expired && (
+            <span className="text-sm font-bold text-[#9CA3AF] mt-2">Trop tard !</span>
+          )}
+          {!expired && formatSubBadge(offre) && (
             <span className="text-xs font-semibold text-[#FF6B00]/70 mt-1.5 uppercase tracking-widest">
               {formatSubBadge(offre)}
             </span>

@@ -217,7 +217,7 @@ export default function OffreCard({ offre }) {
       <div className="bg-white rounded-2xl border border-[#F0F0F0] shadow-sm overflow-hidden flex flex-col">
 
         {/* Zone 1 : header + corps grisés pour les cartes expirées */}
-        <div className={fini ? 'opacity-50 grayscale pointer-events-none' : ''}>
+        <div className={fini ? 'opacity-50 grayscale cursor-pointer' : ''}>
 
         {/* ── Header : countdown + bons restants + partage ── */}
         <div className={`flex items-center gap-1 px-2 py-1.5 ${

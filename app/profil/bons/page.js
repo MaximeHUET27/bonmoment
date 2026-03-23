@@ -328,20 +328,41 @@ export default function MesBonsPage() {
                       {' · '}{resa.offres?.titre}
                     </p>
                     <p className="text-xs text-[#3D3D3D]/60 mt-0.5">{resa.offres?.commerces?.nom}</p>
-                    <p className="text-[11px] text-[#3D3D3D]/40 mt-1">
-                      Utilisé le{' '}
-                      {new Date(resa.created_at).toLocaleDateString('fr-FR', {
-                        day: 'numeric', month: 'long', year: 'numeric',
-                      })}
-                    </p>
                   </div>
                   <span className="text-xs text-[#3D3D3D]/30">{expandedId === resa.id ? '▲' : '▼'}</span>
                 </div>
                 {expandedId === resa.id && (
-                  <div className="mt-3 pt-3 border-t border-[#F5F5F5] flex flex-col gap-1 text-xs text-[#3D3D3D]/70">
-                    {resa.offres?.commerces?.adresse && <p>📍 {resa.offres.commerces.adresse}{resa.offres.commerces.ville ? `, ${resa.offres.commerces.ville}` : ''}</p>}
-                    {resa.offres?.date_fin && <p>🗓 Expirait le {new Date(resa.offres.date_fin).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>}
-                    {resa.code_validation && <p className="font-mono font-bold text-[#0A0A0A] mt-1">Code : {resa.code_validation}</p>}
+                  <div className="mt-3 pt-3 border-t border-[#F5F5F5] flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-block px-3 py-1 rounded-full bg-[#FF6B00] text-white text-sm font-black">
+                        {formatBadge(resa.offres)}
+                      </span>
+                      <span className="text-sm font-bold text-[#0A0A0A]">{resa.offres?.titre}</span>
+                    </div>
+                    {resa.offres?.commerces?.nom && (
+                      <p className="text-xs font-semibold text-[#3D3D3D]">🏪 {resa.offres.commerces.nom}</p>
+                    )}
+                    {resa.offres?.commerces?.adresse && (
+                      <p className="text-xs text-[#3D3D3D]/70">📍 {resa.offres.commerces.adresse}{resa.offres.commerces.ville ? `, ${resa.offres.commerces.ville}` : ''}</p>
+                    )}
+                    {resa.created_at && (
+                      <p className="text-[11px] text-[#3D3D3D]/50">
+                        Réservé le {new Date(resa.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </p>
+                    )}
+                    {resa.offres?.date_fin && (
+                      <p className="text-[11px] text-[#3D3D3D]/50">
+                        Expirait le {new Date(resa.offres.date_fin).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </p>
+                    )}
+                    {resa.code_validation && (
+                      <p
+                        className="font-mono font-bold text-base text-green-700 mt-1 tracking-widest"
+                        style={{ fontFamily: 'Courier New, monospace' }}
+                      >
+                        {String(resa.code_validation).padStart(6, '0')}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -372,21 +393,42 @@ export default function MesBonsPage() {
                       {formatBadge(resa.offres)} · {resa.offres?.titre}
                     </p>
                     <p className="text-xs text-[#3D3D3D]/60 mt-0.5">{resa.offres?.commerces?.nom}</p>
-                    <p className="text-[11px] text-[#3D3D3D]/40 mt-1">
-                      Expiré le{' '}
-                      {resa.offres?.date_fin
-                        ? new Date(resa.offres.date_fin).toLocaleDateString('fr-FR', {
-                            day: 'numeric', month: 'long', year: 'numeric',
-                          })
-                        : '—'}
-                    </p>
                   </div>
                   <span className="text-xs text-[#3D3D3D]/30">{expandedId === resa.id ? '▲' : '▼'}</span>
                 </div>
                 {expandedId === resa.id && (
-                  <div className="mt-3 pt-3 border-t border-[#F5F5F5] flex flex-col gap-1 text-xs text-[#3D3D3D]/70">
-                    {resa.offres?.commerces?.adresse && <p>📍 {resa.offres.commerces.adresse}{resa.offres.commerces.ville ? `, ${resa.offres.commerces.ville}` : ''}</p>}
-                    {resa.code_validation && <p className="font-mono font-bold text-[#0A0A0A] mt-1">Code : {resa.code_validation}</p>}
+                  <div className="mt-3 pt-3 border-t border-[#F5F5F5] flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-block px-3 py-1 rounded-full bg-[#E0E0E0] text-[#9CA3AF] text-sm font-black">
+                        {formatBadge(resa.offres)}
+                      </span>
+                      <span className="text-sm font-bold text-[#3D3D3D]">{resa.offres?.titre}</span>
+                    </div>
+                    {resa.offres?.commerces?.nom && (
+                      <p className="text-xs font-semibold text-[#3D3D3D]/70">🏪 {resa.offres.commerces.nom}</p>
+                    )}
+                    {resa.offres?.commerces?.adresse && (
+                      <p className="text-xs text-[#3D3D3D]/60">📍 {resa.offres.commerces.adresse}{resa.offres.commerces.ville ? `, ${resa.offres.commerces.ville}` : ''}</p>
+                    )}
+                    {resa.created_at && (
+                      <p className="text-[11px] text-[#3D3D3D]/40">
+                        Réservé le {new Date(resa.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </p>
+                    )}
+                    {resa.offres?.date_fin && (
+                      <p className="text-[11px] text-[#3D3D3D]/40">
+                        {resa.statut === 'annulee' ? 'Annulé —' : 'Expiré le'}{' '}
+                        {new Date(resa.offres.date_fin).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </p>
+                    )}
+                    {resa.code_validation && (
+                      <p
+                        className="font-mono font-bold text-base text-[#B0B0B0] line-through mt-1 tracking-widest"
+                        style={{ fontFamily: 'Courier New, monospace' }}
+                      >
+                        {String(resa.code_validation).padStart(6, '0')}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
