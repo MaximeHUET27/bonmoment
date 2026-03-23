@@ -7,6 +7,7 @@ import AuthBottomSheet from '@/app/components/AuthBottomSheet'
 import FullScreenBon from '@/app/components/FullScreenBon'
 import FavoriButton from '@/app/components/FavoriButton'
 import { useReservation } from '@/app/hooks/useReservation'
+import { useFavoris } from '@/app/context/FavorisContext'
 
 const PENDING_KEY = 'bonmoment_pending_reservation'
 
@@ -34,11 +35,13 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
   const { user, supabase } = useAuth()
   const pathname   = usePathname()
 
+  const { isFavori, toggleFavori } = useFavoris()
   const [showAuth,          setShowAuth]          = useState(false)
   const [showBon,           setShowBon]           = useState(false)
   const [toast,             setToast]             = useState(null)
-  const [abonneComm,        setAbonneComm]        = useState(false)
   const [abonneCommLoading, setAbonneCommLoading] = useState(false)
+
+  const abonneComm = isFavori(offre.commerces?.id)
 
   const { reserver, status, reservation, reset, checkExisting } = useReservation()
 
@@ -49,14 +52,6 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
     return () => clearInterval(t)
   }, [offre.date_fin])
 
-  /* ── Vérifier favori commerce au montage ── */
-  useEffect(() => {
-    if (!user || !offre.commerces?.id) return
-    supabase.from('users').select('commerces_abonnes').eq('id', user.id).single()
-      .then(({ data }) => {
-        if (data?.commerces_abonnes?.includes(offre.commerces.id)) setAbonneComm(true)
-      })
-  }, [user, offre.commerces?.id, supabase])
 
   /* ── Vérifier réservation existante au montage (bouton vert persistant) ── */
   useEffect(() => {
@@ -109,11 +104,7 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
   async function handleAbonnerComm() {
     if (!user) { setShowAuth(true); return }
     setAbonneCommLoading(true)
-    const { data: current } = await supabase.from('users').select('commerces_abonnes').eq('id', user.id).single()
-    const existant = current?.commerces_abonnes || []
-    const next = abonneComm ? existant.filter(id => id !== offre.commerces?.id) : [...existant, offre.commerces?.id]
-    await supabase.from('users').update({ commerces_abonnes: next }).eq('id', user.id)
-    setAbonneComm(!abonneComm)
+    await toggleFavori(offre.commerces?.id)
     setAbonneCommLoading(false)
   }
 

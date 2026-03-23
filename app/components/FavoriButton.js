@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '@/app/context/AuthContext'
+import { useFavoris } from '@/app/context/FavorisContext'
 import AuthBottomSheet from './AuthBottomSheet'
 
 /**
@@ -12,73 +13,30 @@ import AuthBottomSheet from './AuthBottomSheet'
  * @param {string} className    - Classes CSS supplémentaires
  */
 export default function FavoriButton({ commerceId, commerceNom, className = '' }) {
-  const { user, supabase } = useAuth()
-  const [favori,    setFavori]    = useState(false)
-  const [pulse,     setPulse]     = useState(false)
-  const [showAuth,  setShowAuth]  = useState(false)
-  const [toast,     setToast]     = useState(null)
-  const [loading,   setLoading]   = useState(false)
+  const { user }                  = useAuth()
+  const { isFavori, toggleFavori } = useFavoris()
+  const [pulse,    setPulse]    = useState(false)
+  const [showAuth, setShowAuth] = useState(false)
+  const [toast,    setToast]    = useState(null)
+  const [loading,  setLoading]  = useState(false)
 
-  /* Lire le statut favori depuis Supabase */
-  useEffect(() => {
-    if (!user || !commerceId) return
-    supabase
-      .from('users')
-      .select('commerces_abonnes')
-      .eq('id', user.id)
-      .single()
-      .then(({ data }) => {
-        if (data?.commerces_abonnes) {
-          setFavori(data.commerces_abonnes.includes(commerceId))
-        }
-      })
-  }, [user, commerceId, supabase])
-
-  function afficherToast(msg) {
-    setToast(msg)
-    setTimeout(() => setToast(null), 4000)
-  }
-
-  function animePulse() {
-    setPulse(true)
-    setTimeout(() => setPulse(false), 400)
-  }
+  const favori = isFavori(commerceId)
 
   async function handleClick(e) {
     e.preventDefault()
     e.stopPropagation()
 
-    if (!user) {
-      setShowAuth(true)
-      return
-    }
+    if (!user) { setShowAuth(true); return }
 
-    animePulse()
+    setPulse(true)
+    setTimeout(() => setPulse(false), 400)
     setLoading(true)
-
-    const { data: current } = await supabase
-      .from('users')
-      .select('commerces_abonnes')
-      .eq('id', user.id)
-      .single()
-
-    const existant    = current?.commerces_abonnes || []
-    const dejaFavori  = existant.includes(commerceId)
-    const next        = dejaFavori
-      ? existant.filter(id => id !== commerceId)
-      : [...existant, commerceId]
-
-    await supabase
-      .from('users')
-      .update({ commerces_abonnes: next })
-      .eq('id', user.id)
-
-    const nouveauStatut = !dejaFavori
-    setFavori(nouveauStatut)
+    const isNowFavori = await toggleFavori(commerceId)
     setLoading(false)
 
-    if (nouveauStatut && existant.length === 0) {
-      afficherToast(`❤️ Tu seras alerté dès que ${commerceNom} publie une offre !`)
+    if (isNowFavori) {
+      setToast(`❤️ Tu seras alerté dès que ${commerceNom} publie une offre !`)
+      setTimeout(() => setToast(null), 4_000)
     }
   }
 
@@ -104,14 +62,12 @@ export default function FavoriButton({ commerceId, commerceNom, className = '' }
         )}
       </button>
 
-      {/* Toast */}
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-[#0A0A0A] text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-2xl max-w-[90vw] text-center">
           {toast}
         </div>
       )}
 
-      {/* Auth bottom sheet */}
       <AuthBottomSheet
         isOpen={showAuth}
         onClose={() => setShowAuth(false)}

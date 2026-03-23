@@ -11,6 +11,7 @@ import FullScreenBon from '@/app/components/FullScreenBon'
 import FavoriButton from '@/app/components/FavoriButton'
 import ShareButton from '@/app/components/ShareButton'
 import { useReservation } from '@/app/hooks/useReservation'
+import { useFavoris } from '@/app/context/FavorisContext'
 
 /* ── Mapping catégorie Google → filtre ───────────────────────────────────── */
 
@@ -87,23 +88,16 @@ export default function OffreCard({ offre }) {
   )
 
   const { user, supabase } = useAuth()
+  const { isFavori, toggleFavori } = useFavoris()
   const pathname  = usePathname()
   const [showAuth,          setShowAuth]          = useState(false)
   const [showBon,           setShowBon]           = useState(false)
   const [toast,             setToast]             = useState(null)
-  const [abonneComm,        setAbonneComm]        = useState(false)
   const [abonneCommLoading, setAbonneCommLoading] = useState(false)
 
-  const { reserver, status, reservation, reset, checkExisting } = useReservation()
+  const abonneComm = isFavori(commerce?.id)
 
-  /* ── Vérifier favori commerce au montage ── */
-  useEffect(() => {
-    if (!user || !commerce?.id) return
-    supabase.from('users').select('commerces_abonnes').eq('id', user.id).single()
-      .then(({ data }) => {
-        if (data?.commerces_abonnes?.includes(commerce.id)) setAbonneComm(true)
-      })
-  }, [user, commerce?.id, supabase])
+  const { reserver, status, reservation, reset, checkExisting } = useReservation()
 
   /* ── Vérifier réservation existante au montage (bouton vert persistant) ── */
   useEffect(() => {
@@ -153,11 +147,7 @@ export default function OffreCard({ offre }) {
     e.stopPropagation()
     if (!user) { setShowAuth(true); return }
     setAbonneCommLoading(true)
-    const { data: current } = await supabase.from('users').select('commerces_abonnes').eq('id', user.id).single()
-    const existant = current?.commerces_abonnes || []
-    const next = abonneComm ? existant.filter(id => id !== commerce.id) : [...existant, commerce.id]
-    await supabase.from('users').update({ commerces_abonnes: next }).eq('id', user.id)
-    setAbonneComm(!abonneComm)
+    await toggleFavori(commerce.id)
     setAbonneCommLoading(false)
   }
 

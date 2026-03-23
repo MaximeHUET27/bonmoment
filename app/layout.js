@@ -2,6 +2,7 @@ import { Montserrat } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { AuthProvider } from "@/app/context/AuthContext";
+import { FavorisProvider } from "@/app/context/FavorisContext";
 import AdminFooterLink from "@/app/components/AdminFooterLink";
 import ChatbotWidget from "@/app/components/ChatbotWidget";
 
@@ -21,6 +22,7 @@ export default function RootLayout({ children }) {
     <html lang="fr">
       <body className={`${montserrat.variable} antialiased`}>
         <AuthProvider>
+          <FavorisProvider>
           {children}
           <ChatbotWidget />
           <footer className="w-full bg-[#F5F5F5] border-t border-[#EBEBEB] px-6 py-5 mt-auto">
@@ -45,6 +47,7 @@ export default function RootLayout({ children }) {
               </p>
             </div>
           </footer>
+          </FavorisProvider>
         </AuthProvider>
       </body>
     </html>
