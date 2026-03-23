@@ -54,6 +54,7 @@ export default function VilleSearchOverlay({
   const inputRef       = useRef(null)
   const debounce       = useRef(null)
   const coordsLoaded   = useRef(false)
+  const abortCtrl      = useRef(null)
 
   const villesActivesSet = new Set(villesBonmoment.map(v => v.nom.toLowerCase()))
 
@@ -100,37 +101,50 @@ export default function VilleSearchOverlay({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
-  /* Compte les offres actives par ville BONMOMENT à l'ouverture */
+  /* Compte les offres actives par ville — un seul appel au montage */
   useEffect(() => {
-    if (!isOpen || !supabase || villesBonmoment.length === 0) return
-    Promise.all(
-      villesBonmoment.map(v =>
-        supabase
-          .from('offres')
-          .select('id, commerces!inner(ville)', { count: 'exact', head: true })
-          .eq('statut', 'active')
-          .gt('date_fin', new Date().toISOString())
-          .eq('commerces.ville', v.nom)
-          .then(({ count }) => [v.nom, count || 0])
-      )
-    ).then(entries => setNbOffresMap(new Map(entries)))
+    if (!isOpen || !supabase) return
+    supabase
+      .from('offres')
+      .select('commerces!inner(ville)')
+      .eq('statut', 'active')
+      .gt('date_fin', new Date().toISOString())
+      .then(({ data }) => {
+        const map = new Map()
+        for (const o of (data || [])) {
+          const ville = o.commerces?.ville
+          if (ville) map.set(ville, (map.get(ville) || 0) + 1)
+        }
+        setNbOffresMap(map)
+      })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
-  /* Debounce search geo.api.gouv.fr */
+  /* Debounce search geo.api.gouv.fr avec AbortController */
   useEffect(() => {
     if (debounce.current) clearTimeout(debounce.current)
-    if (!query.trim() || query.length < 2) { setResults([]); return }
+    if (abortCtrl.current) { abortCtrl.current.abort(); abortCtrl.current = null }
+
+    if (!query.trim() || query.length < 2) { setResults([]); setSearching(false); return }
+
+    setSearching(true)  // visible immédiatement dès la frappe
 
     debounce.current = setTimeout(async () => {
-      setSearching(true)
+      const ctrl = new AbortController()
+      abortCtrl.current = ctrl
       try {
         const isNumeric = /^\d/.test(query.trim())
         const calls = [
-          fetch(`https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(query)}&fields=nom,code,codeDepartement,codesPostaux,population&boost=population&limit=15`),
+          fetch(
+            `https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(query)}&fields=nom,code,codeDepartement,codesPostaux,population&boost=population&limit=15`,
+            { signal: ctrl.signal }
+          ),
         ]
         if (isNumeric) {
-          calls.push(fetch(`https://geo.api.gouv.fr/communes?codePostal=${encodeURIComponent(query)}&fields=nom,code,codeDepartement,codesPostaux,population&boost=population&limit=15`))
+          calls.push(fetch(
+            `https://geo.api.gouv.fr/communes?codePostal=${encodeURIComponent(query)}&fields=nom,code,codeDepartement,codesPostaux,population&boost=population&limit=15`,
+            { signal: ctrl.signal }
+          ))
         }
         const responses = await Promise.all(calls)
         const datasets  = await Promise.all(responses.map(r => r.json()))
@@ -152,9 +166,12 @@ export default function VilleSearchOverlay({
           return (b.population || 0) - (a.population || 0)
         })
         setResults(merged)
-      } catch {}
-      setSearching(false)
-    }, 200)
+        setSearching(false)
+      } catch (e) {
+        if (e.name !== 'AbortError') setSearching(false)
+        // AbortError = nouvelle frappe a annulé la requête → ne pas modifier l'état
+      }
+    }, 400)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query])
 
@@ -213,13 +230,8 @@ export default function VilleSearchOverlay({
           const distance = haversine(lat, lon, bmLat, bmLon)
           if (distance >= 20) continue  // > 20km → skip
 
-          const { count } = await supabase
-            .from('offres')
-            .select('id, commerces!inner(ville)', { count: 'exact', head: true })
-            .eq('statut', 'active')
-            .gt('date_fin', new Date().toISOString())
-            .eq('commerces.ville', villeBm.nom)
-          proches.push({ ...villeBm, distance, nbOffres: count || 0 })
+          const nbOffres = nbOffresMap.get(villeBm.nom) || 0
+          proches.push({ ...villeBm, distance, nbOffres })
         }
       }
       // Si lat/lon non trouvées → proches vide → message "Aucune ville active..."
@@ -334,9 +346,10 @@ export default function VilleSearchOverlay({
               {query.length >= 2 && (
                 <>
                   {searching && (
-                    <div className="flex justify-center py-8">
-                      <span className="w-6 h-6 border-[3px] border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
-                    </div>
+                    <p className="text-center text-sm text-[#3D3D3D]/50 py-8 flex items-center justify-center gap-2">
+                      <span className="w-4 h-4 border-2 border-[#FF6B00] border-t-transparent rounded-full animate-spin inline-block" />
+                      Recherche...
+                    </p>
                   )}
                   {!searching && results.length === 0 && localMatches.length === 0 && (
                     <p className="text-center text-sm text-[#3D3D3D]/50 py-8">
@@ -543,21 +556,20 @@ export default function VilleSearchOverlay({
                   key={v.id}
                   className="flex items-center justify-between py-3 border-b border-[#F5F5F5] last:border-0 gap-3"
                 >
-                  <div className="min-w-0">
+                  <button
+                    onClick={() => { router.push(`/ville/${toSlug(v.nom)}`); onClose() }}
+                    className="flex-1 min-w-0 text-left"
+                  >
                     <p className="text-sm font-bold text-[#0A0A0A]">
-                      📍 {v.nom}
-                      {v.distance !== null && (
-                        <span className="text-xs font-normal text-[#3D3D3D]/50 ml-1.5">
-                          ({v.distance} km)
-                        </span>
-                      )}
+                      📍 {v.nom}{' '}
+                      <span className="text-xs font-normal text-[#3D3D3D]/50">({v.distance} km)</span>
                     </p>
                     <p className="text-[11px] text-[#3D3D3D]/50">
                       {v.nbOffres > 0
-                        ? `${v.nbOffres} offre${v.nbOffres > 1 ? 's' : ''} en cours`
+                        ? `${v.nbOffres} offre${v.nbOffres > 1 ? 's' : ''} actives`
                         : 'Aucune offre en cours'}
                     </p>
-                  </div>
+                  </button>
                   <button
                     onClick={() => subscriberVille(v.nom)}
                     disabled={isAbonne || abonnement === v.nom}
