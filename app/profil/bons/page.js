@@ -209,7 +209,9 @@ export default function MesBonsPage() {
             valeur,
             date_debut,
             date_fin,
+            statut,
             commerces (
+              id,
               nom,
               ville,
               adresse
@@ -217,7 +219,6 @@ export default function MesBonsPage() {
           )
         `)
         .eq('user_id', userId)
-        .order('created_at', { ascending: false })
 
       if (error) {
         console.error('[Mes bons] Erreur requête Supabase:', error.message, error)
