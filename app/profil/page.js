@@ -65,6 +65,21 @@ export default function ProfilPage() {
     if (!loading && !user) router.replace('/')
   }, [user, loading, router])
 
+  /* Requête unique pour le compteur d'offres actives par ville (même logique que VilleSearchOverlay) */
+  async function refreshVilleCounts() {
+    const { data } = await supabase
+      .from('offres')
+      .select('commerces!inner(ville)')
+      .eq('statut', 'active')
+      .gt('date_fin', new Date().toISOString())
+    const map = {}
+    for (const o of (data || [])) {
+      const ville = o.commerces?.ville
+      if (ville) map[ville] = (map[ville] || 0) + 1
+    }
+    setVilleCounts(map)
+  }
+
   /* Charger les données */
   useEffect(() => {
     if (!user) return
@@ -101,22 +116,8 @@ export default function ProfilPage() {
       setProfile(prof)
       setReservations(resa || [])
 
-      /* Offres actives par ville abonnée */
-      if (prof?.villes_abonnees?.length) {
-        const counts = {}
-        await Promise.all(
-          prof.villes_abonnees.map(async (ville) => {
-            const { count } = await supabase
-              .from('offres')
-              .select('id', { count: 'exact', head: true })
-              .eq('statut', 'active')
-              .gt('date_fin', new Date().toISOString())
-              .eq('commerces.ville', ville)
-            counts[ville] = count || 0
-          })
-        )
-        setVilleCounts(counts)
-      }
+      /* Offres actives par ville — requête unique identique à VilleSearchOverlay */
+      await refreshVilleCounts()
 
       /* Détails des commerces favoris */
       if (prof?.commerces_abonnes?.length) {
@@ -187,13 +188,7 @@ export default function ProfilPage() {
     await supabase.from('users').update({ villes_abonnees: next }).eq('id', user.id)
     setProfile(p => ({ ...p, villes_abonnees: next }))
     afficherToast(`🎉 Tu es abonné à ${villeNom} !`)
-    // Charger le nb d'offres pour la nouvelle ville
-    const { count } = await supabase
-      .from('offres')
-      .select('id', { count: 'exact', head: true })
-      .eq('statut', 'active')
-      .gt('date_fin', new Date().toISOString())
-    setVilleCounts(prev => ({ ...prev, [villeNom]: count || 0 }))
+    await refreshVilleCounts()
   }
 
   async function desabonnerVille(villeNom) {
