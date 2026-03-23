@@ -49,7 +49,17 @@ function BonActifCard({ resa, supabase, onCancelled }) {
   const [showBon,       setShowBon]       = useState(false)
   const [confirmCancel, setConfirmCancel] = useState(false)
   const [cancelling,    setCancelling]    = useState(false)
+  const [walletUrl,     setWalletUrl]     = useState(null)
   const timerRed = timeLeft && timeLeft.diff < 1_800_000
+
+  useEffect(() => {
+    if (!/Android/i.test(navigator.userAgent)) return
+    fetch(`/api/wallet/google?reservation_id=${resa.id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.url) setWalletUrl(d.url) })
+      .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resa.id])
 
   async function handleCancel() {
     setCancelling(true)
@@ -98,6 +108,21 @@ function BonActifCard({ resa, supabase, onCancelled }) {
       >
         Voir mon bon 🎟️
       </button>
+
+      {/* Bouton Google Wallet (Android uniquement) */}
+      {walletUrl && (
+        <a
+          href={walletUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full flex items-center justify-center gap-2 bg-[#1A73E8] hover:bg-[#1557B0] text-white font-bold text-sm py-3 rounded-2xl transition-colors min-h-[44px]"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+          </svg>
+          Ajouter à Google Wallet
+        </a>
+      )}
 
       {/* Annulation */}
       {!confirmCancel ? (

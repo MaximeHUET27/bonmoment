@@ -73,12 +73,25 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
   const [entered,        setEntered]        = useState(false)
   const [confirmCancel,  setConfirmCancel]  = useState(false)
   const [cancelling,     setCancelling]     = useState(false)
+  const [isAndroid,      setIsAndroid]      = useState(false)
+  const [walletUrl,      setWalletUrl]      = useState(null)
 
   /* Animation d'entrée */
   useEffect(() => {
     const t = setTimeout(() => setEntered(true), 30)
     return () => clearTimeout(t)
   }, [])
+
+  /* Détection Android + chargement URL Google Wallet */
+  useEffect(() => {
+    const android = /Android/i.test(navigator.userAgent)
+    setIsAndroid(android)
+    if (!android || !reservation?.id) return
+    fetch(`/api/wallet/google?reservation_id=${reservation.id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.url) setWalletUrl(d.url) })
+      .catch(() => {})
+  }, [reservation?.id])
 
   /* Wake lock — empêche la mise en veille */
   useEffect(() => {
@@ -207,6 +220,21 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
           <p className="text-xs text-[#3D3D3D]/60 text-center">
             📍 {commerce.adresse}{commerce.ville ? `, ${commerce.ville}` : ''}
           </p>
+        )}
+
+        {/* ── Bouton Google Wallet (Android uniquement) ── */}
+        {isAndroid && walletUrl && (
+          <a
+            href={walletUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center justify-center gap-2 bg-[#1A73E8] hover:bg-[#1557B0] text-white font-bold text-sm py-3.5 rounded-2xl transition-colors min-h-[48px]"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+            </svg>
+            Ajouter à Google Wallet
+          </a>
         )}
 
         {/* ── Bouton S'y rendre ── */}
