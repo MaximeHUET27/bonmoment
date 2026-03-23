@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/app/context/AuthContext'
 import { useFavoris } from '@/app/context/FavorisContext'
 import AuthBottomSheet from './AuthBottomSheet'
