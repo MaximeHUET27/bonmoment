@@ -114,15 +114,6 @@ export default function OffreCard({ offre }) {
   const commerce   = offre.commerces
   const programmee = new Date(offre.date_debut) > new Date()
   const expired    = !timeLeft
-  const epuise     = nbBons !== null &&
-                     nbBons !== 9999 &&
-                     nbBons <= 0
-  const fini       = expired || epuise
-
-  const urgent     = !programmee && timeLeft && (
-    timeLeft.diff < 3_600_000 ||
-    (nbBons !== null && nbBons < 5)
-  )
 
   const { user, supabase } = useAuth()
   const { isFavori, toggleFavori } = useFavoris()
@@ -141,6 +132,15 @@ export default function OffreCard({ offre }) {
   const nbBons = (offre.nb_bons_restants === null || offre.nb_bons_restants === 9999)
     ? offre.nb_bons_restants
     : offre.nb_bons_restants + nbBonsDelta
+
+  const epuise = nbBons !== null &&
+                 nbBons !== 9999 &&
+                 nbBons <= 0
+  const fini   = expired || epuise
+  const urgent = !programmee && timeLeft && (
+    timeLeft.diff < 3_600_000 ||
+    (nbBons !== null && nbBons < 5)
+  )
 
   /* ── Écouter les annulations pour reset le bouton ── */
   useEffect(() => {
