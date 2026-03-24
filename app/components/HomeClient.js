@@ -11,22 +11,43 @@ import { toSlug } from '@/lib/utils'
 
 /* ── Barre de filtres catégorie ─────────────────────────────────────────── */
 
-const FILTERS = [
+const FILTERS_CATEGORIE = [
   { id: 'tous',     label: '🔥 Tous' },
   { id: 'resto',    label: '🍽️ Resto' },
   { id: 'beaute',   label: '💇 Beauté' },
   { id: 'shopping', label: '🛍️ Shopping' },
   { id: 'loisirs',  label: '🎮 Loisirs' },
-  { id: 'offerts',  label: '🎁 Offerts' },
-  { id: 'concours', label: '🎰 Concours' },
   { id: 'autres',   label: '🏪 Autres' },
 ]
 
+const FILTERS_TYPE = [
+  { id: 'remise',        label: '💰 Remise' },
+  { id: 'offerts',       label: '🎁 Offert' },
+  { id: 'service',       label: '✂️ Service' },
+  { id: 'atelier',       label: '🎨 Atelier' },
+  { id: 'concours',      label: '🎰 Concours' },
+]
+
 function getOffreFiltre(offre) {
-  if (offre.type_remise === 'offert' || offre.type_remise === 'cadeau') return 'offerts'
-  if (offre.type_remise === 'concours') return 'concours'
+  // catégorie commerce
   if (offre.commerces?.categorie_bonmoment) return offre.commerces.categorie_bonmoment
   return getCategorieFiltre(offre.commerces?.categorie) || 'autres'
+}
+
+function getTypeFiltre(offre) {
+  const t = offre.type_remise
+  if (t === 'pourcentage' || t === 'montant_fixe' || t === 'montant') return 'remise'
+  if (t === 'cadeau' || t === 'offert' || t === 'produit_offert')      return 'offerts'
+  if (t === 'service_offert')                                           return 'service'
+  if (t === 'atelier')                                                  return 'atelier'
+  if (t === 'concours')                                                 return 'concours'
+  return null
+}
+
+function matchFiltre(offre, filtre) {
+  if (filtre === 'tous') return true
+  if (FILTERS_TYPE.some(f => f.id === filtre)) return getTypeFiltre(offre) === filtre
+  return getOffreFiltre(offre) === filtre
 }
 
 function isUrgent(offre) {
@@ -98,8 +119,7 @@ export default function HomeClient({ offres, villes }) {
         return true
       }
       if (ville && villeOffre !== ville) return false
-      if (filtre === 'tous') return true
-      return getOffreFiltre(o) === filtre
+      return matchFiltre(o, filtre)
     })
     .sort((a, b) => {
       const now = new Date()
@@ -152,12 +172,26 @@ export default function HomeClient({ offres, villes }) {
         {ville && <VilleAbonnement villeNom={ville} />}
       </div>
 
-      {/* ── Barre de filtres catégorie ────────────────────────────────────── */}
+      {/* ── Barre de filtres ─────────────────────────────────────────────── */}
       <div
-        className="flex gap-2 overflow-x-auto px-4 py-3 border-b border-[#F0F0F0]"
+        className="flex items-center gap-2 overflow-x-auto px-4 py-3 border-b border-[#F0F0F0]"
         style={{ scrollbarWidth: 'none' }}
       >
-        {FILTERS.map(f => (
+        {FILTERS_CATEGORIE.map(f => (
+          <button
+            key={f.id}
+            onClick={() => setFiltre(f.id)}
+            className={`shrink-0 text-xs font-bold px-4 py-2 rounded-full transition-colors whitespace-nowrap min-h-[36px] ${
+              filtre === f.id
+                ? 'bg-[#FF6B00] text-white'
+                : 'bg-[#F5F5F5] text-[#3D3D3D] hover:bg-[#FFF0E0] hover:text-[#FF6B00]'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+        <div className="w-px h-6 bg-gray-300 mx-1 shrink-0" />
+        {FILTERS_TYPE.map(f => (
           <button
             key={f.id}
             onClick={() => setFiltre(f.id)}
