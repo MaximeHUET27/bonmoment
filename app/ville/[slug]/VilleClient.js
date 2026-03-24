@@ -20,12 +20,14 @@ const FILTERS = [
   { id: 'loisirs',  label: '🎮 Loisirs' },
   { id: 'offerts',  label: '🎁 Offerts' },
   { id: 'concours', label: '🎰 Concours' },
+  { id: 'autres',   label: '🏪 Autres' },
 ]
 
 function getOffreFiltre(offre) {
   if (offre.type_remise === 'offert' || offre.type_remise === 'cadeau') return 'offerts'
   if (offre.type_remise === 'concours') return 'concours'
-  return getCategorieFiltre(offre.commerces?.categorie) || 'tous'
+  if (offre.commerces?.categorie_bonmoment) return offre.commerces.categorie_bonmoment
+  return getCategorieFiltre(offre.commerces?.categorie) || 'autres'
 }
 
 function isActive(offre) {

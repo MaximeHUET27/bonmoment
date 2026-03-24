@@ -17,23 +17,58 @@ import { useFavoris } from '@/app/context/FavorisContext'
 /* ── Mapping catégorie Google → filtre ───────────────────────────────────── */
 
 const CATEGORIE_MAP = {
-  restaurant:     'resto',
-  cafe:           'resto',
-  bar:            'resto',
-  bakery:         'resto',
-  hair_care:      'beaute',
-  beauty_salon:   'beaute',
-  spa:            'beaute',
-  clothing_store: 'shopping',
-  florist:        'shopping',
-  jewelry_store:  'shopping',
-  gym:            'loisirs',
-  bowling_alley:  'loisirs',
-  movie_theater:  'loisirs',
+  resto: [
+    'restaurant', 'cafe', 'bar', 'bakery', 'food', 'meal_delivery', 'meal_takeaway',
+    'alimentation', 'food_store', 'grocery_or_supermarket', 'supermarket',
+    'boulangerie', 'patisserie', 'traiteur', 'pizzeria', 'brasserie',
+    'coffee_shop', 'tea_house', 'ice_cream', 'deli', 'butcher',
+    'wine_store', 'liquor_store', 'confectionery', 'sandwich_shop',
+    'juice_bar', 'pub', 'night_club', 'restauration', 'repas',
+    'vins', 'spiritueux', 'boite de nuit',
+    'fromagerie', 'chocolaterie', 'epicerie', 'caviste',
+  ],
+  beaute: [
+    'hair_care', 'beauty_salon', 'spa', 'nail_salon',
+    'coiffeur', 'coiffure', 'esthetique', 'barbier', 'barber',
+    'massage', 'wellness', 'skin_care', 'tattoo', 'piercing',
+    'solarium', 'tanning_salon', 'parfumerie', 'cosmetics',
+    'institut beaute',
+  ],
+  shopping: [
+    'clothing_store', 'florist', 'jewelry_store', 'shoe_store',
+    'boutique', 'gift_shop', 'department_store', 'shopping_mall',
+    'furniture_store', 'home_goods_store', 'hardware_store',
+    'book_store', 'electronics_store', 'pet_store', 'toy_store',
+    'bicycle_store', 'optician', 'opticien', 'pharmacie', 'pharmacy',
+    'fleuriste', 'decoration', 'bricolage', 'jardinerie',
+    'librairie', 'papeterie', 'mercerie', 'maroquinerie',
+    'bijouterie', 'horlogerie', 'antiquaire', 'brocante',
+    'vetements', 'chaussures', 'animalerie', 'sante',
+  ],
+  loisirs: [
+    'gym', 'bowling_alley', 'movie_theater', 'amusement_park',
+    'museum', 'art_gallery', 'zoo', 'aquarium', 'stadium',
+    'tourist_attraction', 'travel_agency', 'car_rental',
+    'car_repair', 'car_wash', 'electrician', 'plumber',
+    'laundry', 'dry_cleaning', 'tailor', 'photographer',
+    'pressing', 'laverie', 'garage', 'auto_ecole',
+    'sport', 'fitness', 'yoga', 'danse', 'theatre', 'cinema',
+    'escape_game', 'karting', 'laser_game', 'trampoline',
+    'tourisme', 'voyage', 'veterinaire', 'veterinary', 'toiletteur',
+  ],
+}
+
+function normalizeStr(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
 }
 
 export function getCategorieFiltre(cat) {
-  return CATEGORIE_MAP[cat?.toLowerCase()] || null
+  if (!cat) return null
+  const norm = normalizeStr(cat)
+  for (const [filtre, keywords] of Object.entries(CATEGORIE_MAP)) {
+    if (keywords.some(kw => norm.includes(normalizeStr(kw)))) return filtre
+  }
+  return null
 }
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */

@@ -7,6 +7,7 @@ import Image from 'next/image'
 import Script from 'next/script'
 import { useAuth } from '@/app/context/AuthContext'
 import AuthBottomSheet from '@/app/components/AuthBottomSheet'
+import { getCategorieFiltre } from '@/app/ville/[slug]/OffreCard'
 
 /* ── Constantes ─────────────────────────────────────────────────────────── */
 
@@ -104,8 +105,13 @@ export default function InscriptionCommercant() {
     }
   }, [user, loading])
 
-  // Reset accordion horaires quand on change de commerce sélectionné
-  useEffect(() => { setShowAllHoraires(false) }, [selectedPlace])
+  const [categorieBonmoment, setCategorieBonmoment] = useState(null)
+
+  // Reset accordion horaires + catégorie quand on change de commerce
+  useEffect(() => {
+    setShowAllHoraires(false)
+    if (!selectedPlace) setCategorieBonmoment(null)
+  }, [selectedPlace])
 
   // Vérification commerce existant
   useEffect(() => {
@@ -176,17 +182,21 @@ export default function InscriptionCommercant() {
 
         const photoUrl = place.photos?.[0]?.getUrl({ maxWidth: 900, maxHeight: 600 }) ?? null
 
+        const categGoogle = mapPlaceType(place.types || [])
         setSelectedPlace({
           place_id:   place.place_id,
           nom:        place.name,
           adresse:    place.formatted_address,
           ville:      locality,
-          categorie:  mapPlaceType(place.types || []),
+          categorie:  categGoogle,
           photo_url:  photoUrl,
           telephone:  place.formatted_phone_number ?? null,
           note_google: place.rating ?? null,
           horaires:   place.opening_hours?.weekday_text ?? null,
         })
+        // Auto-détection catégorie BONMOMENT depuis les types Google
+        const detected = (place.types || []).reduce((acc, t) => acc || getCategorieFiltre(t), null)
+        setCategorieBonmoment(detected || 'autres')
       }
     )
   }
@@ -244,17 +254,18 @@ export default function InscriptionCommercant() {
 
     // 3. Insertion du commerce
     const { error: insertError } = await supabase.from('commerces').insert({
-      owner_id:         user.id,
-      place_id:         selectedPlace.place_id,
-      nom:              selectedPlace.nom,
-      adresse:          selectedPlace.adresse,
-      ville:            selectedPlace.ville,
-      categorie:        selectedPlace.categorie,
-      photo_url:        selectedPlace.photo_url,
-      telephone:        selectedPlace.telephone,
-      note_google:      selectedPlace.note_google,
-      horaires:         selectedPlace.horaires,
-      abonnement_actif: true,
+      owner_id:            user.id,
+      place_id:            selectedPlace.place_id,
+      nom:                 selectedPlace.nom,
+      adresse:             selectedPlace.adresse,
+      ville:               selectedPlace.ville,
+      categorie:           selectedPlace.categorie,
+      categorie_bonmoment: categorieBonmoment,
+      photo_url:           selectedPlace.photo_url,
+      telephone:           selectedPlace.telephone,
+      note_google:         selectedPlace.note_google,
+      horaires:            selectedPlace.horaires,
+      abonnement_actif:    true,
     })
 
     if (insertError) {
@@ -506,6 +517,38 @@ export default function InscriptionCommercant() {
                   >
                     Ce n&apos;est pas mon commerce
                   </button>
+                </div>
+              </div>
+
+              {/* Sélecteur catégorie BONMOMENT */}
+              <div className="mt-4 bg-[#F5F5F5] rounded-2xl px-4 py-4 flex flex-col gap-3">
+                <div>
+                  <p className="text-xs font-bold text-[#0A0A0A]">Catégorie BONMOMENT</p>
+                  <p className="text-[11px] text-[#3D3D3D]/60 mt-0.5">
+                    Détectée : <span className="font-semibold text-[#3D3D3D]">{selectedPlace.categorie}</span> — corrige si besoin.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: 'resto',    label: '🍽️ Resto' },
+                    { id: 'beaute',   label: '💇 Beauté' },
+                    { id: 'shopping', label: '🛍️ Shopping' },
+                    { id: 'loisirs',  label: '🎮 Loisirs' },
+                    { id: 'autres',   label: '🏪 Autre' },
+                  ].map(c => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setCategorieBonmoment(c.id)}
+                      className={`text-xs font-bold px-3 py-1.5 rounded-full transition-colors min-h-[32px] ${
+                        categorieBonmoment === c.id
+                          ? 'bg-[#FF6B00] text-white'
+                          : 'bg-white text-[#3D3D3D] hover:bg-[#FFF0E0] hover:text-[#FF6B00]'
+                      }`}
+                    >
+                      {c.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
