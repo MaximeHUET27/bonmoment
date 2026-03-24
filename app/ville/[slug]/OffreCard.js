@@ -79,14 +79,14 @@ export default function OffreCard({ offre }) {
   const commerce   = offre.commerces
   const programmee = new Date(offre.date_debut) > new Date()
   const expired    = !timeLeft
-  const epuise     = offre.nb_bons_restants !== null &&
-                     offre.nb_bons_restants !== 9999 &&
-                     offre.nb_bons_restants <= 0
+  const epuise     = nbBons !== null &&
+                     nbBons !== 9999 &&
+                     nbBons <= 0
   const fini       = expired || epuise
 
   const urgent     = !programmee && timeLeft && (
     timeLeft.diff < 3_600_000 ||
-    (offre.nb_bons_restants !== null && offre.nb_bons_restants < 5)
+    (nbBons !== null && nbBons < 5)
   )
 
   const { user, supabase } = useAuth()
@@ -96,10 +96,30 @@ export default function OffreCard({ offre }) {
   const [showBon,           setShowBon]           = useState(false)
   const [toast,             setToast]             = useState(null)
   const [abonneCommLoading, setAbonneCommLoading] = useState(false)
+  const [nbBonsDelta,       setNbBonsDelta]       = useState(0)
 
   const abonneComm = isFavori(commerce?.id)
 
   const { reserver, status, reservation, reset, checkExisting } = useReservation()
+
+  /* ── Compteur local (annulation incrémente, ne recharge pas la page) ── */
+  const nbBons = (offre.nb_bons_restants === null || offre.nb_bons_restants === 9999)
+    ? offre.nb_bons_restants
+    : offre.nb_bons_restants + nbBonsDelta
+
+  /* ── Écouter les annulations pour reset le bouton ── */
+  useEffect(() => {
+    function handleAnnulation(e) {
+      if (e.detail?.offreId !== offre.id) return
+      reset()
+      if (offre.nb_bons_restants !== null && offre.nb_bons_restants !== 9999) {
+        setNbBonsDelta(d => d + 1)
+      }
+    }
+    window.addEventListener('bonmoment:annulation', handleAnnulation)
+    return () => window.removeEventListener('bonmoment:annulation', handleAnnulation)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offre.id])
 
   /* ── Vérifier réservation existante au montage (bouton vert persistant) ── */
   useEffect(() => {
@@ -216,9 +236,9 @@ export default function OffreCard({ offre }) {
     : 'bg-[#FF6B00] hover:bg-[#CC5500] active:scale-[0.97]'
 
   /* ── Pulse sur le compteur de bons si < 5 ── */
-  const nbPulse = !fini && offre.nb_bons_restants !== null &&
-                  offre.nb_bons_restants !== 9999 &&
-                  offre.nb_bons_restants <= 5
+  const nbPulse = !fini && nbBons !== null &&
+                  nbBons !== 9999 &&
+                  nbBons <= 5
 
   return (
     <>
@@ -260,9 +280,9 @@ export default function OffreCard({ offre }) {
               )}
             </div>
             <span className={`text-[11px] font-bold ${nbPulse ? 'text-red-500 animate-pulse' : 'text-[#3D3D3D]'}`}>
-              {offre.nb_bons_restants === null || offre.nb_bons_restants === 9999
+              {nbBons === null || nbBons === 9999
                 ? '∞ bons'
-                : `🎫 ${offre.nb_bons_restants}`}
+                : `🎫 ${nbBons}`}
             </span>
           </Link>
           <ShareButton offre={offre} commerce={commerce} />

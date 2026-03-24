@@ -74,6 +74,7 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
   const [entered,        setEntered]        = useState(false)
   const [confirmCancel,  setConfirmCancel]  = useState(false)
   const [cancelling,     setCancelling]     = useState(false)
+  const [cancelOk,       setCancelOk]       = useState(false)
   const [isAndroid,      setIsAndroid]      = useState(false)
   const [walletUrl,      setWalletUrl]      = useState(null)
 
@@ -114,8 +115,9 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
       if (o?.nb_bons_restants != null && o.nb_bons_restants !== 9999) {
         await supabase.from('offres').update({ nb_bons_restants: o.nb_bons_restants + 1 }).eq('id', offre.id)
       }
-      window.dispatchEvent(new Event('bonmoment:reservation'))
-      onClose?.()
+      window.dispatchEvent(new CustomEvent('bonmoment:annulation', { detail: { offreId: offre.id } }))
+      setCancelOk(true)
+      setTimeout(() => onClose?.(), 1800)
     } catch {
       setCancelling(false)
     }
@@ -303,6 +305,17 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
         <div className="h-4" />
       </div>
       </div>
+
+      {/* Toast annulation réussie */}
+      {cancelOk && (
+        <div
+          className="fixed bottom-24 left-4 right-4 z-[200] bg-[#0A0A0A] text-white text-sm font-semibold px-4 py-3 rounded-2xl shadow-xl text-center"
+          style={{ animation: 'fadeSlideUp 0.3s ease' }}
+        >
+          Bon annulé. Le bon a été remis en disponibilité.
+          <style>{`@keyframes fadeSlideUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }`}</style>
+        </div>
+      )}
     </div>
   )
 }

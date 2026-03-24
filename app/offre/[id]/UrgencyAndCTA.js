@@ -41,10 +41,30 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
   const [showBon,           setShowBon]           = useState(false)
   const [toast,             setToast]             = useState(null)
   const [abonneCommLoading, setAbonneCommLoading] = useState(false)
+  const [nbBonsDelta,       setNbBonsDelta]       = useState(0)
 
   const abonneComm = isFavori(offre.commerces?.id)
 
   const { reserver, status, reservation, reset, checkExisting } = useReservation()
+
+  /* ── Compteur local (annulation incrémente, ne recharge pas la page) ── */
+  const nbBons = (offre.nb_bons_restants === null || offre.nb_bons_restants === 9999)
+    ? offre.nb_bons_restants
+    : offre.nb_bons_restants + nbBonsDelta
+
+  /* ── Écouter les annulations pour reset le bouton ── */
+  useEffect(() => {
+    function handleAnnulation(e) {
+      if (e.detail?.offreId !== offre.id) return
+      reset()
+      if (offre.nb_bons_restants !== null && offre.nb_bons_restants !== 9999) {
+        setNbBonsDelta(d => d + 1)
+      }
+    }
+    window.addEventListener('bonmoment:annulation', handleAnnulation)
+    return () => window.removeEventListener('bonmoment:annulation', handleAnnulation)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offre.id])
 
   /* ── Countdown ── */
   useEffect(() => {
@@ -142,14 +162,14 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
 
   const programmee  = new Date(offre.date_debut) > new Date()
   const expired     = !timeLeft
-  const epuise      = offre.nb_bons_restants !== null &&
-                      offre.nb_bons_restants !== 9999 &&
-                      offre.nb_bons_restants <= 0
+  const epuise      = nbBons !== null &&
+                      nbBons !== 9999 &&
+                      nbBons <= 0
   const fini        = expired || epuise
   const urgentTime  = !programmee && timeLeft && timeLeft.diff < 30 * 60_000
-  const urgentStock = !programmee && offre.nb_bons_restants !== null &&
-                      offre.nb_bons_restants !== 9999 &&
-                      offre.nb_bons_restants <= 5
+  const urgentStock = !programmee && nbBons !== null &&
+                      nbBons !== 9999 &&
+                      nbBons <= 5
   const urgent      = urgentTime || urgentStock
 
   /* ── États du bouton ── */
@@ -223,9 +243,9 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
                 urgent && !fini ? 'text-white' :
                 urgentStock ? 'text-red-500 animate-pulse' : 'text-[#0A0A0A]'
               }`}>
-                {offre.nb_bons_restants === null || offre.nb_bons_restants === 9999
+                {nbBons === null || nbBons === 9999
                   ? '∞ bons'
-                  : `🎫 ${offre.nb_bons_restants} restant${offre.nb_bons_restants > 1 ? 's' : ''}`}
+                  : `🎫 ${nbBons} restant${nbBons > 1 ? 's' : ''}`}
               </p>
               {urgent && !fini && (
                 <p className="text-[10px] text-white/80 font-semibold">

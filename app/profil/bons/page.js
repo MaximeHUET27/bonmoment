@@ -73,7 +73,7 @@ function BonActifCard({ resa, supabase, onCancelled }) {
         await supabase.from('offres')
           .update({ nb_bons_restants: o.nb_bons_restants + 1 }).eq('id', resa.offres?.id)
       }
-      window.dispatchEvent(new Event('bonmoment:reservation'))
+      window.dispatchEvent(new CustomEvent('bonmoment:annulation', { detail: { offreId: resa.offres?.id } }))
       onCancelled(resa.id)
     } catch {
       setCancelling(false)
@@ -236,7 +236,7 @@ export default function MesBonsPage() {
   }, [user, supabase])
 
   function handleCancelled(id) {
-    setReservations(prev => prev.filter(r => r.id !== id))
+    setReservations(prev => prev.map(r => r.id === id ? { ...r, statut: 'annulee' } : r))
   }
 
   const now         = new Date()
