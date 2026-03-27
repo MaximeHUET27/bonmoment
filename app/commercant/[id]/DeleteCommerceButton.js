@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useAuth } from '@/app/context/AuthContext'
 
 export default function DeleteCommerceButton({ commerceId, commerceNom, ownerUserId }) {
-  const { user, supabase } = useAuth()
+  const { user } = useAuth()
   const [step,    setStep]    = useState(0)
   const [loading, setLoading] = useState(false)
 
@@ -13,32 +13,25 @@ export default function DeleteCommerceButton({ commerceId, commerceNom, ownerUse
   async function handleDelete() {
     setLoading(true)
     try {
-      // a. Annule toutes les offres actives
-      await supabase
-        .from('offres')
-        .update({ statut: 'annulee' })
-        .eq('commerce_id', commerceId)
-        .eq('statut', 'active')
+      const res = await fetch('/api/commerce/supprimer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commerceId })
+      })
+      const result = await res.json()
 
-      // b. Détache le commerce du propriétaire
-      await supabase
-        .from('commerces')
-        .update({ abonnement_actif: false, owner_id: null })
-        .eq('id', commerceId)
-
-      // c. Vérifie les commerces restants
-      const { data: restants } = await supabase
-        .from('commerces')
-        .select('id')
-        .eq('owner_id', user.id)
-
-      // d/e. Redirect hard pour forcer le rafraîchissement du menu
-      if (!restants || restants.length === 0) {
-        window.location.href = '/'
-      } else {
-        window.location.href = `/commercant/dashboard?commerce=${restants[0].id}`
+      if (!res.ok) {
+        console.error('Erreur suppression:', result.error)
+        alert('Erreur : ' + result.error)
+        setLoading(false)
+        setStep(0)
+        return
       }
-    } catch {
+
+      // Succès — redirect
+      window.location.href = '/'
+    } catch (err) {
+      console.error('Erreur:', err)
       setLoading(false)
       setStep(0)
     }
