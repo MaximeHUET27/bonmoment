@@ -140,10 +140,7 @@ export default function HomeClient({ offres, villes }) {
       return new Date(a.date_fin) - new Date(b.date_fin)
     })
 
-  /* Offres actives dans le filtre courant (pour le banner viewAll) */
-  const activesDansFiltreViewAll = viewAll && filtre !== 'tous'
-    ? offresFiltrees.filter(isActive)
-    : []
+  const seulementExpirées = offresFiltrees.length > 0 && offresFiltrees.filter(isActive).length === 0
 
   /* ── Skeleton pendant hydratation ── */
   if (isLoading) {
@@ -217,21 +214,21 @@ export default function HomeClient({ offres, villes }) {
         ))}
       </div>
 
+      {/* ── Bannière "seulement expirées" ─────────────────────────────────── */}
+      {seulementExpirées && (
+        <p className="text-sm font-semibold text-[#3D3D3D]/60 text-center px-4 py-3 border-b border-[#F0F0F0]">
+          Tes commerçants préparent des surprises...
+        </p>
+      )}
+
       {/* ── Grille d'offres ──────────────────────────────────────────────── */}
       <div className="px-4 py-6">
         {offresFiltrees.length > 0 ? (
-          <>
-            {viewAll && filtre !== 'tous' && activesDansFiltreViewAll.length === 0 && (
-              <p className="text-sm font-semibold text-[#3D3D3D]/60 text-center mb-4">
-                Pas de {[...FILTERS_CATEGORIE, ...FILTERS_TYPE].find(f => f.id === filtre)?.label.replace(/^\S+\s/, '')} en ce moment — tes commerçants préparent des surprises !
-              </p>
-            )}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {offresFiltrees.map(o => (
-                <OffreCard key={o.id} offre={o} />
-              ))}
-            </div>
-          </>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {offresFiltrees.map(o => (
+              <OffreCard key={o.id} offre={o} />
+            ))}
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="text-5xl mb-4">🕐</div>
