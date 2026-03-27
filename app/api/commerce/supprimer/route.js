@@ -30,10 +30,10 @@ export async function POST(request) {
     .eq('statut', 'active')
   if (errOffres) console.error('Erreur annulation offres:', errOffres.message)
 
-  // 5. Détacher le commerce (service role bypass le RLS)
+  // 5. Supprimer le commerce (CASCADE → offres → reservations)
   const { error: errCommerce } = await supabaseAdmin
     .from('commerces')
-    .update({ abonnement_actif: false, owner_id: null })
+    .delete()
     .eq('id', commerceId)
   if (errCommerce) {
     console.error('Erreur suppression commerce:', errCommerce.message)
