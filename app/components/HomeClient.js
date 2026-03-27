@@ -50,6 +50,10 @@ function matchFiltre(offre, filtre) {
   return getOffreFiltre(offre) === filtre
 }
 
+function isActive(offre) {
+  return new Date(offre.date_fin) > new Date() && offre.nb_bons_restants !== 0
+}
+
 function isUrgent(offre) {
   const diff = new Date(offre.date_fin) - new Date()
   return diff > 0 && (diff < 7_200_000 || offre.nb_bons_restants < 5)
@@ -115,8 +119,10 @@ export default function HomeClient({ offres, villes }) {
     .filter(o => {
       const villeOffre = o.commerces?.ville
       if (viewAll) {
-        if (villesAbonnees.length > 0) return villesAbonnees.includes(villeOffre)
-        return true
+        const villeOk = villesAbonnees.length === 0 || villesAbonnees.includes(villeOffre)
+        if (!villeOk) return false
+        if (!isActive(o)) return true  // offres expirées toujours visibles
+        return matchFiltre(o, filtre)
       }
       if (ville && villeOffre !== ville) return false
       return matchFiltre(o, filtre)
@@ -133,6 +139,11 @@ export default function HomeClient({ offres, villes }) {
       if (ub !== ua) return ub - ua
       return new Date(a.date_fin) - new Date(b.date_fin)
     })
+
+  /* Offres actives dans le filtre courant (pour le banner viewAll) */
+  const activesDansFiltreViewAll = viewAll && filtre !== 'tous'
+    ? offresFiltrees.filter(isActive)
+    : []
 
   /* ── Skeleton pendant hydratation ── */
   if (isLoading) {
@@ -209,11 +220,18 @@ export default function HomeClient({ offres, villes }) {
       {/* ── Grille d'offres ──────────────────────────────────────────────── */}
       <div className="px-4 py-6">
         {offresFiltrees.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {offresFiltrees.map(o => (
-              <OffreCard key={o.id} offre={o} />
-            ))}
-          </div>
+          <>
+            {viewAll && filtre !== 'tous' && activesDansFiltreViewAll.length === 0 && (
+              <p className="text-sm font-semibold text-[#3D3D3D]/60 text-center mb-4">
+                Pas de {[...FILTERS_CATEGORIE, ...FILTERS_TYPE].find(f => f.id === filtre)?.label.replace(/^\S+\s/, '')} en ce moment — tes commerçants préparent des surprises !
+              </p>
+            )}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {offresFiltrees.map(o => (
+                <OffreCard key={o.id} offre={o} />
+              ))}
+            </div>
+          </>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="text-5xl mb-4">🕐</div>
