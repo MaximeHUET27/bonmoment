@@ -1,6 +1,11 @@
 {
   "crons": [
     {
+      "path": "/api/maj-commerces",
+      "schedule": "0 3 1 * *",
+      "comment": "Mise à jour mensuelle des fiches Google Places (1er du mois à 3h UTC)"
+    },
+    {
       "path": "/api/email-quotidien",
       "schedule": "0 18 * * *",
       "comment": "Habitant exemplaire — email 19h Paris (UTC+1)"

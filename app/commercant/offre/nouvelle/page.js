@@ -137,7 +137,7 @@ function NouvelleOffrePageInner() {
       const commerceId = searchParams.get('commerce')
       const { data: list } = await supabase
         .from('commerces')
-        .select('id, nom, categorie, ville, adresse, palier')
+        .select('id, nom, categorie, ville, adresse, palier, note_google')
         .eq('owner_id', user.id)
 
       const all  = list || []
@@ -254,9 +254,10 @@ function NouvelleOffrePageInner() {
     date_debut:       buildISO(dateOffre, heureDebut),
     date_fin:         buildISO(dateOffre, heureFin),
     commerces: {
-      nom:       commerce?.nom       || 'Mon commerce',
-      categorie: commerce?.categorie || null,
-      ville:     commerce?.ville     || null,
+      nom:        commerce?.nom        || 'Mon commerce',
+      categorie:  commerce?.categorie  || null,
+      ville:      commerce?.ville      || null,
+      note_google: commerce?.note_google || null,
     },
   }
 

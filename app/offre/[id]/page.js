@@ -76,7 +76,7 @@ export default async function OffrePage({ params }) {
   const [{ data: offre }, { count: reservationsCount }] = await Promise.all([
     supabase
       .from('offres')
-      .select('*, commerces(id, nom, categorie, adresse, ville, description, photo_url)')
+      .select('*, commerces(id, nom, categorie, adresse, ville, description, photo_url, note_google)')
       .eq('id', id)
       .single(),
     supabase

@@ -43,7 +43,8 @@ export default async function VillePage({ params }) {
         categorie,
         adresse,
         ville,
-        photo_url
+        photo_url,
+        note_google
       )
     `)
     .eq('commerces.ville', ville.nom)

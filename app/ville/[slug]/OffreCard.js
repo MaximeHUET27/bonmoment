@@ -346,6 +346,9 @@ export default function OffreCard({ offre }) {
               </span>
             )}
             <span className="text-xs font-semibold text-[#1A1A1A] truncate max-w-[90px]">{commerce?.nom}</span>
+            {commerce?.note_google && (
+              <span className="text-[10px] font-bold text-yellow-400">⭐ {commerce.note_google}</span>
+            )}
             {commerce?.id && (
               <FavoriButton commerceId={commerce.id} commerceNom={commerce.nom || ''} className="!min-h-[28px] !min-w-[28px]" />
             )}
