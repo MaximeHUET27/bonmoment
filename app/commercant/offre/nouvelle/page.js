@@ -251,6 +251,7 @@ function NouvelleOffrePageInner() {
     titre:            titre.trim() || 'Décris ton offre...',
     nb_bons_restants: illimite ? 9999 : (nbBons || 0),
     nb_bons_total:    illimite ? null : nbBons,
+    date_debut:       buildISO(dateOffre, heureDebut),
     date_fin:         buildISO(dateOffre, heureFin),
     commerces: {
       nom:       commerce?.nom       || 'Mon commerce',
