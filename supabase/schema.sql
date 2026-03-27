@@ -73,6 +73,7 @@ create table public.commerces (
   owner_id                     uuid not null references public.users(id) on delete cascade,
   nom                          text not null,
   categorie                    text,
+  categorie_bonmoment          text,
   adresse                      text,
   ville                        text,
   description                  text,
