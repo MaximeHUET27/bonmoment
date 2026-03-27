@@ -134,6 +134,7 @@ export default function HomeClient({ offres, villes }) {
       const bFini = new Date(b.date_fin) <= now ||
         (b.nb_bons_restants !== null && b.nb_bons_restants !== 9999 && b.nb_bons_restants <= 0)
       if (aFini !== bFini) return aFini ? 1 : -1
+      if (aFini) return new Date(b.date_fin) - new Date(a.date_fin)  // expirées : plus récente en premier
       const ua = isUrgent(a) ? 1 : 0
       const ub = isUrgent(b) ? 1 : 0
       if (ub !== ua) return ub - ua

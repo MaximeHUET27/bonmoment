@@ -254,10 +254,12 @@ export default function MesBonsPage() {
     r.offres?.date_debut && new Date(r.offres.date_debut) > now
   )
   const utilises    = reservations.filter(r => r.statut === 'utilisee')
-  const expires    = reservations.filter(r =>
-    r.statut === 'expiree' || r.statut === 'annulee' ||
-    (r.statut === 'reservee' && new Date(r.offres?.date_fin) <= now)
-  )
+  const expires    = reservations
+    .filter(r =>
+      r.statut === 'expiree' || r.statut === 'annulee' ||
+      (r.statut === 'reservee' && new Date(r.offres?.date_fin) <= now)
+    )
+    .sort((a, b) => new Date(b.offres?.date_fin || 0) - new Date(a.offres?.date_fin || 0))
 
   if (loading || fetching) {
     return (
