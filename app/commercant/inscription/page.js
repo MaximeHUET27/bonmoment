@@ -77,6 +77,7 @@ export default function InscriptionCommercant() {
   const { isLoaded: mapsReady } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY,
     libraries: LIBRARIES,
+    language: 'fr',
   })
   const autocompleteRef             = useRef(null)
   const placesServiceRef            = useRef(null)
