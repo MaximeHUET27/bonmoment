@@ -2,38 +2,31 @@
   "crons": [
     {
       "path": "/api/expirer-offres",
-      "schedule": "0 3 * * *",
-      "comment": "Expire les offres dont date_fin est dépassée (1x/jour à 3h UTC)"
+      "schedule": "0 3 * * *"
     },
     {
       "path": "/api/maj-commerces",
-      "schedule": "0 3 1 * *",
-      "comment": "Mise à jour mensuelle des fiches Google Places (1er du mois à 3h UTC)"
+      "schedule": "0 3 1 * *"
     },
     {
       "path": "/api/email-quotidien",
-      "schedule": "0 18 * * *",
-      "comment": "Habitant exemplaire — email 19h Paris (UTC+1)"
+      "schedule": "0 18 * * *"
     },
     {
       "path": "/api/email-quotidien",
-      "schedule": "0 19 * * *",
-      "comment": "Bon habitant — email 20h Paris (UTC+1)"
+      "schedule": "0 19 * * *"
     },
     {
       "path": "/api/email-quotidien",
-      "schedule": "0 20 * * *",
-      "comment": "Habitant — email 21h Paris (UTC+1)"
+      "schedule": "0 20 * * *"
     },
     {
       "path": "/api/admin/comptabilite/recettes/sync",
-      "schedule": "0 6 * * *",
-      "comment": "Sync Stripe → recettes (chaque jour à 6h UTC)"
+      "schedule": "0 6 * * *"
     },
     {
       "path": "/api/rapport-mensuel",
-      "schedule": "0 8 1 * *",
-      "comment": "Rapport mensuel commerçant — 1er du mois à 8h UTC"
+      "schedule": "0 8 1 * *"
     }
   ]
 }
