@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { formatHoraire } from '@/lib/formatHoraires'
+import FavoriButton from './FavoriButton'
 
 /**
  * Carte d'infos d'un commerce : photo, nom, note Google, adresse, téléphone, horaires, lien Maps.
@@ -97,6 +98,15 @@ export default function CommerceInfoCard({ commerce, commerceId }) {
               </p>
             ))}
           </div>
+        )}
+
+        {/* Bouton S'abonner */}
+        {commerceId && (
+          <FavoriButton
+            commerceId={commerceId}
+            commerceNom={commerce.nom || ''}
+            variant="full"
+          />
         )}
 
         {/* Bouton S'y rendre */}

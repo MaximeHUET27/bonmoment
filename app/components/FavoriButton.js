@@ -15,7 +15,7 @@ const PUSH_PROMPT_KEY = 'bonmoment_push_prompt_shown'
  * @param {string} commerceNom  - Nom du commerce (pour le toast)
  * @param {string} className    - Classes CSS supplémentaires
  */
-export default function FavoriButton({ commerceId, commerceNom, className = '' }) {
+export default function FavoriButton({ commerceId, commerceNom, className = '', variant = 'icon' }) {
   const { user, supabase }         = useAuth()
   const { isFavori, toggleFavori } = useFavoris()
   const { showToast }              = useToast()
@@ -109,25 +109,43 @@ export default function FavoriButton({ commerceId, commerceNom, className = '' }
 
   return (
     <>
-      <button
-        onClick={handleClick}
-        disabled={loading}
-        aria-label={favori ? `Retirer ${commerceNom} des favoris` : `Ajouter ${commerceNom} aux favoris`}
-        className={`flex items-center justify-center min-h-[44px] min-w-[44px] ${
-          pulse ? 'scale-[1.2]' : 'scale-100'
-        } ${className}`}
-        style={{ transition: 'transform 0.3s ease-in-out' }}
-      >
-        {favori ? (
-          <svg viewBox="0 0 24 24" className="w-6 h-6 fill-[#FF6B00]" aria-hidden>
-            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-          </svg>
-        ) : (
-          <svg viewBox="0 0 24 24" className="w-6 h-6 stroke-[#FF6B00] fill-none" strokeWidth={2} aria-hidden>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-          </svg>
-        )}
-      </button>
+      {variant === 'full' ? (
+        <button
+          onClick={handleClick}
+          disabled={loading}
+          aria-label={favori ? `Retirer ${commerceNom} des favoris` : `Ajouter ${commerceNom} aux favoris`}
+          className={`w-full flex items-center justify-center gap-2 font-bold text-sm py-3 rounded-2xl min-h-[44px] mt-1 transition-colors ${
+            favori
+              ? 'bg-[#22C55E] text-white'
+              : 'border-2 border-[#FF6B00] text-[#FF6B00] hover:bg-[#FFF0E0]'
+          } ${className}`}
+        >
+          {loading
+            ? <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            : favori ? '✅ Abonné' : '❤️ S\'abonner à ce commerce'
+          }
+        </button>
+      ) : (
+        <button
+          onClick={handleClick}
+          disabled={loading}
+          aria-label={favori ? `Retirer ${commerceNom} des favoris` : `Ajouter ${commerceNom} aux favoris`}
+          className={`flex items-center justify-center min-h-[44px] min-w-[44px] ${
+            pulse ? 'scale-[1.2]' : 'scale-100'
+          } ${className}`}
+          style={{ transition: 'transform 0.3s ease-in-out' }}
+        >
+          {favori ? (
+            <svg viewBox="0 0 24 24" className="w-6 h-6 fill-[#FF6B00]" aria-hidden>
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" className="w-6 h-6 stroke-[#FF6B00] fill-none" strokeWidth={2} aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+          )}
+        </button>
+      )}
 
       <AuthBottomSheet
         isOpen={showAuth}

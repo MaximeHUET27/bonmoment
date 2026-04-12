@@ -3,7 +3,6 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { toSlug } from '@/lib/utils'
 import OffreCard from '@/app/ville/[slug]/OffreCard'
-import FavoriButton from '@/app/components/FavoriButton'
 import CommerceInfoCard from '@/app/components/CommerceInfoCard'
 
 export default async function CommercantPage({ params }) {
@@ -66,12 +65,7 @@ export default async function CommercantPage({ params }) {
         </p>
 
         {/* Carte infos commerce */}
-        <CommerceInfoCard commerce={commerce} />
-
-        {/* Favori */}
-        <div className="flex items-center gap-2 mt-3">
-          <FavoriButton commerceId={commerce.id} commerceNom={commerce.nom || ''} />
-        </div>
+        <CommerceInfoCard commerce={commerce} commerceId={commerce.id} />
 
         {commerce.description && (
           <p className="text-sm text-[#3D3D3D] leading-relaxed mt-4 mb-2">{commerce.description}</p>
