@@ -169,7 +169,7 @@ function BonActifCard({ resa, supabase, onCancelled }) {
       {/* Bon plein écran */}
       {showBon && (
         <FullScreenBon
-          reservation={{ id: resa.id, code_validation: resa.code_validation, qr_code_data: resa.qr_code_data }}
+          reservation={{ id: resa.id, code_validation: resa.code_validation, qr_code_data: resa.qr_code_data, statut: resa.statut }}
           offre={resa.offres}
           commerce={resa.offres?.commerces}
           onClose={() => setShowBon(false)}
@@ -226,7 +226,9 @@ export default function MesBonsPage() {
   const programmes  = enCours.filter(r =>
     r.offres?.date_debut && new Date(r.offres.date_debut) > now
   )
-  const utilises    = reservations.filter(r => r.statut === 'utilisee')
+  const utilises    = reservations
+    .filter(r => r.statut === 'utilisee')
+    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
   const expires    = reservations
     .filter(r =>
       r.statut === 'expiree' || r.statut === 'annulee' ||

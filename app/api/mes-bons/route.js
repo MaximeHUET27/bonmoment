@@ -37,7 +37,8 @@ export async function GET() {
           photo_url,
           note_google,
           telephone,
-          horaires
+          horaires,
+          place_id
         )
       )
     `)
