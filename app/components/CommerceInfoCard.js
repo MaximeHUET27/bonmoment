@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { formatHoraire } from '@/lib/formatHoraires'
 
 /**
  * Carte d'infos d'un commerce : photo, nom, note Google, adresse, téléphone, horaires, lien Maps.
@@ -9,15 +10,6 @@ import Image from 'next/image'
  *   commerce    = { nom, photo_url, note_google, adresse, ville, telephone, horaires }
  *   commerceId  = string | undefined — si fourni, le nom devient un lien vers /commercant/[id]
  */
-
-const JOURS_EN_FR = {
-  'Monday': 'Lundi', 'Tuesday': 'Mardi', 'Wednesday': 'Mercredi',
-  'Thursday': 'Jeudi', 'Friday': 'Vendredi', 'Saturday': 'Samedi', 'Sunday': 'Dimanche',
-}
-function tradJour(str) {
-  if (!str) return str
-  return str.replace(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/, d => JOURS_EN_FR[d] || d)
-}
 
 /* Google weekdayDescriptions : index 0 = Lundi … 6 = Dimanche */
 function getTodayIndex() {
@@ -101,7 +93,7 @@ export default function CommerceInfoCard({ commerce, commerceId }) {
                 }`}
               >
                 {i === todayIdx && <span className="text-[#FF6B00] mr-1">▶</span>}
-                {tradJour(desc)}
+                {formatHoraire(desc)}
               </p>
             ))}
           </div>
