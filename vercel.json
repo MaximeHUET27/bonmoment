@@ -2,8 +2,8 @@
   "crons": [
     {
       "path": "/api/expirer-offres",
-      "schedule": "* * * * *",
-      "comment": "Expire les offres dont date_fin est dépassée (toutes les minutes)"
+      "schedule": "0 3 * * *",
+      "comment": "Expire les offres dont date_fin est dépassée (1x/jour à 3h UTC)"
     },
     {
       "path": "/api/maj-commerces",
