@@ -1,6 +1,7 @@
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rate-limit'
 
 const QUOTA_PAR_PALIER = { decouverte: 4, essentiel: 8, pro: 16 }
 
@@ -9,7 +10,12 @@ const admin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
+const checkRate = rateLimit({ maxRequests: 20, windowMs: 10 * 60 * 1000 })
+
 export async function POST(request) {
+  const limited = checkRate(request)
+  if (limited) return limited
+
   /* ── Auth ────────────────────────────────────────────────────────────── */
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -52,7 +58,7 @@ export async function POST(request) {
   }
 
   /* ── Insertion ───────────────────────────────────────────────────────── */
-  const { error: insertErr } = await admin.from('offres').insert({
+  const { data: inserted, error: insertErr } = await admin.from('offres').insert({
     commerce_id:      commerce.id,
     type_remise:      body.type_remise,
     valeur:           body.valeur ?? null,
@@ -64,12 +70,12 @@ export async function POST(request) {
     statut:           'active',
     est_recurrente:   body.est_recurrente ?? false,
     jours_recurrence: body.jours_recurrence ?? null,
-  })
+  }).select('id').single()
 
   if (insertErr) {
     console.error('Erreur insertion offre:', insertErr.message)
     return NextResponse.json({ error: insertErr.message }, { status: 500 })
   }
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true, id: inserted.id })
 }

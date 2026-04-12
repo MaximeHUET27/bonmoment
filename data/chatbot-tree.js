@@ -155,7 +155,7 @@ const TREE = {
 
   'c-tarifs': {
     user: 'Paliers et tarifs',
-    bot: "📋 Découverte : 29€ HT/mois (34,80€ TTC) — 4 offres\nEssentiel : 49€ HT/mois (58,80€ TTC) — 8 offres\nPro : 79€ HT/mois (94,80€ TTC) — 16 offres\n\n🎁 Premier mois offert ! Bons illimités sur tous les paliers.",
+    bot: "📋 Découverte : 29€/mois — 4 offres\nEssentiel : 49€/mois — 8 offres\nPro : 79€/mois — 16 offres\n\n🎁 Premier mois offert ! Bons illimités sur tous les paliers.",
     buttons: [
       { label: 'Merci ! 😊', next: 'merci-fin' },
     ],

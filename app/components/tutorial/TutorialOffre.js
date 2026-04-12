@@ -13,7 +13,7 @@
  *   onFinish      — called when user exits the celebration screen
  */
 
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import TutorialTooltip from './TutorialTooltip'
 
 const CONFETTI_COLORS = ['#FF6B00', '#FFD700', '#FF4444', '#00C853', '#2196F3', '#E91E63', '#9C27B0']
@@ -67,6 +67,7 @@ const SUBSTEP_CONTENT = [
     title:     'Choisis le type d\'offre',
     body:      'Remise en %, montant fixe, cadeau, concours… Choisis ce qui correspond le mieux à ta promo du moment.',
     nextLabel: 'Suivant →',
+    targetId:  'tut-type',
   },
   {
     // 4B
@@ -74,6 +75,7 @@ const SUBSTEP_CONTENT = [
     title:     'Décris ton offre en une phrase',
     body:      'Sois précis et accrocheur. Tes clients voient directement ce qu\'ils gagnent. Pas plus de 150 caractères.',
     nextLabel: 'Suivant →',
+    targetId:  'tut-description',
   },
   {
     // 4C
@@ -81,6 +83,7 @@ const SUBSTEP_CONTENT = [
     title:     'Combien de clients peuvent en profiter ?',
     body:      'Fixe un nombre de bons pour créer l\'urgence (ex : 10 bons), ou choisis "Illimité" si tu veux toucher tout le monde.',
     nextLabel: 'Suivant →',
+    targetId:  'tut-nb-bons',
   },
   {
     // 4D
@@ -88,6 +91,7 @@ const SUBSTEP_CONTENT = [
     title:     'Quand est-ce valable ?',
     body:      'Choisis la plage horaire de ton offre. Une durée courte (2-4h) crée de l\'urgence et améliore la visibilité.',
     nextLabel: 'Suivant →',
+    targetId:  'tut-horaire',
   },
   {
     // 4E — suggestions
@@ -95,8 +99,56 @@ const SUBSTEP_CONTENT = [
     title:     'Besoin d\'inspiration ?',
     body:      'Voici des idées d\'offres adaptées à ton commerce. Clique pour pré-remplir la description.',
     nextLabel: 'Voir l\'aperçu →',
+    targetId:  'tut-description',
   },
 ]
+
+/* ID cible pour chaque sous-étape hors numérique */
+const EXTRA_TARGETS = {
+  apercu:  'tut-apercu',
+  publier: 'tut-publier',
+}
+
+/* ── Hook spotlight + scroll ────────────────────────────────────────────── */
+
+function useSpotlight(substep) {
+  useEffect(() => {
+    // Résoudre l'id cible
+    const targetId =
+      typeof substep === 'number'
+        ? SUBSTEP_CONTENT[substep]?.targetId
+        : EXTRA_TARGETS[substep]
+
+    if (!targetId) return
+
+    const el = document.getElementById(targetId)
+    if (!el) return
+
+    // Sauvegarder les styles d'origine
+    const orig = {
+      position:  el.style.position,
+      zIndex:    el.style.zIndex,
+      boxShadow: el.style.boxShadow,
+    }
+
+    // Élever l'élément au-dessus de l'overlay (z-40)
+    el.style.position  = 'relative'
+    el.style.zIndex    = '50'
+    el.style.boxShadow = '0 0 0 3px #FF6B00, 0 8px 32px rgba(0,0,0,0.18)'
+
+    // Scroll avec délai pour laisser l'overlay s'afficher d'abord
+    const t = setTimeout(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 60)
+
+    return () => {
+      clearTimeout(t)
+      el.style.position  = orig.position
+      el.style.zIndex    = orig.zIndex
+      el.style.boxShadow = orig.boxShadow
+    }
+  }, [substep])
+}
 
 /* ── Composant principal ────────────────────────────────────────────────── */
 
@@ -109,6 +161,8 @@ export default function TutorialOffre({
   success,
   onFinish,
 }) {
+  useSpotlight(success ? null : substep)
+
   /* ── Écran de célébration (step 6) ── */
   if (success) {
     return (
@@ -142,7 +196,7 @@ export default function TutorialOffre({
                 Prochaine étape
               </p>
               <p className="text-sm text-[#0A0A0A] font-semibold">
-                Imprime ton QR code vitrine et place-le à l'entrée pour attirer les clients.
+                Imprime ton QR code vitrine et place-le à l&apos;entrée pour attirer les clients.
               </p>
             </div>
             <button
@@ -164,7 +218,7 @@ export default function TutorialOffre({
 
     return (
       <>
-        <div className="fixed inset-0 bg-black/40 z-40 pointer-events-none" aria-hidden />
+        <div className="fixed inset-0 bg-black/50 z-40 pointer-events-none" aria-hidden />
         <TutorialTooltip
           step={4}
           total={6}
@@ -185,7 +239,7 @@ export default function TutorialOffre({
   if (substep === 'apercu') {
     return (
       <>
-        <div className="fixed inset-0 bg-black/40 z-40 pointer-events-none" aria-hidden />
+        <div className="fixed inset-0 bg-black/50 z-40 pointer-events-none" aria-hidden />
         <TutorialTooltip
           step={5}
           total={6}
@@ -204,7 +258,7 @@ export default function TutorialOffre({
   if (substep === 'publier') {
     return (
       <>
-        <div className="fixed inset-0 bg-black/40 z-40 pointer-events-none" aria-hidden />
+        <div className="fixed inset-0 bg-black/50 z-40 pointer-events-none" aria-hidden />
         <TutorialTooltip
           step={6}
           total={6}

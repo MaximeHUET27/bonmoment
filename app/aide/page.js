@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import FAQ from '@/data/faq-data'
 
 /* ── Remove accents for search ───────────────────────────────────────────── */
@@ -81,14 +82,17 @@ export default function AidePage() {
     <main className="min-h-screen bg-[#F5F5F5]">
 
       {/* ── Header ────────────────────────────────────────────────────────── */}
+      <header className="w-full bg-white border-b border-[#EBEBEB] px-5 py-3 flex items-center justify-between sticky top-0 z-30">
+        <Link href="/">
+          <Image src="/LOGO.png" alt="BONMOMENT" width={600} height={300} unoptimized priority className="w-[110px] h-auto" />
+        </Link>
+        <Link href="/" className="bg-[#FF6B00] hover:bg-[#CC5500] text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors min-h-[44px] flex items-center whitespace-nowrap">
+          Accueil
+        </Link>
+      </header>
+
       <div className="bg-white border-b border-[#EBEBEB] px-5 py-6">
         <div className="max-w-2xl mx-auto">
-          <Link
-            href="/"
-            className="text-xs text-[#3D3D3D]/50 hover:text-[#FF6B00] transition-colors mb-4 inline-block"
-          >
-            ← Accueil
-          </Link>
           <h1 className="text-3xl font-black text-[#0A0A0A] mb-1">Besoin d&apos;aide ?</h1>
           <p className="text-sm text-[#3D3D3D]/60 mb-5">
             Trouve ta réponse parmi nos {FAQ.reduce((s, c) => s + c.questions.length, 0)} questions fréquentes.

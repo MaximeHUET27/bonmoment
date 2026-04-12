@@ -6,7 +6,7 @@ const supabase = createClient(
 )
 
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY
-const FIELDS = 'displayName,rating,userRatingCount,photos,currentOpeningHours,nationalPhoneNumber'
+const FIELDS = 'displayName,rating,userRatingCount,photos,currentOpeningHours,nationalPhoneNumber,location'
 
 async function fetchPlaceDetails(placeId) {
   const res = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, {
@@ -60,6 +60,8 @@ export async function GET(request) {
     if (place.nationalPhoneNumber   !== undefined) updates.telephone   = place.nationalPhoneNumber
     if (place.currentOpeningHours   !== undefined) updates.horaires    = place.currentOpeningHours
     if (place.photos?.[0]?.name)                   updates.photo_url  = buildPhotoUrl(place.photos[0].name)
+    if (place.location?.latitude    !== undefined) updates.latitude   = place.location.latitude
+    if (place.location?.longitude   !== undefined) updates.longitude  = place.location.longitude
 
     const { error: updateError } = await supabase
       .from('commerces')
@@ -74,7 +76,7 @@ export async function GET(request) {
     }
   }
 
-  console.log(`maj-commerces : ${mis_a_jour} mis à jour, ${erreurs} erreurs sur ${(commerces || []).length} commerces`)
+  if (erreurs > 0) console.error(`maj-commerces : ${erreurs} erreurs sur ${(commerces || []).length} commerces`)
 
   return Response.json({
     total:      (commerces || []).length,

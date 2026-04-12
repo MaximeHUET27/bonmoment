@@ -7,6 +7,9 @@ import Image from 'next/image'
 import { useAuth } from '@/app/context/AuthContext'
 import VilleSearchOverlay from '@/app/components/VilleSearchOverlay'
 import { toSlug } from '@/lib/utils'
+import { useToast } from '@/app/components/Toast'
+import { triggerConfetti } from '@/lib/confetti'
+import AddToHomeScreen from '@/app/components/AddToHomeScreen'
 
 /* ── Helpers badges ────────────────────────────────────────────────────────── */
 
@@ -48,6 +51,7 @@ function Toggle({ value, onChange, label, sublabel }) {
 export default function ProfilPage() {
   const { user, loading, supabase, signOut } = useAuth()
   const router = useRouter()
+  const { showToast } = useToast()
 
   const [profile,            setProfile]            = useState(null)
   const [reservations,       setReservations]        = useState([])
@@ -57,7 +61,6 @@ export default function ProfilPage() {
   const [fetching,           setFetching]            = useState(true)
   const [confirmDelete,      setConfirmDelete]       = useState(false)
   const [deleting,           setDeleting]            = useState(false)
-  const [toast,              setToast]               = useState(null)
   const [showVilleOverlay,   setShowVilleOverlay]    = useState(false)
 
   /* Auth guard */
@@ -132,12 +135,8 @@ export default function ProfilPage() {
     }
 
     load()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, supabase])
-
-  function afficherToast(msg) {
-    setToast(msg)
-    setTimeout(() => setToast(null), 4000)
-  }
 
   async function toggleEmailNotif() {
     const next = !profile.notifications_email
@@ -148,12 +147,12 @@ export default function ProfilPage() {
   async function togglePushNotif() {
     if (!profile.notifications_push) {
       if (!('Notification' in window)) {
-        afficherToast('Les notifications push ne sont pas supportées sur cet appareil.')
+        showToast('Les notifications push ne sont pas supportées sur cet appareil.')
         return
       }
       const perm = await Notification.requestPermission()
       if (perm !== 'granted') {
-        afficherToast('Permission refusée. Active les notifications dans les paramètres du navigateur.')
+        showToast('Permission refusée. Active les notifications dans les paramètres du navigateur.')
         return
       }
       try {
@@ -187,7 +186,8 @@ export default function ProfilPage() {
     const next = [...existant, villeNom]
     await supabase.from('users').update({ villes_abonnees: next }).eq('id', user.id)
     setProfile(p => ({ ...p, villes_abonnees: next }))
-    afficherToast(`🎉 Tu es abonné à ${villeNom} !`)
+    triggerConfetti()
+    showToast(`🎉 Tu es abonné à ${villeNom} !`)
     await refreshVilleCounts()
   }
 
@@ -209,7 +209,7 @@ export default function ProfilPage() {
     await supabase.from('users').delete().eq('id', user.id)
     await signOut()
     router.push('/')
-    afficherToast('Ton compte a été supprimé.')
+    showToast('Ton compte a été supprimé.')
   }
 
   if (loading || fetching) {
@@ -306,8 +306,8 @@ export default function ProfilPage() {
         <Link href="/">
           <Image src="/LOGO.png" alt="BONMOMENT" width={600} height={300} unoptimized priority className="w-[110px] h-auto" />
         </Link>
-        <Link href="/" className="text-xs text-[#3D3D3D]/60 hover:text-[#FF6B00] transition-colors">
-          ← Accueil
+        <Link href="/" className="bg-[#FF6B00] hover:bg-[#CC5500] text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors min-h-[44px] flex items-center whitespace-nowrap">
+          Accueil
         </Link>
       </header>
 
@@ -318,7 +318,7 @@ export default function ProfilPage() {
           <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00] mb-3">Mes informations</p>
           <div className="flex items-center gap-4 mb-5">
             {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt={prenom} className="w-14 h-14 rounded-full object-cover border-2 border-[#FF6B00]/20" />
+              <Image src={profile.avatar_url} alt={prenom} width={56} height={56} className="w-14 h-14 rounded-full object-cover border-2 border-[#FF6B00]/20" />
             ) : (
               <div className="w-14 h-14 rounded-full bg-[#FFF0E0] flex items-center justify-center text-2xl font-black text-[#FF6B00]">
                 {prenom[0]?.toUpperCase()}
@@ -356,26 +356,22 @@ export default function ProfilPage() {
           </div>
         </section>
 
-        {/* ── Mes villes ── */}
+        {/* ── Ma ville / Mes villes ── */}
         <section className="bg-white rounded-3xl px-5 py-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00]">Mes villes</p>
-            <button
-              onClick={() => setShowVilleOverlay(true)}
-              className="text-xs font-bold text-[#FF6B00] border border-[#FF6B00] px-3 py-1 rounded-full hover:bg-[#FFF0E0] transition-colors min-h-[32px]"
-            >
-              + Ajouter une ville
-            </button>
+          <div className="mb-4">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00]">
+              {(profile.villes_abonnees?.length ?? 0) > 1 ? 'Mes villes' : 'Ma ville'}
+            </p>
           </div>
 
           {(!profile.villes_abonnees || profile.villes_abonnees.length === 0) ? (
             <p className="text-sm text-[#3D3D3D]/50 text-center py-4">
-              Tu n'es abonné à aucune ville pour l'instant.
+              Tu n&apos;es abonné à aucune ville pour l&apos;instant.
             </p>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col divide-y divide-[#F5F5F5]">
               {profile.villes_abonnees.map(ville => (
-                <div key={ville} className="flex items-center justify-between py-2.5 border-b border-[#F5F5F5] last:border-0">
+                <div key={ville} className="flex items-center justify-between py-2.5">
                   <Link href={`/ville/${toSlug(ville)}`} className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors">📍 {ville}</p>
                     <p className="text-[11px] text-[#3D3D3D]/50">
@@ -385,7 +381,7 @@ export default function ProfilPage() {
                     </p>
                   </Link>
                   <button
-                    onClick={(e) => { e.stopPropagation(); desabonnerVille(ville) }}
+                    onClick={() => desabonnerVille(ville)}
                     className="ml-3 text-[10px] font-semibold text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 px-2.5 py-1 rounded-full transition-colors shrink-0"
                   >
                     Se désabonner
@@ -402,14 +398,14 @@ export default function ProfilPage() {
 
           {favorisDetails.length === 0 ? (
             <p className="text-sm text-[#3D3D3D]/50 text-center py-4">
-              Tu n'as pas encore de commerce favori. Clique sur ❤️ à côté d'un commerce pour le suivre !
+              Tu n&apos;as pas encore de commerce favori. Clique sur ❤️ à côté d&apos;un commerce pour le suivre !
             </p>
           ) : (
             <div className="flex flex-col gap-2">
               {favorisDetails.map(commerce => (
                 <Link key={commerce.id} href={`/commercant/${commerce.id}`} className="flex items-center gap-3 py-2.5 border-b border-[#F5F5F5] last:border-0 hover:bg-[#FFF8F3] rounded-xl px-1 -mx-1 transition-colors">
                   {commerce.photo_url ? (
-                    <img src={commerce.photo_url} alt={commerce.nom} className="w-10 h-10 rounded-xl object-cover shrink-0" />
+                    <Image src={commerce.photo_url} alt={commerce.nom} width={40} height={40} className="w-10 h-10 rounded-xl object-cover shrink-0" />
                   ) : (
                     <div className="w-10 h-10 rounded-xl bg-[#FFF0E0] flex items-center justify-center text-lg shrink-0">🏪</div>
                   )}
@@ -465,6 +461,9 @@ export default function ProfilPage() {
           <span className="text-[#FF6B00] font-bold text-lg">→</span>
         </Link>
 
+        {/* ── Ajouter à l'écran d'accueil ── */}
+        <div><AddToHomeScreen /></div>
+
         {/* ── Aide ── */}
         <Link
           href="/aide"
@@ -516,13 +515,6 @@ export default function ProfilPage() {
 
         <div className="h-8" />
       </div>
-
-      {/* Toast */}
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-[#0A0A0A] text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-2xl max-w-[90vw] text-center">
-          {toast}
-        </div>
-      )}
 
       {/* Overlay ajout de ville */}
       <VilleSearchOverlay

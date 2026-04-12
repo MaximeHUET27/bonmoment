@@ -5,6 +5,8 @@ import { toSlug } from '@/lib/utils'
 import UrgencyAndCTA from './UrgencyAndCTA'
 import ShareButton from '@/app/components/ShareButton'
 import FavoriButton from '@/app/components/FavoriButton'
+import CommerceInfoCard from '@/app/components/CommerceInfoCard'
+import { getFullOffreTitle } from '@/lib/offreTitle'
 
 const OG_DEFAULT_IMAGE = 'https://bonmoment.app/og-default.jpg'
 
@@ -26,7 +28,7 @@ export async function generateMetadata({ params }) {
   const ville = offre.commerces?.ville || ''
   const image = offre.commerces?.photo_url || OG_DEFAULT_IMAGE
   const offreTitle = `${badge} chez ${nom} — BONMOMENT`
-  const offreDesc  = `${offre.titre} à ${ville}. Réserve ton bon gratuit !`
+  const offreDesc  = `${getFullOffreTitle(offre)} à ${ville}. Réserve ton bon gratuit !`
   const offreUrl   = `https://bonmoment.app/offre/${id}`
 
   return {
@@ -58,7 +60,8 @@ function formatBadge(offre) {
   if (offre.type_remise === 'service_offert') return '✂️ Offert'
   if (offre.type_remise === 'offert')         return 'Offert'               // rétrocompat
   if (offre.type_remise === 'concours')       return '🎰 Concours'
-  if (offre.type_remise === 'atelier')        return '🎨 Atelier'
+  if (offre.type_remise === 'atelier')        return '🎉 Évènement'
+  if (offre.type_remise === 'fidelite')       return '⭐ Fidélité'
   return offre.type_remise || 'Offre'
 }
 
@@ -76,7 +79,7 @@ export default async function OffrePage({ params }) {
   const [{ data: offre }, { count: reservationsCount }] = await Promise.all([
     supabase
       .from('offres')
-      .select('*, commerces(id, nom, categorie, adresse, ville, description, photo_url, note_google)')
+      .select('*, commerces(id, nom, categorie, adresse, ville, description, photo_url, note_google, telephone, horaires)')
       .eq('id', id)
       .single(),
     supabase
@@ -91,9 +94,9 @@ export default async function OffrePage({ params }) {
       <main className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
         <p className="text-4xl mb-4">😕</p>
         <p className="text-[#0A0A0A] font-bold text-lg mb-2">Offre introuvable</p>
-        <p className="text-[#3D3D3D] text-sm mb-6">Cette offre n'existe pas ou a expiré.</p>
+        <p className="text-[#3D3D3D] text-sm mb-6">Cette offre n&apos;existe pas ou a expiré.</p>
         <Link href="/" className="text-[#FF6B00] font-semibold underline underline-offset-2">
-          ← Retour à l'accueil
+          ← Retour à l&apos;accueil
         </Link>
       </main>
     )
@@ -102,16 +105,13 @@ export default async function OffrePage({ params }) {
   const commerce  = offre.commerces
   const villeSlug = commerce?.ville ? toSlug(commerce.ville) : null
   const expired   = offre.statut === 'expiree' || new Date(offre.date_fin) < new Date()
-  const mapsUrl   = commerce?.adresse
-    ? `https://maps.google.com/?q=${encodeURIComponent(`${commerce.adresse}, ${commerce.ville || ''}`)}`
-    : null
 
   return (
     <main className="min-h-screen bg-white flex flex-col">
 
       {/* ── Header ── */}
-      <header className="px-4 pt-5 pb-2 flex items-center justify-between">
-        <Link href={villeSlug ? `/ville/${villeSlug}` : '/'}>
+      <header className="w-full bg-white border-b border-[#EBEBEB] px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+        <Link href="/">
           <Image
             src="/LOGO.png"
             alt="BONMOMENT"
@@ -126,9 +126,9 @@ export default async function OffrePage({ params }) {
           <ShareButton offre={offre} commerce={commerce} />
           <Link
             href={villeSlug ? `/ville/${villeSlug}` : '/'}
-            className="text-xs font-semibold text-[#3D3D3D]/60 hover:text-[#FF6B00] transition-colors"
+            className="bg-[#FF6B00] hover:bg-[#CC5500] text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors min-h-[44px] flex items-center whitespace-nowrap"
           >
-            ← Tous les bons plans
+            Retour
           </Link>
         </div>
       </header>
@@ -153,7 +153,7 @@ export default async function OffrePage({ params }) {
 
         {/* 2. Titre */}
         <h1 className="text-xl sm:text-2xl font-black text-[#0A0A0A] text-center leading-tight px-2">
-          {offre.titre}
+          {getFullOffreTitle(offre)}
         </h1>
 
         {/* 3. Barre d'urgence + CTA + preuve sociale — ABOVE THE FOLD */}
@@ -165,53 +165,24 @@ export default async function OffrePage({ params }) {
         {/* 4. Info commerce — secondaire */}
         <div className="flex flex-col gap-3">
 
-          <div className="flex items-start gap-3">
-            <div className="w-12 h-12 rounded-xl bg-[#FFF0E0] flex items-center justify-center text-2xl shrink-0">
-              🏪
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <Link
-                  href={`/commercant/${commerce?.id || ''}`}
-                  className="text-base font-black text-[#0A0A0A] hover:text-[#FF6B00] transition-colors"
-                >
-                  {commerce?.nom}
-                </Link>
-                {commerce?.id && (
-                  <FavoriButton commerceId={commerce.id} commerceNom={commerce.nom || ''} className="!min-h-[28px] !min-w-[28px]" />
-                )}
-              </div>
-              {commerce?.categorie && (
-                <div className="mt-1">
-                  <span className="text-[10px] font-semibold text-[#FF6B00] uppercase tracking-widest bg-[#FFF0E0] px-2 py-0.5 rounded-full">
-                    {commerce.categorie}
-                  </span>
-                </div>
-              )}
-              {commerce?.description && (
-                <p className="text-xs text-[#3D3D3D]/60 mt-1 leading-relaxed">{commerce.description}</p>
-              )}
-            </div>
+          {/* Catégorie + favori */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {commerce?.categorie && (
+              <span className="text-[10px] font-semibold text-[#FF6B00] uppercase tracking-widest bg-[#FFF0E0] px-2 py-0.5 rounded-full">
+                {commerce.categorie}
+              </span>
+            )}
+            {commerce?.id && (
+              <FavoriButton commerceId={commerce.id} commerceNom={commerce.nom || ''} className="!min-h-[28px] !min-w-[28px]" />
+            )}
           </div>
 
-          {/* Adresse */}
-          {commerce?.adresse && (
-            <p className="text-sm text-[#3D3D3D] flex items-start gap-1.5">
-              <span className="mt-0.5 shrink-0">📍</span>
-              <span>{commerce.adresse}{commerce.ville ? `, ${commerce.ville}` : ''}</span>
-            </p>
-          )}
+          {/* Bloc unifié commerce — nom = lien cliquable vers /commercant/[id] */}
+          <CommerceInfoCard commerce={commerce} commerceId={commerce?.id} />
 
-          {/* Bouton S'y rendre */}
-          {mapsUrl && (
-            <a
-              href={mapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-2 border-2 border-[#FF6B00] text-[#FF6B00] font-bold text-sm py-3 rounded-2xl hover:bg-[#FFF0E0] transition-colors min-h-[48px]"
-            >
-              📍 S'y rendre
-            </a>
+          {/* Description */}
+          {commerce?.description && (
+            <p className="text-xs text-[#3D3D3D]/60 leading-relaxed">{commerce.description}</p>
           )}
 
         </div>

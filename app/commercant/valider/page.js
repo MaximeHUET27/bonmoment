@@ -27,7 +27,8 @@ function labelRemise(type_remise, valeur) {
     case 'produit_offert': return 'Produit offert'
     case 'service_offert': return 'Service offert'
     case 'concours':       return 'Concours'
-    case 'atelier':        return 'Atelier'
+    case 'atelier':        return 'Évènement'
+    case 'fidelite':       return '⭐ Fidélité'
     default:               return type_remise
   }
 }
@@ -176,16 +177,13 @@ export default function ValiderPage() {
       `}</style>
 
       {/* ── Header ───────────────────────────────────────────────────────── */}
-      <header className="bg-white border-b border-[#EBEBEB] px-5 py-3 flex items-center gap-3 sticky top-0 z-20">
-        <Link
-          href="/commercant/dashboard"
-          className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-[#F5F5F5] text-[#3D3D3D]/60 hover:text-[#FF6B00] transition-colors text-lg"
-          aria-label="Retour"
-        >
-          ←
+      <header className="bg-white border-b border-[#EBEBEB] px-5 py-3 flex items-center justify-between sticky top-0 z-20">
+        <Link href="/">
+          <Image src="/LOGO.png" alt="BONMOMENT" width={600} height={300} unoptimized priority className="w-[100px] h-auto" />
         </Link>
-        <Image src="/LOGO.png" alt="BONMOMENT" width={600} height={300} unoptimized priority className="w-[90px] h-auto" />
-        <span className="ml-2 text-sm font-black text-[#0A0A0A]">Vérifier un bon</span>
+        <Link href="/commercant/dashboard" className="bg-[#FF6B00] hover:bg-[#CC5500] text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors min-h-[44px] flex items-center whitespace-nowrap">
+          Mon commerce
+        </Link>
       </header>
 
       <div className="flex-1 w-full max-w-lg mx-auto px-4 py-5 flex flex-col gap-5">
@@ -352,6 +350,7 @@ function ResultScreen({ result, onBack }) {
               {labelRemise(result.data.offre.type_remise, result.data.offre.valeur)}
             </p>
           )}
+          <p className="text-sm opacity-70 mt-2">💡 Ton client va recevoir une invitation à noter son expérience</p>
         </div>
       )}
 

@@ -6,7 +6,9 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/app/context/AuthContext'
 import FullScreenBon from '@/app/components/FullScreenBon'
+import CommerceInfoCard from '@/app/components/CommerceInfoCard'
 import { formatDebut } from '@/lib/offreStatus'
+import { getFullOffreTitle } from '@/lib/offreTitle'
 
 /* ── Helpers ──────────────────────────────────────────────────────────────── */
 
@@ -19,25 +21,26 @@ function formatBadge(offre) {
   if (offre.type_remise === 'produit_offert') return '📦 Offert'
   if (offre.type_remise === 'service_offert') return '✂️ Offert'
   if (offre.type_remise === 'concours')       return '🎰 Concours'
-  if (offre.type_remise === 'atelier')        return '🎨 Atelier'
+  if (offre.type_remise === 'atelier')        return '🎉 Évènement'
+  if (offre.type_remise === 'fidelite')       return '⭐ Fidélité'
   return 'Offre'
 }
 
+function calcTimeLeft(dateFin) {
+  const diff = new Date(dateFin) - new Date()
+  if (diff <= 0) return null
+  return {
+    h:    Math.floor(diff / 3_600_000),
+    m:    Math.floor((diff % 3_600_000) / 60_000),
+    s:    Math.floor((diff % 60_000) / 1_000),
+    diff,
+  }
+}
+
 function useCountdown(dateFin) {
-  const [tl, setTl] = useState(null)
+  const [tl, setTl] = useState(() => calcTimeLeft(dateFin))
   useEffect(() => {
-    function calc() {
-      const diff = new Date(dateFin) - new Date()
-      if (diff <= 0) return null
-      return {
-        h:    Math.floor(diff / 3_600_000),
-        m:    Math.floor((diff % 3_600_000) / 60_000),
-        s:    Math.floor((diff % 60_000) / 1_000),
-        diff,
-      }
-    }
-    setTl(calc())
-    const t = setInterval(() => setTl(calc()), 1_000)
+    const t = setInterval(() => setTl(calcTimeLeft(dateFin)), 1_000)
     return () => clearInterval(t)
   }, [dateFin])
   return tl
@@ -60,7 +63,6 @@ function BonActifCard({ resa, supabase, onCancelled }) {
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.url) setWalletUrl(d.url) })
       .catch(() => {})
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resa.id])
 
   async function handleCancel() {
@@ -89,7 +91,7 @@ function BonActifCard({ resa, supabase, onCancelled }) {
           {formatBadge(resa.offres)}
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-bold text-[#0A0A0A] leading-snug">{resa.offres?.titre}</p>
+          <p className="text-sm font-bold text-[#0A0A0A] leading-snug">{getFullOffreTitle(resa.offres)}</p>
           <p className="text-xs text-[#3D3D3D]/60 mt-0.5">{resa.offres?.commerces?.nom}</p>
         </div>
       </div>
@@ -106,6 +108,9 @@ function BonActifCard({ resa, supabase, onCancelled }) {
       ) : (
         <p className="text-sm font-bold text-red-500">⚠ Trop tard — bon expiré</p>
       )}
+
+      {/* Infos commerce */}
+      <CommerceInfoCard commerce={resa.offres?.commerces} commerceId={resa.offres?.commerces?.id} />
 
       {/* Bouton Voir mon bon */}
       <button
@@ -188,42 +193,10 @@ export default function MesBonsPage() {
   }, [user, loading, router])
 
   useEffect(() => {
-    if (!user || !supabase) return
+    if (!user) return
     async function load() {
-      // Vérifie que l'on a bien le user connecté
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      const userId = authUser?.id || user.id
-
-      const { data, error } = await supabase
-        .from('reservations')
-        .select(`
-          id,
-          statut,
-          code_validation,
-          qr_code_data,
-          created_at,
-          offres (
-            id,
-            titre,
-            type_remise,
-            valeur,
-            date_debut,
-            date_fin,
-            statut,
-            commerces (
-              id,
-              nom,
-              ville,
-              adresse
-            )
-          )
-        `)
-        .eq('user_id', userId)
-
-      if (error) {
-        console.error('[Mes bons] Erreur requête Supabase:', error.message, error)
-      }
-
+      const res = await fetch('/api/mes-bons')
+      const data = res.ok ? await res.json() : []
       const sorted = (data || []).sort((a, b) => {
         const da = a.offres?.date_fin ? new Date(a.offres.date_fin) : new Date(0)
         const db = b.offres?.date_fin ? new Date(b.offres.date_fin) : new Date(0)
@@ -233,7 +206,7 @@ export default function MesBonsPage() {
       setFetching(false)
     }
     load()
-  }, [user, supabase])
+  }, [user])
 
   function handleCancelled(id) {
     setReservations(prev => prev.map(r => r.id === id ? { ...r, statut: 'annulee' } : r))
@@ -287,8 +260,8 @@ export default function MesBonsPage() {
         <Link href="/">
           <Image src="/LOGO.png" alt="BONMOMENT" width={600} height={300} unoptimized priority className="w-[110px] h-auto" />
         </Link>
-        <Link href="/profil" className="text-xs text-[#3D3D3D]/60 hover:text-[#FF6B00] transition-colors">
-          ← Profil
+        <Link href="/profil" className="bg-[#FF6B00] hover:bg-[#CC5500] text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors min-h-[44px] flex items-center whitespace-nowrap">
+          Mon profil
         </Link>
       </header>
 
@@ -303,7 +276,7 @@ export default function MesBonsPage() {
         {reservations.length === 0 && (
           <div className="text-center py-16">
             <p className="text-5xl mb-4">🎟️</p>
-            <p className="text-base font-bold text-[#0A0A0A]">Aucun bon pour l'instant</p>
+            <p className="text-base font-bold text-[#0A0A0A]">Aucun bon pour l&apos;instant</p>
             <p className="text-sm text-[#3D3D3D]/60 mt-2">Réserve un bon plan dans ta ville !</p>
             <Link
               href="/"
@@ -358,8 +331,7 @@ export default function MesBonsPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold text-[#0A0A0A]">
-                      <span className="text-[#FF6B00]">{formatBadge(resa.offres)}</span>
-                      {' · '}{resa.offres?.titre}
+                      {getFullOffreTitle(resa.offres)}
                     </p>
                     <p className="text-xs text-[#3D3D3D]/60 mt-0.5">{resa.offres?.commerces?.nom}</p>
                   </div>
@@ -371,14 +343,9 @@ export default function MesBonsPage() {
                       <span className="inline-block px-3 py-1 rounded-full bg-[#FF6B00] text-white text-sm font-black">
                         {formatBadge(resa.offres)}
                       </span>
-                      <span className="text-sm font-bold text-[#0A0A0A]">{resa.offres?.titre}</span>
+                      <span className="text-sm font-bold text-[#0A0A0A]">{getFullOffreTitle(resa.offres)}</span>
                     </div>
-                    {resa.offres?.commerces?.nom && (
-                      <p className="text-xs font-semibold text-[#3D3D3D]">🏪 {resa.offres.commerces.nom}</p>
-                    )}
-                    {resa.offres?.commerces?.adresse && (
-                      <p className="text-xs text-[#3D3D3D]/70">📍 {resa.offres.commerces.adresse}{resa.offres.commerces.ville ? `, ${resa.offres.commerces.ville}` : ''}</p>
-                    )}
+                    <CommerceInfoCard commerce={resa.offres?.commerces} commerceId={resa.offres?.commerces?.id} />
                     {resa.created_at && (
                       <p className="text-[11px] text-[#3D3D3D]/50">
                         Réservé le {new Date(resa.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -424,7 +391,7 @@ export default function MesBonsPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold text-[#3D3D3D]">
-                      {formatBadge(resa.offres)} · {resa.offres?.titre}
+                      {getFullOffreTitle(resa.offres)}
                     </p>
                     <p className="text-xs text-[#3D3D3D]/60 mt-0.5">{resa.offres?.commerces?.nom}</p>
                   </div>
@@ -436,14 +403,9 @@ export default function MesBonsPage() {
                       <span className="inline-block px-3 py-1 rounded-full bg-[#E0E0E0] text-[#9CA3AF] text-sm font-black">
                         {formatBadge(resa.offres)}
                       </span>
-                      <span className="text-sm font-bold text-[#3D3D3D]">{resa.offres?.titre}</span>
+                      <span className="text-sm font-bold text-[#3D3D3D]">{getFullOffreTitle(resa.offres)}</span>
                     </div>
-                    {resa.offres?.commerces?.nom && (
-                      <p className="text-xs font-semibold text-[#3D3D3D]/70">🏪 {resa.offres.commerces.nom}</p>
-                    )}
-                    {resa.offres?.commerces?.adresse && (
-                      <p className="text-xs text-[#3D3D3D]/60">📍 {resa.offres.commerces.adresse}{resa.offres.commerces.ville ? `, ${resa.offres.commerces.ville}` : ''}</p>
-                    )}
+                    <CommerceInfoCard commerce={resa.offres?.commerces} commerceId={resa.offres?.commerces?.id} />
                     {resa.created_at && (
                       <p className="text-[11px] text-[#3D3D3D]/40">
                         Réservé le {new Date(resa.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}

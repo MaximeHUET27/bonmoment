@@ -15,7 +15,8 @@ function formatBadge(offre) {
   if (offre.type_remise === 'produit_offert') return 'Produit offert'
   if (offre.type_remise === 'service_offert') return 'Service offert'
   if (offre.type_remise === 'concours')       return 'Concours'
-  if (offre.type_remise === 'atelier')        return 'Atelier'
+  if (offre.type_remise === 'atelier')        return 'Évènement'
+  if (offre.type_remise === 'fidelite')       return 'Fidélité'
   return 'Offre'
 }
 

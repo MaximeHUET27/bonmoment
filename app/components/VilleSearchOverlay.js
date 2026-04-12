@@ -443,15 +443,15 @@ export default function VilleSearchOverlay({
                         📌 Mes villes
                       </p>
 
-                      {/* Option : Toutes mes villes */}
+                      {/* Option : Toutes les villes */}
                       <button
                         onClick={() => { try { localStorage.removeItem('bonmoment_ville') } catch {} onSelectAll?.(); router.push('/?view=all'); onClose() }}
                         className="w-full flex items-center gap-3 py-3.5 border-b border-[#F5F5F5] hover:bg-[#FFF0E0] rounded-xl px-2 transition-colors min-h-[48px]"
                       >
                         <span className="text-lg">🏠</span>
                         <div className="text-left">
-                          <p className="text-sm font-bold text-[#0A0A0A]">Toutes mes villes</p>
-                          <p className="text-[11px] text-[#3D3D3D]/50">Offres de toutes mes villes</p>
+                          <p className="text-sm font-bold text-[#0A0A0A]">Toutes les villes</p>
+                          <p className="text-[11px] text-[#3D3D3D]/50">Offres de toutes les villes</p>
                         </div>
                       </button>
 
@@ -550,7 +550,7 @@ export default function VilleSearchOverlay({
                 .
               </p>
               <p className="text-xs text-[#3D3D3D]/60">
-                Abonne-toi pour être prévenu dès l'ouverture, ou choisis une ville proche :
+                Abonne-toi pour être prévenu dès l&apos;ouverture, ou choisis une ville proche :
               </p>
               {(() => {
                 const nomC       = communeChoisie?.nom

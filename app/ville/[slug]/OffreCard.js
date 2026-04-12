@@ -12,7 +12,10 @@ import FullScreenBon from '@/app/components/FullScreenBon'
 import FavoriButton from '@/app/components/FavoriButton'
 import ShareButton from '@/app/components/ShareButton'
 import { useReservation } from '@/app/hooks/useReservation'
+import { getFullOffreTitle } from '@/lib/offreTitle'
 import { useFavoris } from '@/app/context/FavorisContext'
+import { useToast } from '@/app/components/Toast'
+import { triggerConfetti } from '@/lib/confetti'
 
 /* ── Mapping catégorie Google → filtre ───────────────────────────────────── */
 
@@ -85,9 +88,8 @@ function getTimeLeft(dateFin) {
 }
 
 function useCountdown(dateFin) {
-  const [tl, setTl] = useState(null)
+  const [tl, setTl] = useState(() => getTimeLeft(dateFin))
   useEffect(() => {
-    setTl(getTimeLeft(dateFin))
     const t = setInterval(() => setTl(getTimeLeft(dateFin)), 1_000)
     return () => clearInterval(t)
   }, [dateFin])
@@ -103,13 +105,14 @@ function formatBadge(offre) {
   if (offre.type_remise === 'service_offert') return '✂️ Offert'
   if (offre.type_remise === 'offert')         return 'Offert'               // rétrocompat
   if (offre.type_remise === 'concours')       return '🎰 Concours'
-  if (offre.type_remise === 'atelier')        return '🎨 Atelier'
+  if (offre.type_remise === 'atelier')        return '🎉 Évènement'
+  if (offre.type_remise === 'fidelite')       return '⭐ Fidélité'
   return offre.type_remise || 'Offre'
 }
 
 /* ── Composant ───────────────────────────────────────────────────────────── */
 
-export default function OffreCard({ offre }) {
+export default function OffreCard({ offre, userReservation }) {
   const timeLeft   = useCountdown(offre.date_fin)
   const commerce   = offre.commerces
   const programmee = new Date(offre.date_debut) > new Date()
@@ -117,16 +120,17 @@ export default function OffreCard({ offre }) {
 
   const { user, supabase } = useAuth()
   const { isFavori, toggleFavori } = useFavoris()
+  const { showToast } = useToast()
   const pathname  = usePathname()
   const [showAuth,          setShowAuth]          = useState(false)
   const [showBon,           setShowBon]           = useState(false)
-  const [toast,             setToast]             = useState(null)
+  const [pressing,          setPressing]          = useState(false)
   const [abonneCommLoading, setAbonneCommLoading] = useState(false)
   const [nbBonsDelta,       setNbBonsDelta]       = useState(0)
 
   const abonneComm = isFavori(commerce?.id)
 
-  const { reserver, status, reservation, reset, checkExisting } = useReservation()
+  const { reserver, status, reservation, reset, checkExisting, setStatus, setReservation } = useReservation()
 
   /* ── Compteur local (annulation incrémente, ne recharge pas la page) ── */
   const nbBons = (offre.nb_bons_restants === null || offre.nb_bons_restants === 9999)
@@ -156,11 +160,24 @@ export default function OffreCard({ offre }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offre.id])
 
-  /* ── Vérifier réservation existante au montage (bouton vert persistant) ── */
+  /* ── Statut initial : depuis données batchées ou check individuel ── */
   useEffect(() => {
-    if (user && !fini) checkExisting(offre.id)
+    if (userReservation !== undefined) {
+      // Données batchées fournies par le parent — pas de requête individuelle
+      if (userReservation) {
+        const s = userReservation.statut
+        if (s === 'reservee')  { setReservation(userReservation); setStatus('already_reserved') }
+        else if (s === 'utilisee') setStatus('already_used')
+        else if (s === 'expiree')  setStatus('already_expired')
+        // 'annulee' → idle (cliquable)
+      }
+      // null → pas de réservation, rester idle
+    } else if (user && !fini) {
+      // Pas de données batchées → fallback check individuel
+      checkExisting(offre.id)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, offre.id])
+  }, [user, offre.id, userReservation])
 
   /* ── Auto-pending : réservation déclenché après retour OAuth ── */
   useEffect(() => {
@@ -188,7 +205,7 @@ export default function OffreCard({ offre }) {
           if (!data.notifications_email) updates.notifications_email = true
           if (Object.keys(updates).length > 0) {
             await supabase.from('users').update(updates).eq('id', user.id)
-            if (isNew) setToast(`🎉 Bienvenue à ${ville} ! Tu recevras les bons plans chaque soir à 21h.`)
+            if (isNew) { triggerConfetti(); showToast(`🎉 Bienvenue à ${ville} ! Tu recevras les bons plans chaque soir à 21h.`) }
           }
         }
       }
@@ -224,13 +241,6 @@ export default function OffreCard({ offre }) {
     setAbonneCommLoading(false)
   }
 
-  /* ── Toast auto-dismiss ── */
-  useEffect(() => {
-    if (!toast) return
-    const t = setTimeout(() => setToast(null), 4_000)
-    return () => clearTimeout(t)
-  }, [toast])
-
   /* ── Affichage FullScreenBon après succès (1s de feedback vert) ── */
   useEffect(() => {
     if (status === 'success') {
@@ -243,7 +253,11 @@ export default function OffreCard({ offre }) {
     e.preventDefault()  // empêche navigation si dans un Link
     e.stopPropagation()
     if (fini) return
+    if (status === 'already_used' || status === 'already_expired') return
     if (status === 'already_reserved') { setShowBon(true); return }
+    // Compression visuelle 150ms
+    setPressing(true)
+    setTimeout(() => setPressing(false), 150)
     if (!user) {
       sessionStorage.setItem(PENDING_KEY, offre.id)
       setShowAuth(true)
@@ -254,21 +268,27 @@ export default function OffreCard({ offre }) {
 
   /* ── Libellé et style du bouton selon l'état ── */
   const btnLabel = (() => {
-    if (fini)                          return 'Trop tard !'
-    if (status === 'loading')          return null                  // spinner
-    if (status === 'success')          return '✓ Bon réservé !'
-    if (status === 'already_reserved') return '✅ Bon réservé — Voir mon bon'
-    if (status === 'no_stock')         return 'Plus de bons…'
-    if (status === 'error')            return '✗ Erreur — réessaie'
+    if (fini)                           return 'Trop tard !'
+    if (status === 'loading')           return null                  // spinner
+    if (status === 'success')           return '✓ Bon réservé !'
+    if (status === 'already_reserved')  return '🎟️ Voir mon bon'
+    if (status === 'already_used')      return '✅ Bon utilisé'
+    if (status === 'already_expired')   return '⏰ Bon expiré'
+    if (status === 'no_stock')          return 'Plus de bons…'
+    if (status === 'error')             return '✗ Erreur — réessaie'
     return 'Réserver mon bon'
   })()
 
-  const btnColor = fini                           ? 'bg-[#D0D0D0] cursor-not-allowed'
-    : status === 'success'                        ? 'bg-green-500'
-    : status === 'error'                          ? 'bg-red-500'
-    : status === 'already_reserved'               ? 'bg-green-500'
-    : status === 'no_stock'                       ? 'bg-[#FF6B00]'
-    : 'bg-[#FF6B00] hover:bg-[#CC5500] active:scale-[0.97]'
+  const btnColor = fini                            ? 'bg-[#D0D0D0] cursor-not-allowed'
+    : status === 'success'                         ? 'bg-green-500'
+    : status === 'error'                           ? 'bg-red-500'
+    : status === 'already_reserved'                ? 'bg-green-500'
+    : (status === 'already_used' ||
+       status === 'already_expired')               ? 'bg-[#9CA3AF] cursor-not-allowed'
+    : status === 'no_stock'                        ? 'bg-[#FF6B00]'
+    : 'bg-[#FF6B00] hover:bg-[#CC5500]'
+
+  const isPulsing = urgent && !fini && status !== 'loading' && status !== 'success' && status !== 'already_reserved' && status !== 'already_used' && status !== 'already_expired'
 
   /* ── Pulse sur le compteur de bons si < 5 ── */
   const nbPulse = !fini && nbBons !== null &&
@@ -277,81 +297,114 @@ export default function OffreCard({ offre }) {
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-[#F0F0F0] shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-white rounded-2xl border border-[#F0F0F0] shadow-sm overflow-hidden flex flex-col relative">
+
+        {/* Fond photo commerce */}
+        {commerce?.photo_url && (
+          <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden>
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `url(${commerce.photo_url})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                filter: fini ? 'grayscale(100%)' : 'none',
+                opacity: 0.30,
+              }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{ backgroundColor: fini ? 'rgba(255,255,255,0.80)' : 'rgba(255,255,255,0.65)' }}
+            />
+          </div>
+        )}
 
         {/* Zone 1 : header + corps grisés pour les cartes expirées */}
-        <div className={fini ? 'opacity-50 grayscale cursor-pointer' : ''}>
+        <div className={`relative z-10 ${fini ? 'opacity-50 grayscale cursor-pointer' : ''}`}>
 
-        {/* ── Header : countdown + bons restants + partage ── */}
-        <div className={`flex items-center gap-1 px-2 py-1.5 ${
+        {/* ── Header : countdown (ligne 1) + bons + partage (ligne 2) ── */}
+        <div className={`flex flex-col gap-0.5 px-2 pt-1.5 pb-1 ${
           programmee ? 'bg-[#FFF0E0]' :
           urgent && !fini ? 'bg-red-50' : 'bg-[#F5F5F5]'
         }`}>
-          <Link href={`/offre/${offre.id}`} className="flex-1 flex items-center justify-between gap-1.5 px-1 py-1 min-w-0">
-            <div className="flex items-center gap-1.5 min-w-0">
-              {programmee ? (
-                <>
-                  <span className="text-sm">📅</span>
-                  <span className="text-xs font-bold text-[#FF6B00] truncate">
-                    Début le {formatDebut(offre.date_debut)}
+          {/* Ligne 1 : timer pleine largeur */}
+          <Link href={`/offre/${offre.id}`} className="flex items-center gap-1 min-w-0">
+            {programmee ? (
+              <>
+                <span className="text-sm">📅</span>
+                <span className="text-xs font-bold text-[#FF6B00] truncate">
+                  Début le {formatDebut(offre.date_debut)}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="text-sm">⏱</span>
+                {timeLeft ? (
+                  <span className={`text-[12px] font-black tabular-nums whitespace-nowrap ${
+                    urgent && !fini ? 'text-red-500' : 'text-[#0A0A0A]'
+                  }`}>
+                    {urgent && !fini && <span className="font-semibold mr-0.5 text-[10px]">Urgent —</span>}
+                    {String(timeLeft.h).padStart(2, '0')}h{' '}
+                    {String(timeLeft.m).padStart(2, '0')}m{' '}
+                    {String(timeLeft.s).padStart(2, '0')}s
                   </span>
-                </>
-              ) : (
-                <>
-                  <span className="text-sm">⏱</span>
-                  {timeLeft ? (
-                    <span className={`text-xs font-black tabular-nums ${
-                      urgent && !fini ? 'text-red-500' : 'text-[#0A0A0A]'
-                    }`}>
-                      {urgent && !fini && <span className="font-semibold mr-1 text-[10px]">Urgent —</span>}
-                      {String(timeLeft.h).padStart(2, '0')}h{' '}
-                      {String(timeLeft.m).padStart(2, '0')}m{' '}
-                      {String(timeLeft.s).padStart(2, '0')}s
-                    </span>
-                  ) : (
-                    <span className="text-xs font-black text-[#3D3D3D]/60">Trop tard !</span>
-                  )}
-                </>
-              )}
-            </div>
-            <span className={`text-[11px] font-bold ${nbPulse ? 'text-red-500 animate-pulse' : 'text-[#3D3D3D]'}`}>
-              {nbBons === null || nbBons === 9999
-                ? '∞ bons'
-                : `🎫 ${nbBons}`}
-            </span>
+                ) : (
+                  <span className="text-xs font-black text-[#3D3D3D]/60">Trop tard !</span>
+                )}
+              </>
+            )}
           </Link>
-          <ShareButton offre={offre} commerce={commerce} />
+          {/* Ligne 2 : bons restants + bouton partage */}
+          <div className="flex items-center justify-between">
+            <Link href={`/offre/${offre.id}`}>
+              <span className={`text-[11px] font-bold ${nbPulse ? 'text-red-500 animate-pulse' : 'text-[#3D3D3D]'}`}>
+                {nbBons === null || nbBons === 9999
+                  ? '∞ bons'
+                  : `🎫 ${nbBons}`}
+              </span>
+            </Link>
+            <ShareButton offre={offre} commerce={commerce} />
+          </div>
         </div>
 
         {/* ── Corps : cliquable → détail ── */}
-        <Link href={`/offre/${offre.id}`} className="block flex-1 px-3 py-4 flex flex-col gap-2.5">
+        <Link href={`/offre/${offre.id}`} className="block flex-1 px-3 py-3 sm:py-4 flex flex-col gap-1.5 sm:gap-2.5">
 
           {/* Badge remise */}
-          <div className="flex items-center justify-center bg-[#FFF0E0] rounded-xl py-4">
-            <span className="text-2xl font-black text-[#FF6B00] tracking-tight leading-none">
-              {formatBadge(offre)}
-            </span>
-          </div>
+          {(() => {
+            const badge = formatBadge(offre)
+            return (
+              <div className="flex items-center justify-center bg-[#FFF0E0] rounded-xl py-2 sm:py-4 overflow-hidden px-2" style={{ maxHeight: 40 }}>
+                <span className={`font-black text-[#FF6B00] tracking-tight leading-none whitespace-nowrap ${
+                  badge.length > 6 ? 'text-base sm:text-lg' : 'text-xl sm:text-2xl'
+                }`}>
+                  {badge}
+                </span>
+              </div>
+            )
+          })()}
 
           {/* Titre */}
-          <p className="text-xs font-bold text-[#0A0A0A] text-center leading-snug line-clamp-2">
-            {offre.titre}
+          <p className="text-sm font-bold text-[#0A0A0A] text-center leading-snug line-clamp-2">
+            {getFullOffreTitle(offre)}
           </p>
 
           {/* Commerce + catégorie + favori */}
-          <div className="flex items-center justify-center gap-1.5 flex-wrap">
+          <div className="flex flex-col gap-0.5 min-w-0">
             {commerce?.categorie && (
-              <span className="text-[9px] font-semibold text-[#FF6B00] uppercase tracking-wider bg-[#FFF0E0] px-1.5 py-0.5 rounded-full">
+              <span className="text-[11px] font-semibold text-[#FF6B00] uppercase tracking-wider text-center truncate">
                 {getCategorieFiltre(commerce.categorie) || commerce.categorie}
               </span>
             )}
-            <span className="text-xs font-semibold text-[#1A1A1A] truncate max-w-[90px]">{commerce?.nom}</span>
-            {commerce?.note_google && (
-              <span className="text-[10px] font-bold text-yellow-400">⭐ {commerce.note_google}</span>
-            )}
-            {commerce?.id && (
-              <FavoriButton commerceId={commerce.id} commerceNom={commerce.nom || ''} className="!min-h-[28px] !min-w-[28px]" />
-            )}
+            <div className="flex items-center justify-center gap-1 min-w-0">
+              <span className="text-xs font-semibold text-[#1A1A1A] truncate min-w-0">{commerce?.nom}</span>
+              {commerce?.note_google && (
+                <span className="text-[10px] font-bold text-yellow-400 shrink-0">⭐ {commerce.note_google}</span>
+              )}
+              {commerce?.id && (
+                <span className="shrink-0"><FavoriButton commerceId={commerce.id} commerceNom={commerce.nom || ''} className="!min-h-[28px] !min-w-[28px]" /></span>
+              )}
+            </div>
           </div>
 
           {/* Ville */}
@@ -364,7 +417,7 @@ export default function OffreCard({ offre }) {
         </div>{/* fin Zone 1 */}
 
         {/* Zone 2 : CTA toujours actif — non affecté par grayscale/opacity */}
-        <div className="px-3 pb-3 pointer-events-auto">
+        <div className="relative z-10 px-3 pb-3 pointer-events-auto">
           {fini ? (
             <button
               onClick={handleAbonnerComm}
@@ -382,15 +435,28 @@ export default function OffreCard({ offre }) {
                 : 'Trop tard ! Abonne-toi à ce commerçant ❤️'}
             </button>
           ) : (
-            <button
-              onClick={handleReserver}
-              disabled={status === 'loading'}
-              className={`w-full text-white font-bold text-xs py-2.5 rounded-full transition-all duration-200 min-h-[40px] flex items-center justify-center gap-1.5 ${btnColor}`}
-            >
-              {status === 'loading' ? (
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : btnLabel}
-            </button>
+            <>
+              <style>{`
+                @keyframes bm-btn-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
+                @keyframes bm-pop       { 0%{transform:scale(0);opacity:0} 100%{transform:scale(1);opacity:1} }
+              `}</style>
+              <button
+               
+                onClick={handleReserver}
+                disabled={status === 'loading'}
+                style={{ transform: pressing ? 'scale(0.95)' : 'scale(1)', transition: 'transform 0.15s ease' }}
+                className={`w-full text-white font-bold text-sm py-2 rounded-full min-h-[40px] flex items-center justify-center gap-1.5 ${btnColor} ${isPulsing ? 'bm-btn-pulse-cls' : ''}`}
+              >
+                {status === 'loading' ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <span key={status} style={(status === 'success' || status === 'error') ? { animation: 'bm-pop 0.3s cubic-bezier(0.175,0.885,0.32,1.275) forwards' } : {}}>
+                    {btnLabel}
+                  </span>
+                )}
+              </button>
+              {isPulsing && <style>{`.bm-btn-pulse-cls{animation:bm-btn-pulse 2s ease-in-out infinite}`}</style>}
+            </>
           )}
 
           {/* Erreur */}
@@ -418,16 +484,7 @@ export default function OffreCard({ offre }) {
         />
       )}
 
-      {/* ── Toast onboarding ── */}
-      {toast && (
-        <div
-          className="fixed bottom-24 left-4 right-4 z-50 bg-[#0A0A0A] text-white text-sm font-semibold px-4 py-3 rounded-2xl shadow-xl text-center"
-          style={{ animation: 'fadeSlideUp 0.3s ease' }}
-        >
-          {toast}
-          <style>{`@keyframes fadeSlideUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }`}</style>
-        </div>
-      )}
+      {/* Toast géré globalement par ToastProvider */}
     </>
   )
 }

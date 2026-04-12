@@ -8,6 +8,8 @@ import { useAuth } from '@/app/context/AuthContext'
 import OffreCard from '@/app/ville/[slug]/OffreCard'
 import TutorialOffre from '@/app/components/tutorial/TutorialOffre'
 import suggestionsData from '@/data/suggestions-offres.json'
+import { triggerConfetti } from '@/lib/confetti'
+import { getFullOffreTitle } from '@/lib/offreTitle'
 
 const TUT_KEY = 'bonmoment_tutoriel'
 function readTutState() {
@@ -21,21 +23,21 @@ function writeTutState(state) {
 /* ── Constantes ─────────────────────────────────────────────────────────── */
 
 const TYPES = [
-  { id: 'pourcentage',    label: 'Remise %', icon: '%'  },
-  { id: 'montant_fixe',   label: 'Remise €', icon: '€'  },
-  { id: 'cadeau',         label: 'Offert',   icon: '🎁' },
-  { id: 'service_offert', label: 'Service',  icon: '✂️' },
-  { id: 'concours',       label: 'Concours', icon: '🎰' },
-  { id: 'atelier',        label: 'Atelier',  icon: '🎨' },
+  { id: 'cadeau',       label: 'Cadeau offert', icon: '🎁' },
+  { id: 'atelier',      label: 'Évènement',     icon: '🎉' },
+  { id: 'concours',     label: 'Concours',      icon: '🎰' },
+  { id: 'pourcentage',  label: 'Remise %',      icon: '%'  },
+  { id: 'montant_fixe', label: 'Remise €',      icon: '€'  },
+  { id: 'fidelite',     label: 'Fidélité',      icon: '⭐' },
 ]
 
 const PLACEHOLDERS = {
   pourcentage:    "Ex : Sur toutes les coupes aujourd'hui",
   montant_fixe:   'Ex : Sur ton repas du soir',
-  cadeau:         "Ex : Un croissant à l'achat d'une baguette",
-  service_offert: 'Ex : Diagnostic capillaire gratuit',
+  cadeau:         'Ex : un café pour la commande d\'un menu plat/dessert',
   concours:       "Ex : Gagnez un soin complet d'une valeur de 50€",
-  atelier:        'Ex : Initiation à la pâtisserie — places limitées',
+  atelier:        'Ex : initiation à la pâtisserie — 50€ / 1h',
+  fidelite:       'Ex : vos points doublés',
 }
 
 const JOURS = [
@@ -109,21 +111,30 @@ function NouvelleOffrePageInner() {
   const defaultDebut = nextQuarterHour()
   const defaultFin   = addMinutes(defaultDebut, 180)  // +3h
 
-  const [typeRemise,      setTypeRemise]      = useState('pourcentage')
-  const [valeur,          setValeur]          = useState('')
-  const [titre,           setTitre]           = useState('')
-  const [nbBons,          setNbBons]          = useState(15)
-  const [illimite,        setIllimite]        = useState(false)
+  const [typeRemise,      setTypeRemise]      = useState(() => searchParams.get('prefill_type') || 'cadeau')
+  const [valeur,          setValeur]          = useState(() => searchParams.get('prefill_valeur') || '')
+  const [titre,           setTitre]           = useState(() => searchParams.get('prefill_titre') || '')
+  const [nbBons,          setNbBons]          = useState(() => {
+    const n = searchParams.get('prefill_nb_bons')
+    return n ? Math.max(1, parseInt(n) || 15) : 15
+  })
+  const [illimite,        setIllimite]        = useState(() => searchParams.get('prefill_illimite') === 'true')
   const [dateOffre,       setDateOffre]       = useState(today)
   const [heureDebut,      setHeureDebut]      = useState(defaultDebut)
   const [heureFin,        setHeureFin]        = useState(defaultFin)
-  const [estRecurrente,   setEstRecurrente]   = useState(false)
-  const [joursRecurrence, setJoursRecurrence] = useState([])
+  const [estRecurrente,   setEstRecurrente]   = useState(() => searchParams.get('prefill_recurrente') === 'true')
+  const [joursRecurrence, setJoursRecurrence] = useState(() => {
+    const j = searchParams.get('prefill_jours')
+    return j ? j.split(',').filter(Boolean) : []
+  })
 
   /* ── État soumission ── */
-  const [submitting, setSubmitting] = useState(false)
-  const [errors,     setErrors]     = useState({})
-  const [success,    setSuccess]    = useState(false)
+  const [submitting,      setSubmitting]      = useState(false)
+  const [errors,          setErrors]          = useState({})
+  const [success,         setSuccess]         = useState(false)
+  const [createdOffreId,  setCreatedOffreId]  = useState(null)
+  const [shareMenuOpen,   setShareMenuOpen]   = useState(false)
+  const [shareCopied,     setShareCopied]     = useState(false)
 
   /* ── Auth guard ── */
   useEffect(() => {
@@ -137,7 +148,7 @@ function NouvelleOffrePageInner() {
       const commerceId = searchParams.get('commerce')
       const { data: list } = await supabase
         .from('commerces')
-        .select('id, nom, categorie, ville, adresse, palier, note_google')
+        .select('id, nom, categorie, ville, adresse, palier, note_google, tutoriel_complete')
         .eq('owner_id', user.id)
 
       const all  = list || []
@@ -160,8 +171,8 @@ function NouvelleOffrePageInner() {
       setQuotaInfo({ used: used ?? 0, limite, palier })
       if ((used ?? 0) >= limite) setQuotaAtteint(true)
 
-      // Modal tutoriel si aucune offre publiée jusqu'ici
-      if ((total ?? 0) === 0 && !isTutoriel) setShowFirstModal(true)
+      // Modal tutoriel si aucune offre publiée jusqu'ici et tutoriel pas encore complété
+      if ((total ?? 0) === 0 && !isTutoriel && !data.tutoriel_complete) { setShowFirstModal(true); triggerConfetti() }
 
       setFetching(false)
     })()
@@ -172,6 +183,7 @@ function NouvelleOffrePageInner() {
     if (!isTutoriel) return
     const saved = readTutState()
     if (saved?.active && saved.step === 4) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTutSubstep(saved.substep ?? 0)
     } else {
       writeTutState({ active: true, step: 4, substep: 0 })
@@ -183,6 +195,7 @@ function NouvelleOffrePageInner() {
   useEffect(() => {
     if (!forceTutoriel) return
     writeTutState({ active: true, step: 4, substep: 0 })
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTutSubstep(0)
   }, [forceTutoriel])
 
@@ -313,6 +326,7 @@ function NouvelleOffrePageInner() {
         setSubmitting(false)
         return
       }
+      setCreatedOffreId(result.id || result.offre?.id || null)
     } catch {
       setErrors({ submit: 'Erreur réseau, réessaie.' })
       setSubmitting(false)
@@ -320,9 +334,7 @@ function NouvelleOffrePageInner() {
     }
 
     setSuccess(true)
-    if (!tutActive) {
-      setTimeout(() => router.replace('/commercant/dashboard'), 2200)
-    }
+    triggerConfetti()
   }
 
   /* ── Loading ── */
@@ -338,12 +350,109 @@ function NouvelleOffrePageInner() {
 
   /* ── Succès (mode normal) ── */
   if (success && !tutActive) {
+    const shareUrl = createdOffreId ? `https://bonmoment.app/offre/${createdOffreId}` : 'https://bonmoment.app'
+    const shareTitle = `${commerce?.nom || 'Bonmoment'} — ${getFullOffreTitle({ type_remise: typeRemise, valeur: Number(valeur) || null, titre: titre.trim() }) || 'Nouvelle offre'}`
+    const shareText  = `Profite de mon offre sur Bonmoment 🎁`
+
+    async function handleShare() {
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: shareTitle, text: shareText, url: shareUrl })
+        } catch {
+          // user dismissed — no action needed
+        }
+      } else {
+        setShareMenuOpen(m => !m)
+      }
+    }
+
+    async function handleCopyLink() {
+      try { await navigator.clipboard.writeText(shareUrl) } catch { }
+      setShareCopied(true)
+      setTimeout(() => { setShareCopied(false); setShareMenuOpen(false) }, 2000)
+    }
+
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white text-center px-6 gap-4">
-        <div className="text-6xl">🎉</div>
-        <h1 className="text-2xl font-black text-[#0A0A0A]">Ton offre est en ligne !</h1>
-        <p className="text-sm text-[#3D3D3D]/60">Redirection vers Mon commerce...</p>
-        <span className="w-5 h-5 border-2 border-[#FF6B00] border-t-transparent rounded-full animate-spin mt-2" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white text-center px-6 gap-6 relative">
+        <div className="flex flex-col items-center gap-2">
+          <h1 className="text-3xl font-black text-[#0A0A0A]">Ton offre est en ligne !</h1>
+          <p className="text-sm text-[#3D3D3D]/60 max-w-xs">
+            Partage-la autour de toi pour attirer tes premiers clients dès aujourd&apos;hui.
+          </p>
+        </div>
+
+        <div className="relative flex flex-col items-center gap-3 w-full max-w-xs">
+          <button
+            onClick={handleShare}
+            className="w-full py-4 rounded-2xl bg-[#FF6B00] text-white font-black text-base shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-3"
+          >
+            {/* Logos réseaux chevauchés */}
+            <div className="flex items-center shrink-0" style={{ marginRight: '-4px' }}>
+              {/* WhatsApp */}
+              <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-sm" style={{ zIndex: 3 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#25D366">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+              </div>
+              {/* Facebook */}
+              <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-sm -ml-1.5" style={{ zIndex: 2 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#1877F2">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+              </div>
+              {/* Instagram */}
+              <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-sm -ml-1.5" style={{ zIndex: 1 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24">
+                  <defs>
+                    <linearGradient id="igGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                      <stop offset="0%"   stopColor="#FDB347"/>
+                      <stop offset="30%"  stopColor="#F7627B"/>
+                      <stop offset="65%"  stopColor="#C01F8A"/>
+                      <stop offset="100%" stopColor="#7232BD"/>
+                    </linearGradient>
+                  </defs>
+                  <path fill="url(#igGrad)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+              </div>
+            </div>
+            Partager mon offre
+          </button>
+
+          {shareMenuOpen && (
+            <div className="absolute top-full mt-2 w-full bg-white border border-[#F0F0F0] rounded-2xl shadow-xl overflow-hidden z-10">
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`}
+                target="_blank" rel="noopener noreferrer"
+                onClick={() => setShareMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-[#0A0A0A] hover:bg-[#F5F5F5]"
+              >
+                <span className="text-lg">💬</span> WhatsApp
+              </a>
+              <a
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
+                target="_blank" rel="noopener noreferrer"
+                onClick={() => setShareMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-[#0A0A0A] hover:bg-[#F5F5F5] border-t border-[#F0F0F0]"
+              >
+                <span className="text-lg">📘</span> Facebook
+              </a>
+              <button
+                onClick={handleCopyLink}
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-[#0A0A0A] hover:bg-[#F5F5F5] border-t border-[#F0F0F0]"
+              >
+                <span className="text-lg">{shareCopied ? '✅' : '🔗'}</span>
+                {shareCopied ? 'Lien copié !' : 'Copier le lien'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={() => router.push('/')}
+          className="text-xs text-[#3D3D3D]/40 underline underline-offset-2 hover:text-[#3D3D3D]/60"
+        >
+          Je ne souhaite pas partager
+        </button>
       </div>
     )
   }
@@ -354,29 +463,27 @@ function NouvelleOffrePageInner() {
     <main className="min-h-screen bg-[#F5F5F5] flex flex-col">
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <header className="bg-white border-b border-[#EBEBEB] px-5 py-3 flex items-center gap-3 sticky top-0 z-20">
-        <Link
-          href="/commercant/dashboard"
-          className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-[#F5F5F5] text-[#3D3D3D]/60 hover:text-[#FF6B00] transition-colors text-lg"
-          aria-label="Retour"
-        >
-          ←
+      <header className="bg-white border-b border-[#EBEBEB] px-5 py-3 flex items-center justify-between sticky top-0 z-20">
+        <Link href="/">
+          <Image
+            src="/LOGO.png"
+            alt="BONMOMENT"
+            width={600}
+            height={300}
+            unoptimized
+            priority
+            className="w-[100px] h-auto"
+          />
         </Link>
-        <Image
-          src="/LOGO.png"
-          alt="BONMOMENT"
-          width={600}
-          height={300}
-          unoptimized
-          priority
-          className="w-[90px] h-auto"
-        />
-        <div className="ml-auto flex items-center gap-2 text-[11px]">
-          <span className={`font-bold px-2.5 py-1 rounded-full ${
+        <div className="flex items-center gap-3">
+          <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${
             quotaAtteint ? 'bg-red-100 text-red-600' : 'bg-[#FFF0E0] text-[#FF6B00]'
           }`}>
             {quotaInfo.used}/{quotaInfo.limite} offres
           </span>
+          <Link href="/commercant/dashboard" className="bg-[#FF6B00] hover:bg-[#CC5500] text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors min-h-[44px] flex items-center whitespace-nowrap">
+            Mon commerce
+          </Link>
         </div>
       </header>
 
@@ -398,9 +505,9 @@ function NouvelleOffrePageInner() {
         )}
 
         {/* ══ 1. TYPE D'OFFRE ════════════════════════════════════════════ */}
-        <section className="bg-white rounded-2xl px-5 py-4 shadow-sm">
+        <section id="tut-type" className="bg-white rounded-2xl px-5 py-4 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-widest text-[#3D3D3D]/50 mb-3">
-            Type d'offre
+            Type d&apos;offre
           </p>
           <div className="grid grid-cols-3 gap-2">
             {TYPES.map(t => (
@@ -450,9 +557,9 @@ function NouvelleOffrePageInner() {
         )}
 
         {/* ══ 3. DESCRIPTION ═════════════════════════════════════════════ */}
-        <section className="bg-white rounded-2xl px-5 py-4 shadow-sm">
+        <section id="tut-description" className="bg-white rounded-2xl px-5 py-4 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-widest text-[#3D3D3D]/50 mb-3">
-            Description de l'offre
+            Description de l&apos;offre
           </p>
           <div className="relative">
             <textarea
@@ -474,7 +581,7 @@ function NouvelleOffrePageInner() {
         </section>
 
         {/* ══ 4. NOMBRE DE BONS ══════════════════════════════════════════ */}
-        <section className="bg-white rounded-2xl px-5 py-4 shadow-sm">
+        <section id="tut-nb-bons" className="bg-white rounded-2xl px-5 py-4 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-widest text-[#3D3D3D]/50 mb-3">
             Nombre de bons
           </p>
@@ -526,7 +633,7 @@ function NouvelleOffrePageInner() {
         </section>
 
         {/* ══ 5. PLAGE HORAIRE ═══════════════════════════════════════════ */}
-        <section className="bg-white rounded-2xl px-5 py-4 shadow-sm">
+        <section id="tut-horaire" className="bg-white rounded-2xl px-5 py-4 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-widest text-[#3D3D3D]/50 mb-3">
             Plage horaire
           </p>
@@ -597,8 +704,8 @@ function NouvelleOffrePageInner() {
                 estRecurrente ? 'bg-[#FF6B00]' : 'bg-[#E0E0E0]'
               }`}
             >
-              <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${
-                estRecurrente ? 'translate-x-7' : 'translate-x-1'
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+                estRecurrente ? 'translate-x-6' : ''
               }`} />
             </button>
           </div>
@@ -611,10 +718,10 @@ function NouvelleOffrePageInner() {
                   type="button"
                   onClick={() => toggleJour(j.id)}
                   title={j.id}
-                  className={`flex-1 h-10 rounded-xl border-2 font-black text-xs transition-all ${
+                  className={`flex-1 min-h-[44px] rounded-xl font-black text-xs transition-all ${
                     joursRecurrence.includes(j.id)
-                      ? 'bg-[#FF6B00] border-[#FF6B00] text-white'
-                      : 'border-[#E0E0E0] text-[#3D3D3D] hover:border-[#FF6B00] hover:text-[#FF6B00]'
+                      ? 'bg-[#FF6B00] text-white'
+                      : 'bg-[#F5F5F5] text-[#3D3D3D] hover:bg-[#FFF0E0] hover:text-[#FF6B00]'
                   }`}
                 >
                   {j.label}
@@ -628,7 +735,7 @@ function NouvelleOffrePageInner() {
         </section>
 
         {/* ══ 7. APERÇU TEMPS RÉEL ═══════════════════════════════════════ */}
-        <section>
+        <section id="tut-apercu">
           <p className="text-[11px] font-bold uppercase tracking-widest text-[#3D3D3D]/50 mb-3 px-1">
             Aperçu client en temps réel
           </p>
@@ -646,6 +753,8 @@ function NouvelleOffrePageInner() {
 
         {/* ══ 8. BOUTON PUBLICATION ══════════════════════════════════════ */}
         <button
+         
+          id="tut-publier"
           type="submit"
           disabled={submitting || quotaAtteint || !!erreurHoraire}
           className="w-full bg-[#FF6B00] hover:bg-[#CC5500] disabled:bg-[#D0D0D0] disabled:cursor-not-allowed text-white font-black text-base py-4 rounded-2xl transition-colors duration-200 shadow-lg shadow-orange-200/60 min-h-[56px] flex items-center justify-center gap-2"
@@ -666,9 +775,8 @@ function NouvelleOffrePageInner() {
           <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" />
           <div className="relative w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl px-6 py-8 flex flex-col gap-5">
             <div className="text-center">
-              <p className="text-4xl mb-3">🎉</p>
               <h2 className="text-xl font-black text-[#0A0A0A] leading-tight">
-                C'est ta première offre !
+                C&apos;est ta première offre !
               </h2>
               <p className="text-sm text-[#3D3D3D]/60 mt-2">
                 Souhaites-tu être accompagné étape par étape ?
@@ -681,7 +789,12 @@ function NouvelleOffrePageInner() {
               Oui, guide-moi !
             </button>
             <button
-              onClick={() => setShowFirstModal(false)}
+              onClick={async () => {
+                setShowFirstModal(false)
+                if (commerce?.id) {
+                  await supabase.from('commerces').update({ tutoriel_complete: true }).eq('id', commerce.id)
+                }
+              }}
               className="w-full text-[#3D3D3D]/60 font-semibold text-sm py-2 hover:text-[#0A0A0A] transition-colors"
             >
               Non merci, je remplis seul

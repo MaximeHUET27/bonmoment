@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/app/context/AuthContext'
 import AuthBottomSheet from './AuthBottomSheet'
 import NotifBottomSheet from './NotifBottomSheet'
+import { useToast } from './Toast'
+import { triggerConfetti } from '@/lib/confetti'
 
 /**
  * Bouton d'abonnement à une ville avec persistance Supabase.
@@ -14,11 +16,11 @@ import NotifBottomSheet from './NotifBottomSheet'
  */
 export default function VilleAbonnement({ villeNom, className = '' }) {
   const { user, supabase } = useAuth()
+  const { showToast } = useToast()
   const [abonne,    setAbonne]    = useState(false)
   const [showAuth,  setShowAuth]  = useState(false)
   const [showNotif, setShowNotif] = useState(false)
   const [loading,   setLoading]   = useState(false)
-  const [toast,     setToast]     = useState(null)
 
   /* Lire le statut d'abonnement depuis Supabase au montage */
   useEffect(() => {
@@ -35,11 +37,6 @@ export default function VilleAbonnement({ villeNom, className = '' }) {
       })
   }, [user, villeNom, supabase])
 
-  function afficherToast(msg) {
-    setToast(msg)
-    setTimeout(() => setToast(null), 4000)
-  }
-
   async function subscribe() {
     setLoading(true)
 
@@ -50,16 +47,17 @@ export default function VilleAbonnement({ villeNom, className = '' }) {
       .single()
 
     const existant = current?.villes_abonnees || []
-    if (!existant.includes(villeNom)) {
-      await supabase
-        .from('users')
-        .update({ villes_abonnees: [...existant, villeNom] })
-        .eq('id', user.id)
-    }
+    const next = existant.includes(villeNom) ? existant : [...existant, villeNom]
+
+    await supabase
+      .from('users')
+      .update({ villes_abonnees: next })
+      .eq('id', user.id)
 
     setAbonne(true)
     setLoading(false)
-    afficherToast(`🎉 Bienvenue à ${villeNom} ! Tu recevras les bons plans chaque soir à 21h.`)
+    triggerConfetti()
+    showToast(`🎉 Bienvenue à ${villeNom} ! Tu recevras les bons plans chaque soir à 21h.`)
     setShowNotif(true)
   }
 
@@ -79,7 +77,7 @@ export default function VilleAbonnement({ villeNom, className = '' }) {
 
     setAbonne(false)
     setLoading(false)
-    afficherToast(`Tu t'es désabonné de ${villeNom}.`)
+    showToast(`Tu t'es désabonné de ${villeNom}.`)
   }
 
   async function handleClick() {
@@ -109,6 +107,7 @@ export default function VilleAbonnement({ villeNom, className = '' }) {
   return (
     <>
       <button
+       
         onClick={handleClick}
         disabled={loading}
         className={`text-xs font-bold px-3 py-1.5 rounded-full transition-colors min-h-[36px] flex items-center gap-1.5 ${
@@ -121,13 +120,6 @@ export default function VilleAbonnement({ villeNom, className = '' }) {
           <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
         ) : abonne ? '✅ Abonné' : "📌 S'abonner à cette ville"}
       </button>
-
-      {/* Toast */}
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[90] bg-[#0A0A0A] text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-2xl max-w-[90vw] text-center animate-fade-in-up">
-          {toast}
-        </div>
-      )}
 
       {/* Auth bottom sheet si pas connecté */}
       <AuthBottomSheet

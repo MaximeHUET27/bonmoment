@@ -29,7 +29,7 @@ export default function Confidentialite() {
           <SectionTitle num="1">Identité du Responsable de traitement</SectionTitle>
           <table className="w-full text-sm border-collapse mt-3">
             <tbody>
-              <Tr label="Responsable de traitement" value="Maxime HUET" />
+              <Tr label="Responsable de traitement" value="Manon LISSE" />
               <Tr label="Adresse" value="7 rue du Chesne, 27190 Nogent-le-Sec" />
               <Tr label="Email DPO / Contact RGPD" value={<a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a>} />
               <Tr label="Site web" value={<a href="https://bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">bonmoment.app</a>} last />
@@ -101,7 +101,7 @@ export default function Confidentialite() {
           <div className="mt-4 bg-[#FFF0E0] border border-[#FF6B00]/20 rounded-2xl px-5 py-3">
             <p className="font-bold text-[#0A0A0A]">Données bancaires</p>
             <p className="mt-1">
-              BONMOMENT ne stocke JAMAIS les données de carte bancaire. Ces données sont traitées exclusivement par Stripe, certifié PCI-DSS Level 1. Stripe agit en tant que sous-traitant au sens de l'article 28 du RGPD.
+              BONMOMENT ne stocke JAMAIS les données de carte bancaire. Ces données sont traitées exclusivement par Stripe, certifié PCI-DSS Level 1. Stripe agit en tant que sous-traitant au sens de l&apos;article 28 du RGPD.
             </p>
           </div>
         </div>
@@ -197,7 +197,7 @@ export default function Confidentialite() {
             </table>
           </div>
           <p className="mt-3">
-            Tous les sous-traitants ont été sélectionnés pour leurs garanties en matière de protection des données. Des contrats de traitement de données (DPA) sont en place avec chacun d'eux conformément à l'article 28 du RGPD.
+            Tous les sous-traitants ont été sélectionnés pour leurs garanties en matière de protection des données. Des contrats de traitement de données (DPA) sont en place avec chacun d&apos;eux conformément à l&apos;article 28 du RGPD.
           </p>
 
           <SubTitle className="mt-5">5.2 Transferts hors UE</SubTitle>
@@ -211,17 +211,17 @@ export default function Confidentialite() {
           <SectionTitle num="6">Droits des personnes concernées</SectionTitle>
           <p className="mt-3">Conformément au RGPD (articles 15 à 22), vous disposez des droits suivants :</p>
           <ul className="list-disc pl-5 mt-2 space-y-1">
-            <li><strong className="text-[#0A0A0A]">Droit d'accès</strong> : obtenir une copie de vos données personnelles</li>
+            <li><strong className="text-[#0A0A0A]">Droit d&apos;accès</strong> : obtenir une copie de vos données personnelles</li>
             <li><strong className="text-[#0A0A0A]">Droit de rectification</strong> : corriger des données inexactes</li>
-            <li><strong className="text-[#0A0A0A]">Droit à l'effacement (droit à l'oubli)</strong> : demander la suppression de vos données</li>
+            <li><strong className="text-[#0A0A0A]">Droit à l&apos;effacement (droit à l&apos;oubli)</strong> : demander la suppression de vos données</li>
             <li><strong className="text-[#0A0A0A]">Droit à la portabilité</strong> : recevoir vos données dans un format structuré</li>
-            <li><strong className="text-[#0A0A0A]">Droit d'opposition</strong> : vous opposer à certains traitements</li>
-            <li><strong className="text-[#0A0A0A]">Droit à la limitation</strong> : demander la suspension temporaire d'un traitement</li>
+            <li><strong className="text-[#0A0A0A]">Droit d&apos;opposition</strong> : vous opposer à certains traitements</li>
+            <li><strong className="text-[#0A0A0A]">Droit à la limitation</strong> : demander la suspension temporaire d&apos;un traitement</li>
             <li><strong className="text-[#0A0A0A]">Droit de retrait du consentement</strong> : à tout moment, sans préjudice des traitements antérieurs</li>
           </ul>
           <p className="mt-4">Pour exercer ces droits, vous pouvez :</p>
           <ul className="list-disc pl-5 mt-2 space-y-1">
-            <li>Utiliser le bouton « Supprimer mon compte » directement dans l'application</li>
+            <li>Utiliser le bouton « Supprimer mon compte » directement dans l&apos;application</li>
             <li>Envoyer un email à : <a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a> — Réponse sous 30 jours ouvrés</li>
             <li>Adresser une réclamation à la CNIL : <a href="https://cnil.fr" target="_blank" rel="noopener noreferrer" className="text-[#FF6B00] hover:text-[#CC5500]">cnil.fr</a> / 3 Place de Fontenoy, 75007 Paris</li>
           </ul>
@@ -235,7 +235,7 @@ export default function Confidentialite() {
             <li><strong className="text-[#0A0A0A]">Chiffrement en transit</strong> : HTTPS/TLS obligatoire sur tout le domaine .app (HSTS Preload Google)</li>
             <li><strong className="text-[#0A0A0A]">Chiffrement au repos</strong> : assuré par Supabase (PostgreSQL avec chiffrement AES-256)</li>
             <li><strong className="text-[#0A0A0A]">Authentification</strong> : OAuth uniquement — aucun mot de passe stocké par BONMOMENT</li>
-            <li><strong className="text-[#0A0A0A]">Contrôle d'accès</strong> : Row Level Security (RLS) activé sur toutes les tables de la base de données</li>
+            <li><strong className="text-[#0A0A0A]">Contrôle d&apos;accès</strong> : Row Level Security (RLS) activé sur toutes les tables de la base de données</li>
             <li><strong className="text-[#0A0A0A]">Sauvegardes</strong> : quotidiennes automatiques assurées par Supabase</li>
             <li>Serveurs hébergés en Union Européenne (région EU West)</li>
           </ul>
@@ -256,17 +256,17 @@ export default function Confidentialite() {
               <tbody>
                 <tr className="border-b border-[#F5F5F5]">
                   <td className="px-4 py-2.5 font-semibold text-[#0A0A0A]">Cookie de session</td>
-                  <td className="px-4 py-2.5">Maintien de la connexion de l'utilisateur — Session (supprimé à la fermeture)</td>
+                  <td className="px-4 py-2.5">Maintien de la connexion de l&apos;utilisateur — Session (supprimé à la fermeture)</td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-2.5 font-semibold text-[#0A0A0A]">Token d'authentification</td>
+                  <td className="px-4 py-2.5 font-semibold text-[#0A0A0A]">Token d&apos;authentification</td>
                   <td className="px-4 py-2.5">Identification sécurisée — 30 jours</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p className="mt-3">
-            Aucun cookie publicitaire, de traçage ou analytique tiers n'est utilisé. Ces cookies techniques ne nécessitent pas de consentement préalable (Article 82 de la loi Informatique et Libertés modifiée).
+            Aucun cookie publicitaire, de traçage ou analytique tiers n&apos;est utilisé. Ces cookies techniques ne nécessitent pas de consentement préalable (Article 82 de la loi Informatique et Libertés modifiée).
           </p>
         </div>
 
@@ -286,10 +286,10 @@ export default function Confidentialite() {
         {/* 10. Violation */}
         <div>
           <SectionTitle num="10">Violation de données</SectionTitle>
-          <p className="mt-3">En cas de violation de données à caractère personnel susceptible d'engendrer un risque pour vos droits et libertés, BONMOMENT s'engage à :</p>
+          <p className="mt-3">En cas de violation de données à caractère personnel susceptible d&apos;engendrer un risque pour vos droits et libertés, BONMOMENT s&apos;engage à :</p>
           <ul className="list-disc pl-5 mt-2 space-y-1">
             <li>Notifier la CNIL dans les 72 heures suivant la prise de connaissance de la violation (Article 33 RGPD)</li>
-            <li>Informer les personnes concernées dans les meilleurs délais si la violation est susceptible d'engendrer un risque élevé (Article 34 RGPD)</li>
+            <li>Informer les personnes concernées dans les meilleurs délais si la violation est susceptible d&apos;engendrer un risque élevé (Article 34 RGPD)</li>
           </ul>
         </div>
 
@@ -297,7 +297,7 @@ export default function Confidentialite() {
         <div>
           <SectionTitle num="11">Mise à jour de la politique</SectionTitle>
           <p className="mt-3">
-            La présente politique de confidentialité a été mise à jour le Mars 2026. Toute modification substantielle vous sera notifiée par email et/ou via un bandeau d'information sur la plateforme.
+            La présente politique de confidentialité a été mise à jour le Mars 2026. Toute modification substantielle vous sera notifiée par email et/ou via un bandeau d&apos;information sur la plateforme.
           </p>
         </div>
 
@@ -311,7 +311,7 @@ export default function Confidentialite() {
         </div>
 
         <p className="text-xs text-[#3D3D3D]/40 text-center pt-4 border-t border-[#F5F5F5]">
-          Document établi le Mars 2026 — bonmoment.app — Maxime HUET — Conforme RGPD (UE 2016/679)
+          Document établi le Mars 2026 — bonmoment.app — Manon LISSE — Conforme RGPD (UE 2016/679)
         </p>
 
       </section>

@@ -7,18 +7,27 @@
 
 import { useEffect, useRef } from 'react'
 
+async function safeStop(scanner) {
+  try {
+    await scanner.stop()
+  } catch {
+    // scanner n'était pas en cours — on ignore
+  }
+}
+
 export default function QrScanner({ onDetect, active }) {
-  const scannerRef  = useRef(null)
-  const detectedRef = useRef(false)
+  const scannerRef    = useRef(null)
+  const detectedRef   = useRef(false)
+  const isStartedRef  = useRef(false)  // true uniquement après start() résolu
 
   useEffect(() => {
     if (!active) return
 
-    let scanner = null
-    detectedRef.current = false
+    detectedRef.current  = false
+    isStartedRef.current = false
 
     import('html5-qrcode').then(({ Html5Qrcode }) => {
-      scanner = new Html5Qrcode('qr-reader-div')
+      const scanner = new Html5Qrcode('qr-reader-div')
       scannerRef.current = scanner
 
       return scanner.start(
@@ -31,21 +40,25 @@ export default function QrScanner({ onDetect, active }) {
         (text) => {
           if (detectedRef.current) return
           detectedRef.current = true
-          scanner.stop().catch(() => {}).finally(() => onDetect(text))
+          safeStop(scanner).finally(() => onDetect(text))
         },
         () => {} // erreur par frame — normal, on ignore
-      )
+      ).then(() => {
+        isStartedRef.current = true
+      })
     }).catch(() => {})
 
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop()
-          .catch(() => {})
-          .finally(() => {
-            scannerRef.current?.clear()
-            scannerRef.current = null
-          })
+      const s = scannerRef.current
+      if (!s || !isStartedRef.current) {
+        scannerRef.current = null
+        return
       }
+      isStartedRef.current = false
+      safeStop(s).finally(() => {
+        s.clear?.()
+        scannerRef.current = null
+      })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active])

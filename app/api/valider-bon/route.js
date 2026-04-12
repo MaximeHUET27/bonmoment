@@ -28,13 +28,15 @@ export async function POST(request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Non connecté' }, { status: 401 })
 
-  /* ── Commerce du commerçant connecté ──────────────────────────────────── */
-  const { data: commerce } = await admin
+  /* ── Commerce(s) du commerçant connecté ───────────────────────────────── */
+  // On prend tous les commerces (pas maybeSingle qui échoue si plusieurs)
+  const { data: commerces } = await admin
     .from('commerces')
     .select('id')
     .eq('owner_id', user.id)
-    .maybeSingle()
-  if (!commerce) return NextResponse.json({ error: 'Commerce introuvable' }, { status: 403 })
+  if (!commerces || commerces.length === 0)
+    return NextResponse.json({ error: 'Commerce introuvable' }, { status: 403 })
+  const commerceIds = commerces.map(c => c.id)
 
   /* ── Paramètres ───────────────────────────────────────────────────────── */
   const body = await request.json().catch(() => ({}))
@@ -43,11 +45,13 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Paramètre manquant' }, { status: 400 })
 
   /* ── Chercher la réservation ──────────────────────────────────────────── */
+  // On évite !inner qui peut échouer selon la version PostgREST — on valide
+  // manuellement la présence de l'offre juste après.
   let q = admin
     .from('reservations')
     .select(`
       id, statut, utilise_at, code_validation, user_id,
-      offres!inner(id, commerce_id, statut, date_debut, date_fin, type_remise, titre, valeur)
+      offres(id, commerce_id, statut, date_debut, date_fin, type_remise, titre, valeur)
     `)
 
   if (reservation_id) q = q.eq('id', reservation_id)
@@ -55,16 +59,20 @@ export async function POST(request) {
 
   const { data: res, error: fetchErr } = await q.maybeSingle()
 
-  if (fetchErr || !res)
+  if (fetchErr) {
+    console.error('[valider-bon] fetchErr:', fetchErr.message, fetchErr.details)
     return NextResponse.json({ error: 'Code invalide' }, { status: 404 })
+  }
+  if (!res) return NextResponse.json({ error: 'Code invalide' }, { status: 404 })
 
   const offre = res.offres
+  if (!offre) return NextResponse.json({ error: 'Code invalide' }, { status: 404 })
 
   /* ── Vérifications dans l'ordre ───────────────────────────────────────── */
 
-  // 1. Appartient au commerce du commerçant ?
-  if (offre.commerce_id !== commerce.id)
-    return NextResponse.json({ error: "Ce bon n'est pas pour ton commerce" }, { status: 403 })
+  // 1. Appartient à l'un des commerces du commerçant ?
+  if (!commerceIds.includes(offre.commerce_id))
+    return NextResponse.json({ error: "Ce bon appartient à un autre commerce" }, { status: 403 })
 
   // 2. Déjà utilisé ?
   if (res.statut === 'utilisee')

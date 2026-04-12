@@ -27,6 +27,17 @@ function FacebookIcon() {
   )
 }
 
+function MicrosoftIcon() {
+  return (
+    <svg className="w-5 h-5 shrink-0" viewBox="0 0 21 21" aria-hidden>
+      <rect x="1"  y="1"  width="9" height="9" fill="#F25022"/>
+      <rect x="11" y="1"  width="9" height="9" fill="#7FBA00"/>
+      <rect x="1"  y="11" width="9" height="9" fill="#00A4EF"/>
+      <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
+    </svg>
+  )
+}
+
 /* ── Spinner ────────────────────────────────────────────────────────────── */
 
 function Spinner() {
@@ -36,7 +47,6 @@ function Spinner() {
 }
 
 /* ── Définition des providers actifs ────────────────────────────────────── */
-// Pour ajouter Microsoft plus tard : décommenter l'entrée 'azure' ci-dessous.
 
 const PROVIDERS = [
   {
@@ -51,12 +61,12 @@ const PROVIDERS = [
     icon: <FacebookIcon />,
     className: 'bg-[#1877F2] hover:bg-[#166FE5] border-2 border-transparent text-white',
   },
-  // {
-  //   id: 'azure',
-  //   label: 'Continuer avec Microsoft',
-  //   icon: <MicrosoftIcon />,
-  //   className: 'bg-[#2F2F2F] hover:bg-[#1a1a1a] border-2 border-transparent text-white',
-  // },
+  {
+    id: 'azure',
+    label: 'Continuer avec Microsoft',
+    icon: <MicrosoftIcon />,
+    className: 'bg-[#2F2F2F] hover:bg-[#1a1a1a] border-2 border-transparent text-white',
+  },
 ]
 
 /* ── Composant principal ────────────────────────────────────────────────── */
@@ -73,13 +83,19 @@ export default function SignInPanel({
 }) {
   const { signIn } = useAuth()
   const [loadingId, setLoadingId] = useState(null)
+  const [errorMsg, setErrorMsg]   = useState(null)
 
   async function handleSignIn(providerId) {
     setLoadingId(providerId)
-    await signIn(providerId, redirectAfter)
-    // La redirection OAuth est déclenchée — cette ligne n'est atteinte
-    // qu'en cas d'erreur réseau (le provider ne répond pas).
-    setLoadingId(null)
+    setErrorMsg(null)
+    const { error } = await signIn(providerId, redirectAfter)
+    if (error) {
+      // Provider non configuré ou erreur réseau — la redirection n'a pas eu lieu
+      console.error('[SignInPanel] signIn error:', error.message)
+      setErrorMsg('Connexion impossible. Réessaie ou utilise un autre provider.')
+      setLoadingId(null)
+    }
+    // Pas de reset loadingId en cas de succès : le redirect prend le dessus
   }
 
   return (
@@ -89,6 +105,13 @@ export default function SignInPanel({
       {context === 'reserver' && (
         <p className="text-center text-xs text-[#3D3D3D]/60 mb-1">
           Connecte-toi pour réserver ton bon gratuitement.
+        </p>
+      )}
+
+      {/* Message d'erreur OAuth */}
+      {errorMsg && (
+        <p className="text-center text-xs font-semibold text-red-500 bg-red-50 rounded-xl px-3 py-2">
+          {errorMsg}
         </p>
       )}
 

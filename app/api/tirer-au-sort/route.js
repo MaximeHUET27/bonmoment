@@ -2,6 +2,7 @@
  * POST /api/tirer-au-sort
  * Body: { offre_id: string }
  * Tire au sort un gagnant parmi les bons validés physiquement (statut = 'utilisee').
+ * Retourne : { success, gagnant: { id, prenom, nom, email }, participants: [{ id, nom }] }
  */
 
 import { createClient as createServerClient } from '@/lib/supabase/server'
@@ -25,36 +26,40 @@ export async function POST(request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Non connecté' }, { status: 401 })
 
-  /* ── Commerce ─────────────────────────────────────────────────────────── */
-  const { data: commerce } = await admin
-    .from('commerces')
-    .select('id, nom, adresse, ville')
-    .eq('owner_id', user.id)
-    .maybeSingle()
-  if (!commerce) return NextResponse.json({ error: 'Commerce introuvable' }, { status: 403 })
-
   /* ── Paramètre ────────────────────────────────────────────────────────── */
   const { offre_id } = await request.json().catch(() => ({}))
   if (!offre_id) return NextResponse.json({ error: 'offre_id manquant' }, { status: 400 })
 
-  /* ── Vérifier l'offre ─────────────────────────────────────────────────── */
+  /* ── Offre + commerce en une seule requête ────────────────────────────── */
+  // Fix : on résout le commerce via l'offre (évite le problème multi-commerces par owner_id)
   const { data: offre } = await admin
     .from('offres')
-    .select('id, commerce_id, titre, type_remise, statut, gagnant_id')
+    .select('id, commerce_id, titre, type_remise, statut, date_fin, gagnant_id, commerces(id, nom, adresse, ville, telephone, owner_id)')
     .eq('id', offre_id)
     .maybeSingle()
 
-  if (!offre || offre.commerce_id !== commerce.id)
-    return NextResponse.json({ error: 'Offre introuvable' }, { status: 403 })
+  if (!offre)
+    return NextResponse.json({ error: 'Offre introuvable' }, { status: 404 })
+
+  if (offre.commerces?.owner_id !== user.id)
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
 
   if (offre.type_remise !== 'concours')
     return NextResponse.json({ error: "Ce n'est pas un concours" }, { status: 400 })
 
-  if (offre.statut !== 'expiree')
+  const estExpiree = offre.statut === 'expiree' || new Date(offre.date_fin) < new Date()
+  if (!estExpiree)
     return NextResponse.json({ error: "L'offre n'est pas encore expirée" }, { status: 400 })
 
   if (offre.gagnant_id)
     return NextResponse.json({ error: 'Le tirage a déjà eu lieu' }, { status: 409 })
+
+  /* Mise à jour du statut en BDD si date_fin passée mais statut pas encore 'expiree' */
+  if (offre.statut !== 'expiree') {
+    await admin.from('offres').update({ statut: 'expiree' }).eq('id', offre_id)
+  }
+
+  const commerce = offre.commerces
 
   /* ── Participants (bons validés physiquement) ─────────────────────────── */
   const { data: reservations } = await admin
@@ -66,93 +71,44 @@ export async function POST(request) {
   if (!reservations?.length)
     return NextResponse.json({ error: 'Aucun participant validé physiquement' }, { status: 404 })
 
-  /* ── Tirage aléatoire ─────────────────────────────────────────────────── */
-  const gagnantRes = reservations[Math.floor(Math.random() * reservations.length)]
-
-  const { data: gagnantUser } = await admin
+  /* Récupère les noms de tous les participants en une seule requête */
+  const userIds = [...new Set(reservations.map(r => r.user_id))]
+  const { data: usersData } = await admin
     .from('users')
     .select('id, nom, email')
-    .eq('id', gagnantRes.user_id)
-    .maybeSingle()
+    .in('id', userIds)
+
+  const usersMap = Object.fromEntries((usersData || []).map(u => [u.id, u]))
+
+  const participants = reservations.map(r => ({
+    id:  r.user_id,
+    nom: usersMap[r.user_id]?.nom ?? 'Participant',
+  }))
+
+  /* ── Tirage aléatoire (CSPRNG) ───────────────────────────────────────── */
+  const randomIndex = new Uint32Array(1)
+  globalThis.crypto.getRandomValues(randomIndex)
+  const gagnantRes  = reservations[randomIndex[0] % reservations.length]
+  const gagnantUser = usersMap[gagnantRes.user_id]
 
   /* ── Stocker le gagnant ───────────────────────────────────────────────── */
-  await admin
+  const { error: updateErr } = await admin
     .from('offres')
-    .update({ gagnant_id: gagnantUser.id })
+    .update({ gagnant_id: gagnantUser?.id ?? gagnantRes.user_id })
     .eq('id', offre_id)
 
-  /* ── Email au gagnant via Brevo ───────────────────────────────────────── */
-  if (gagnantUser?.email) {
-    const prenom   = gagnantUser.nom?.split(' ')[0] ?? 'toi'
-    const adresse  = [commerce.adresse, commerce.ville].filter(Boolean).join(', ')
-
-    await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-key': process.env.BREVO_API_KEY,
-      },
-      body: JSON.stringify({
-        sender:      { name: 'BONMOMENT', email: 'bonmomentapp@gmail.com' },
-        to:          [{ email: gagnantUser.email }],
-        subject:     `🎉 Tu as gagné "${offre.titre}" chez ${commerce.nom} !`,
-        htmlContent: buildEmailGagnant({ prenom, offre, commerce, adresse }),
-      }),
-    })
-  }
+  if (updateErr)
+    return NextResponse.json({ error: 'Erreur lors de l\'enregistrement du gagnant' }, { status: 500 })
 
   return NextResponse.json({
-    success:           true,
+    success:            true,
     total_participants: reservations.length,
+    participants,
     gagnant: {
-      id:     gagnantUser.id,
-      prenom: gagnantUser.nom?.split(' ')[0] ?? 'Gagnant',
-      nom:    gagnantUser.nom,
-      email:  gagnantUser.email,
+      id:     gagnantUser?.id     ?? gagnantRes.user_id,
+      prenom: gagnantUser?.nom?.split(' ')[0] ?? 'Gagnant',
+      nom:    gagnantUser?.nom    ?? 'Gagnant',
+      email:  gagnantUser?.email  ?? null,
     },
   })
-}
-
-/* ── Template email ────────────────────────────────────────────────────── */
-
-function buildEmailGagnant({ prenom, offre, commerce, adresse }) {
-  return `<!DOCTYPE html>
-<html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#F5F5F5;font-family:Arial,sans-serif;">
-  <div style="max-width:480px;margin:0 auto;padding:24px 16px;">
-    <div style="background:linear-gradient(135deg,#FF6B00,#FFD700);border-radius:20px 20px 0 0;padding:40px 32px;text-align:center;">
-      <p style="margin:0;color:rgba(255,255,255,0.9);font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;">BONMOMENT</p>
-      <div style="font-size:64px;margin:16px 0 8px;">🎉</div>
-      <h1 style="margin:0;color:white;font-size:28px;font-weight:900;line-height:1.2;">
-        Félicitations ${prenom} !
-      </h1>
-      <p style="margin:10px 0 0;color:rgba(255,255,255,0.9);font-size:15px;">Tu as remporté le concours !</p>
-    </div>
-    <div style="background:white;padding:32px;border-radius:0 0 20px 20px;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
-      <p style="margin:0 0 6px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#9CA3AF;">Tu as gagné</p>
-      <p style="margin:0 0 24px;font-size:22px;font-weight:900;color:#FF6B00;">${offre.titre}</p>
-
-      <div style="background:#FFF0E0;border-radius:12px;padding:16px 20px;margin-bottom:24px;">
-        <p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#0A0A0A;">${commerce.nom}</p>
-        ${adresse ? `<p style="margin:0;font-size:13px;color:#3D3D3D;">📍 ${adresse}</p>` : ''}
-      </div>
-
-      <p style="font-size:14px;color:#3D3D3D;line-height:1.6;margin:0 0 24px;">
-        Présente-toi chez <strong>${commerce.nom}</strong> pour récupérer ton lot.
-        Montre cet email ou ton bon BONMOMENT à l'accueil.
-      </p>
-
-      <div style="text-align:center;">
-        <a href="https://bonmoment.app" style="display:inline-block;background:#FF6B00;color:white;font-weight:700;font-size:14px;padding:16px 32px;border-radius:14px;text-decoration:none;">
-          Voir mes bons →
-        </a>
-      </div>
-    </div>
-    <div style="text-align:center;padding:20px 0 0;color:#9CA3AF;font-size:11px;">
-      <p style="margin:0;">BONMOMENT — Soyez là au bon moment</p>
-    </div>
-  </div>
-</body>
-</html>`
 }

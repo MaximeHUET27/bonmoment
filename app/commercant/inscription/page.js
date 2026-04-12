@@ -4,16 +4,19 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import Script from 'next/script'
+import { useJsApiLoader } from '@react-google-maps/api'
 import { useAuth } from '@/app/context/AuthContext'
 import AuthBottomSheet from '@/app/components/AuthBottomSheet'
 import { getCategorieFiltre } from '@/app/ville/[slug]/OffreCard'
+
+const LIBRARIES = ['places']
 
 /* ── Constantes ─────────────────────────────────────────────────────────── */
 
 const MAPS_FIELDS = [
   'place_id', 'name', 'formatted_address', 'address_components',
   'types', 'photos', 'opening_hours', 'rating', 'formatted_phone_number',
+  'geometry',
 ]
 
 const TYPE_MAP = {
@@ -71,7 +74,10 @@ export default function InscriptionCommercant() {
   const router = useRouter()
 
   // Google Maps
-  const [mapsReady, setMapsReady]   = useState(false)
+  const { isLoaded: mapsReady } = useJsApiLoader({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY,
+    libraries: LIBRARIES,
+  })
   const autocompleteRef             = useRef(null)
   const placesServiceRef            = useRef(null)
   const mapDivRef                   = useRef(null)
@@ -126,13 +132,13 @@ export default function InscriptionCommercant() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
-  // Initialise les services Google Maps
-  function onMapsLoad() {
+  // Initialise les services Google Maps quand le loader est prêt
+  useEffect(() => {
+    if (!mapsReady || !mapDivRef.current) return
     if (!window.google?.maps?.places) return
     autocompleteRef.current = new window.google.maps.places.AutocompleteService()
     placesServiceRef.current = new window.google.maps.places.PlacesService(mapDivRef.current)
-    setMapsReady(true)
-  }
+  }, [mapsReady])
 
   // Recherche avec debounce
   const fetchPredictions = useCallback((value) => {
@@ -184,15 +190,17 @@ export default function InscriptionCommercant() {
 
         const categGoogle = mapPlaceType(place.types || [])
         setSelectedPlace({
-          place_id:   place.place_id,
-          nom:        place.name,
-          adresse:    place.formatted_address,
-          ville:      locality,
-          categorie:  categGoogle,
-          photo_url:  photoUrl,
-          telephone:  place.formatted_phone_number ?? null,
+          place_id:    place.place_id,
+          nom:         place.name,
+          adresse:     place.formatted_address,
+          ville:       locality,
+          categorie:   categGoogle,
+          photo_url:   photoUrl,
+          telephone:   place.formatted_phone_number ?? null,
           note_google: place.rating ?? null,
-          horaires:   place.opening_hours?.weekday_text ?? null,
+          horaires:    place.opening_hours?.weekday_text ?? null,
+          latitude:    place.geometry?.location?.lat() ?? null,
+          longitude:   place.geometry?.location?.lng() ?? null,
         })
         // Auto-détection catégorie BONMOMENT depuis les types Google
         const detected = (place.types || []).reduce((acc, t) => acc || getCategorieFiltre(t), null)
@@ -265,6 +273,8 @@ export default function InscriptionCommercant() {
       telephone:           selectedPlace.telephone,
       note_google:         selectedPlace.note_google,
       horaires:            selectedPlace.horaires,
+      latitude:            selectedPlace.latitude,
+      longitude:           selectedPlace.longitude,
       abonnement_actif:    true,
     })
 
@@ -274,16 +284,27 @@ export default function InscriptionCommercant() {
       return
     }
 
+    // 3.5 Upsert de la ville dans la table villes (non-bloquant)
+    if (selectedPlace.ville) {
+      fetch('/api/upsert-ville', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ nom: selectedPlace.ville }),
+      }).catch(err => console.error('upsert-ville:', err))
+    }
+
     // 4. Marquer le code de parrainage comme utilisé
     if (parrainCodeId) {
-      supabase
+      const { error: parrainErr } = await supabase
         .from('codes_parrainage')
         .update({ utilise_par: user.id, statut: 'utilise' })
         .eq('id', parrainCodeId)
+      if (parrainErr) console.error('Parrainage update:', parrainErr.message)
     }
 
-    // 5. Passage du user en rôle commerçant (async, pas d'attente)
-    supabase.from('users').update({ role: 'commerçant' }).eq('id', user.id)
+    // 5. Passage du user en rôle commerçant
+    const { error: roleErr } = await supabase.from('users').update({ role: 'commercant' }).eq('id', user.id)
+    if (roleErr) console.error('Role update:', roleErr.message)
 
     router.push('/commercant/dashboard')
   }
@@ -306,12 +327,6 @@ export default function InscriptionCommercant() {
 
   return (
     <>
-      {/* Script Google Maps Places */}
-      <Script
-        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}&libraries=places`}
-        strategy="afterInteractive"
-        onLoad={onMapsLoad}
-      />
       {/* Div cachée requise par PlacesService */}
       <div ref={mapDivRef} style={{ display: 'none' }} />
 
@@ -372,7 +387,7 @@ export default function InscriptionCommercant() {
           <div>
             <StepLabel num={1}>Trouve ton commerce</StepLabel>
             <p className="text-xs text-[#3D3D3D]/60 mb-3">
-              Tape le nom ou l'adresse de ton commerce pour le retrouver.
+              Tape le nom ou l&apos;adresse de ton commerce pour le retrouver.
             </p>
 
             {/* Champ de recherche */}
@@ -452,9 +467,11 @@ export default function InscriptionCommercant() {
                 {/* Photo */}
                 {selectedPlace.photo_url ? (
                   <div className="w-full h-40 bg-[#FFF0E0] overflow-hidden">
-                    <img
+                    <Image
                       src={selectedPlace.photo_url}
                       alt={selectedPlace.nom}
+                      width={500}
+                      height={160}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -530,7 +547,7 @@ export default function InscriptionCommercant() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {[
-                    { id: 'resto',    label: '🍽️ Resto' },
+                    { id: 'resto',    label: '🍽️ Alimentaire' },
                     { id: 'beaute',   label: '💇 Beauté' },
                     { id: 'shopping', label: '🛍️ Shopping' },
                     { id: 'loisirs',  label: '🎮 Loisirs' },
@@ -613,6 +630,7 @@ export default function InscriptionCommercant() {
               )}
 
               <button
+               
                 onClick={handleSubmit}
                 disabled={submitting}
                 className="w-full bg-[#FF6B00] hover:bg-[#CC5500] disabled:opacity-60 disabled:cursor-not-allowed text-white font-black text-base py-4 rounded-2xl transition-colors shadow-lg shadow-orange-200 min-h-[56px] flex items-center justify-center gap-2"

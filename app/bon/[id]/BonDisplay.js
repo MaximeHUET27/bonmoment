@@ -5,9 +5,11 @@
  * Identique visuellement à FullScreenBon mais sans fixed inset-0.
  */
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { formatDebut } from '@/lib/offreStatus'
+import { getFullOffreTitle } from '@/lib/offreTitle'
+import CommerceInfoCard from '@/app/components/CommerceInfoCard'
 
 const QRCodeSVG = dynamic(
   () => import('qrcode.react').then(m => m.QRCodeSVG),
@@ -21,16 +23,16 @@ const QRCodeSVG = dynamic(
   }
 )
 
+function calcTimeLeft(dateFin) {
+  const diff = new Date(dateFin) - new Date()
+  if (diff <= 0) return null
+  return { h: Math.floor(diff / 3_600_000), m: Math.floor((diff % 3_600_000) / 60_000), s: Math.floor((diff % 60_000) / 1_000), diff }
+}
+
 function useCountdown(dateFin) {
-  const [tl, setTl] = useState(null)
+  const [tl, setTl] = useState(() => calcTimeLeft(dateFin))
   useEffect(() => {
-    function calc() {
-      const diff = new Date(dateFin) - new Date()
-      if (diff <= 0) return null
-      return { h: Math.floor(diff / 3_600_000), m: Math.floor((diff % 3_600_000) / 60_000), s: Math.floor((diff % 60_000) / 1_000), diff }
-    }
-    setTl(calc())
-    const t = setInterval(() => setTl(calc()), 1_000)
+    const t = setInterval(() => setTl(calcTimeLeft(dateFin)), 1_000)
     return () => clearInterval(t)
   }, [dateFin])
   return tl
@@ -50,14 +52,192 @@ function formatBadge(offre) {
   if (offre.type_remise === 'produit_offert') return '📦 Offert'
   if (offre.type_remise === 'service_offert') return '✂️ Offert'
   if (offre.type_remise === 'concours')       return '🎰 Concours'
-  if (offre.type_remise === 'atelier')        return '🎨 Atelier'
+  if (offre.type_remise === 'atelier')        return '🎉 Évènement'
+  if (offre.type_remise === 'fidelite')       return '⭐ Fidélité'
   return 'Offre'
 }
 
-export default function BonDisplay({ reservation, offre, commerce }) {
+/* ── Overlay de review ─────────────────────────────────────────────────────── */
+
+function ReviewOverlay({ reservationId, commerceId, commerceNom, placeId, onClose }) {
+  const [step,        setStep]        = useState('stars')  // 'stars' | 'google' | 'feedback'
+  const [note,        setNote]        = useState(0)
+  const [hover,       setHover]       = useState(0)
+  const [commentaire, setCommentaire] = useState('')
+  const [sending,     setSending]     = useState(false)
+  const [toast,       setToast]       = useState(false)
+
+  const handleStarClick = useCallback(async (n) => {
+    setNote(n)
+    if (n >= 4) {
+      setStep('google')
+    } else {
+      setStep('feedback')
+    }
+  }, [])
+
+  const handleGoogleClick = useCallback(async () => {
+    try {
+      await fetch('/api/avis-google', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ reservation_id: reservationId, commerce_id: commerceId, note }),
+      })
+    } catch {}
+    window.open(`https://search.google.com/local/writereview?placeid=${placeId}`, '_blank', 'noopener')
+    onClose()
+  }, [reservationId, commerceId, note, placeId, onClose])
+
+  const handleFeedbackSend = useCallback(async () => {
+    setSending(true)
+    try {
+      await fetch('/api/feedback-commerce', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ reservation_id: reservationId, commerce_id: commerceId, note, commentaire }),
+      })
+    } catch {}
+    setSending(false)
+    setToast(true)
+    setTimeout(onClose, 1800)
+  }, [reservationId, commerceId, note, commentaire, onClose])
+
+  const activeStars  = hover || note
+  const starStyle = (i) => ({
+    fontSize: '40px',
+    cursor: 'pointer',
+    color: i <= activeStars ? '#FF6B00' : '#D1D5DB',
+    transition: 'color 0.1s',
+    lineHeight: 1,
+    userSelect: 'none',
+  })
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6"
+      style={{ animation: 'fadeInOverlay 0.35s ease forwards' }}
+    >
+      <style>{`
+        @keyframes fadeInOverlay {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes slideUpCard {
+          from { transform: translateY(24px); opacity: 0; }
+          to   { transform: translateY(0);    opacity: 1; }
+        }
+        .review-card { animation: slideUpCard 0.35s ease forwards; }
+      `}</style>
+
+      <div className="review-card bg-white rounded-3xl px-6 py-8 w-full max-w-sm flex flex-col items-center gap-5 shadow-2xl">
+
+        {/* ── Étape : étoiles ─────────────────────────────────────────────── */}
+        {step === 'stars' && (
+          <>
+            <p className="text-base font-black text-[#0A0A0A] text-center leading-snug">
+              ✅ Bon validé !
+            </p>
+            <p className="text-sm text-[#3D3D3D] text-center leading-relaxed">
+              Toi aussi, rend service à ton commerçant&nbsp;:
+            </p>
+            <p className="text-base font-bold text-[#0A0A0A] text-center leading-snug">
+              Comment s&apos;est passée ton expérience chez&nbsp;<span className="text-[#FF6B00]">{commerceNom}</span>&nbsp;?
+            </p>
+            <div className="flex gap-3" role="group" aria-label="Note">
+              {[1, 2, 3, 4, 5].map(i => (
+                <button
+                  key={i}
+                  onClick={() => handleStarClick(i)}
+                  onMouseEnter={() => setHover(i)}
+                  onMouseLeave={() => setHover(0)}
+                  style={starStyle(i)}
+                  aria-label={`${i} étoile${i > 1 ? 's' : ''}`}
+                >
+                  {i <= activeStars ? '★' : '☆'}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={onClose}
+              className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              Plus tard
+            </button>
+          </>
+        )}
+
+        {/* ── Étape : redirection Google ──────────────────────────────────── */}
+        {step === 'google' && (
+          <>
+            <p className="text-2xl">🎉</p>
+            <p className="text-lg font-black text-[#0A0A0A] text-center">Merci !</p>
+            <p className="text-sm text-[#3D3D3D] text-center leading-relaxed">
+              Aide <span className="font-bold">{commerceNom}</span> en partageant ton expérience sur Google&nbsp;:
+            </p>
+            <button
+              onClick={handleGoogleClick}
+              className="w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-bold text-base py-4 rounded-2xl transition-colors flex items-center justify-center gap-2"
+            >
+              ⭐ Laisser un avis Google
+            </button>
+            <button
+              onClick={onClose}
+              className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              Plus tard
+            </button>
+          </>
+        )}
+
+        {/* ── Étape : feedback privé ──────────────────────────────────────── */}
+        {step === 'feedback' && (
+          <>
+            <p className="text-lg font-black text-[#0A0A0A] text-center">Merci pour ton retour 🙏</p>
+            <p className="text-sm text-[#3D3D3D] text-center leading-relaxed">
+              Aide <span className="font-bold">{commerceNom}</span> à s&apos;améliorer&nbsp;:
+            </p>
+            <textarea
+              value={commentaire}
+              onChange={e => setCommentaire(e.target.value)}
+              rows={3}
+              placeholder="Qu'est-ce qui pourrait être amélioré ?"
+              className="w-full border border-[#E0E0E0] rounded-2xl px-4 py-3 text-sm text-[#0A0A0A] resize-none outline-none focus:border-[#FF6B00] transition-colors"
+            />
+            {toast ? (
+              <div className="w-full text-center text-sm font-bold text-green-600 py-2">
+                Merci, ton avis a été transmis !
+              </div>
+            ) : (
+              <button
+                onClick={handleFeedbackSend}
+                disabled={sending}
+                className="w-full bg-[#FF6B00] hover:bg-[#CC5500] disabled:opacity-60 text-white font-bold text-base py-4 rounded-2xl transition-colors"
+              >
+                {sending ? 'Envoi…' : 'Envoyer mon avis'}
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              Passer
+            </button>
+          </>
+        )}
+
+      </div>
+    </div>
+  )
+}
+
+/* ── Composant principal ─────────────────────────────────────────────────── */
+
+export default function BonDisplay({ reservation, offre, commerce, commerceId, placeId }) {
   const timeLeft = useCountdown(offre?.date_fin)
   const wakeLock = useRef(null)
-  const [entered, setEntered] = useState(false)
+  const [entered,     setEntered]     = useState(false)
+  const [showReview,  setShowReview]  = useState(false)
+  const prevStatutRef = useRef(reservation?.statut)
 
   useEffect(() => {
     const t = setTimeout(() => setEntered(true), 30)
@@ -75,10 +255,44 @@ export default function BonDisplay({ reservation, offre, commerce }) {
     return () => { wakeLock.current?.release().catch(() => {}) }
   }, [])
 
+  /* ── Polling pour détecter la validation ──────────────────────────────── */
+  useEffect(() => {
+    // Conditions pour activer le polling
+    const hasValidPlace = placeId && !placeId.startsWith('test_')
+    if (!hasValidPlace || !commerceId || !reservation?.id) return
+    if (reservation?.statut === 'utilisee') return // déjà validé au chargement
+
+    const sessionKey = `avis_demande_${reservation.id}`
+    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(sessionKey)) return
+
+    let stopped = false
+
+    async function pollStatut() {
+      try {
+        const res = await fetch(`/api/bon-statut/${reservation.id}`)
+        if (!res.ok) return
+        const { statut } = await res.json()
+        if (statut === 'utilisee' && prevStatutRef.current !== 'utilisee') {
+          prevStatutRef.current = 'utilisee'
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem(sessionKey, '1')
+          }
+          setTimeout(() => {
+            if (!stopped) setShowReview(true)
+          }, 2000)
+          clearInterval(interval)
+        }
+      } catch {}
+    }
+
+    const interval = setInterval(pollStatut, 3000)
+    return () => {
+      stopped = true
+      clearInterval(interval)
+    }
+  }, [reservation?.id, reservation?.statut, placeId, commerceId])
+
   const qrUrl      = reservation?.qr_code_data || `${typeof window !== 'undefined' ? window.location.href : ''}`
-  const mapsUrl    = commerce?.adresse
-    ? `https://maps.google.com/?q=${encodeURIComponent(`${commerce.adresse}, ${commerce.ville || ''}`)}`
-    : null
   const programmee = offre?.date_debut && new Date(offre.date_debut) > new Date()
   const timerRed   = !programmee && timeLeft && timeLeft.diff < 1_800_000
   const expired    = !timeLeft
@@ -94,7 +308,7 @@ export default function BonDisplay({ reservation, offre, commerce }) {
           <span className="inline-block mt-1 mb-0.5 px-2.5 py-0.5 rounded-full bg-[#FFF0E0] text-[#FF6B00] text-xs font-black">
             {formatBadge(offre)}
           </span>
-          <p className="text-sm text-[#3D3D3D]/60 mt-0.5">{offre?.titre}</p>
+          <p className="text-sm text-[#3D3D3D]/60 mt-0.5">{getFullOffreTitle(offre)}</p>
         </div>
 
         {/* Statut */}
@@ -135,7 +349,7 @@ export default function BonDisplay({ reservation, offre, commerce }) {
             <>
               <p className="text-xl font-black text-[#FF6B00]">📅 Valable à partir du</p>
               <p className="text-base font-bold text-[#FF6B00] mt-1">{formatDebut(offre.date_debut)}</p>
-              <p className="text-[11px] text-[#FF6B00]/70 mt-1 font-medium">Ce bon n'est pas encore actif</p>
+              <p className="text-[11px] text-[#FF6B00]/70 mt-1 font-medium">Ce bon n&apos;est pas encore actif</p>
             </>
           ) : expired ? (
             <p className="text-base font-black text-red-500">Trop tard — bon expiré</p>
@@ -151,24 +365,20 @@ export default function BonDisplay({ reservation, offre, commerce }) {
           )}
         </div>
 
-        {commerce?.adresse && (
-          <p className="text-xs text-[#3D3D3D]/60 text-center">
-            📍 {commerce.adresse}{commerce.ville ? `, ${commerce.ville}` : ''}
-          </p>
-        )}
-
-        {mapsUrl && (
-          <a
-            href={mapsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-2 border-2 border-[#FF6B00] text-[#FF6B00] font-bold text-sm py-3.5 rounded-2xl hover:bg-[#FFF0E0] transition-colors min-h-[48px]"
-          >
-            📍 S'y rendre
-          </a>
-        )}
+        <CommerceInfoCard commerce={commerce} commerceId={commerce?.id} />
 
       </div>
+
+      {/* ── Overlay de review ─────────────────────────────────────────────── */}
+      {showReview && (
+        <ReviewOverlay
+          reservationId={reservation.id}
+          commerceId={commerceId}
+          commerceNom={commerce?.nom}
+          placeId={placeId}
+          onClose={() => setShowReview(false)}
+        />
+      )}
     </main>
   )
 }

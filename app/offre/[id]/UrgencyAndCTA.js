@@ -9,6 +9,8 @@ import FavoriButton from '@/app/components/FavoriButton'
 import { useReservation } from '@/app/hooks/useReservation'
 import { useFavoris } from '@/app/context/FavorisContext'
 import { formatDebut } from '@/lib/offreStatus'
+import { useToast } from '@/app/components/Toast'
+import { triggerConfetti } from '@/lib/confetti'
 
 const PENDING_KEY = 'bonmoment_pending_reservation'
 
@@ -37,9 +39,10 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
   const pathname   = usePathname()
 
   const { isFavori, toggleFavori } = useFavoris()
+  const { showToast } = useToast()
   const [showAuth,          setShowAuth]          = useState(false)
   const [showBon,           setShowBon]           = useState(false)
-  const [toast,             setToast]             = useState(null)
+  const [pressing,          setPressing]          = useState(false)
   const [abonneCommLoading, setAbonneCommLoading] = useState(false)
   const [nbBonsDelta,       setNbBonsDelta]       = useState(0)
 
@@ -111,7 +114,7 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
           if (!data.notifications_email) updates.notifications_email = true
           if (Object.keys(updates).length > 0) {
             await supabase.from('users').update(updates).eq('id', user.id)
-            if (isNew) setToast(`🎉 Bienvenue à ${ville} ! Tu recevras les bons plans chaque soir à 21h.`)
+            if (isNew) { triggerConfetti(); showToast(`🎉 Bienvenue à ${ville} ! Tu recevras les bons plans chaque soir à 21h.`) }
           }
         }
       }
@@ -129,17 +132,11 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
     setAbonneCommLoading(false)
   }
 
-  /* ── Toast auto-dismiss ── */
-  useEffect(() => {
-    if (!toast) return
-    const t = setTimeout(() => setToast(null), 4_000)
-    return () => clearTimeout(t)
-  }, [toast])
-
   /* ── Toast sur erreurs métier ── */
   useEffect(() => {
-    if (status === 'no_stock') setToast('😔 Plus de bons disponibles pour cette offre.')
-    if (status === 'error')    setToast('⚠️ Une erreur est survenue. Réessaie dans quelques secondes.')
+    if (status === 'no_stock') showToast('😔 Plus de bons disponibles pour cette offre.')
+    if (status === 'error')    showToast('⚠️ Une erreur est survenue. Réessaie dans quelques secondes.')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status])
 
   /* ── Show FullScreenBon après succès (1s de feedback ✓) ── */
@@ -151,7 +148,10 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
   }, [status])
 
   async function handleReserver() {
+    if (status === 'already_used' || status === 'already_expired') return
     if (status === 'already_reserved') { setShowBon(true); return }
+    setPressing(true)
+    setTimeout(() => setPressing(false), 150)
     if (!user) {
       sessionStorage.setItem(PENDING_KEY, offre.id)
       setShowAuth(true)
@@ -173,23 +173,28 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
   const urgent      = urgentTime || urgentStock
 
   /* ── États du bouton ── */
-  const btnDisabled = fini || status === 'loading'
+  const btnDisabled = fini || status === 'loading' || status === 'already_used' || status === 'already_expired'
 
   const btnLabel = (() => {
-    if (fini)                          return 'Trop tard !'
-    if (status === 'loading')          return null
-    if (status === 'success')          return '✓ Bon réservé !'
-    if (status === 'already_reserved') return '✅ Bon réservé — Voir mon bon'
-    if (status === 'no_stock')         return 'Plus de bons disponibles'
-    if (status === 'error')            return '✗ Erreur — réessaie'
+    if (fini)                           return 'Trop tard !'
+    if (status === 'loading')           return null
+    if (status === 'success')           return '✓ Bon réservé !'
+    if (status === 'already_reserved')  return '🎟️ Voir mon bon'
+    if (status === 'already_used')      return '✅ Bon utilisé'
+    if (status === 'already_expired')   return '⏰ Bon expiré'
+    if (status === 'no_stock')          return 'Plus de bons disponibles'
+    if (status === 'error')             return '✗ Erreur — réessaie'
     return 'Réserver mon bon'
   })()
 
-  const btnBase = 'w-full font-black text-lg py-4 rounded-2xl transition-all duration-200 min-h-[56px] flex items-center justify-center gap-2 shadow-lg active:scale-[0.97]'
+  const isPulsing = urgent && !fini && status !== 'loading' && status !== 'success' && status !== 'already_reserved' && status !== 'already_used' && status !== 'already_expired'
+  const btnBase = 'w-full font-black text-lg py-4 rounded-2xl min-h-[56px] flex items-center justify-center gap-2 shadow-lg'
   const btnColor = fini
     ? 'bg-[#D0D0D0] text-white cursor-not-allowed shadow-none'
     : (status === 'success' || status === 'already_reserved')
     ? 'bg-green-500 text-white shadow-green-200'
+    : (status === 'already_used' || status === 'already_expired')
+    ? 'bg-[#9CA3AF] text-white cursor-not-allowed shadow-none'
     : status === 'error'
     ? 'bg-red-500 text-white shadow-red-200'
     : 'bg-[#FF6B00] hover:bg-[#CC5500] text-white shadow-orange-200'
@@ -273,15 +278,27 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
             : 'Trop tard ! Abonne-toi à ce commerçant ❤️'}
         </button>
       ) : (
-        <button
-          onClick={handleReserver}
-          disabled={status === 'loading'}
-          className={`${btnBase} ${btnColor}`}
-        >
-          {status === 'loading' ? (
-            <span className="w-6 h-6 border-[3px] border-white border-t-transparent rounded-full animate-spin" />
-          ) : btnLabel}
-        </button>
+        <>
+          <style>{`
+            @keyframes bm-btn-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
+            @keyframes bm-pop       { 0%{transform:scale(0);opacity:0} 100%{transform:scale(1);opacity:1} }
+          `}</style>
+          {isPulsing && <style>{`.bm-cta-pulse{animation:bm-btn-pulse 2s ease-in-out infinite}`}</style>}
+          <button
+            onClick={handleReserver}
+            disabled={status === 'loading'}
+            style={{ transform: pressing ? 'scale(0.95)' : 'scale(1)', transition: 'transform 0.15s ease' }}
+            className={`${btnBase} ${btnColor} ${isPulsing ? 'bm-cta-pulse' : ''}`}
+          >
+            {status === 'loading' ? (
+              <span className="w-6 h-6 border-[3px] border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <span key={status} style={(status === 'success' || status === 'error') ? { animation: 'bm-pop 0.3s cubic-bezier(0.175,0.885,0.32,1.275) forwards' } : {}}>
+                {btnLabel}
+              </span>
+            )}
+          </button>
+        </>
       )}
 
       {/* ── Message contextuel sous le bouton ── */}
@@ -324,16 +341,7 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
         />
       )}
 
-      {/* ── Toast onboarding / erreur ── */}
-      {toast && (
-        <div
-          className="fixed bottom-24 left-4 right-4 z-50 bg-[#0A0A0A] text-white text-sm font-semibold px-4 py-3 rounded-2xl shadow-xl text-center"
-          style={{ animation: 'fadeSlideUp 0.3s ease' }}
-        >
-          {toast}
-          <style>{`@keyframes fadeSlideUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }`}</style>
-        </div>
-      )}
+      {/* Toast géré globalement par ToastProvider */}
     </>
   )
 }

@@ -14,7 +14,9 @@ export async function GET() {
   /* ── Auth ── */
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user || user.email !== ADMIN_EMAIL)
+  if (!user)
+    return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+  if (user.email !== ADMIN_EMAIL)
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
 
   const now       = new Date()

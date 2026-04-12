@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/app/context/AuthContext'
 import { useFavoris } from '@/app/context/FavorisContext'
 import AuthBottomSheet from './AuthBottomSheet'
+import { useToast } from './Toast'
+
+const PUSH_PROMPT_KEY = 'bonmoment_push_prompt_shown'
 
 /**
  * Bouton cœur pour mettre un commerce en favori.
@@ -13,12 +16,14 @@ import AuthBottomSheet from './AuthBottomSheet'
  * @param {string} className    - Classes CSS supplémentaires
  */
 export default function FavoriButton({ commerceId, commerceNom, className = '' }) {
-  const { user }                  = useAuth()
+  const { user, supabase }         = useAuth()
   const { isFavori, toggleFavori } = useFavoris()
-  const [pulse,    setPulse]    = useState(false)
-  const [showAuth, setShowAuth] = useState(false)
-  const [toast,    setToast]    = useState(null)
-  const [loading,  setLoading]  = useState(false)
+  const { showToast }              = useToast()
+  const [pulse,          setPulse]          = useState(false)
+  const [showAuth,       setShowAuth]       = useState(false)
+  const [loading,        setLoading]        = useState(false)
+  const [showPushPrompt, setShowPushPrompt] = useState(false)
+  const [pushLoading,    setPushLoading]    = useState(false)
 
   const favori = isFavori(commerceId)
 
@@ -28,14 +33,27 @@ export default function FavoriButton({ commerceId, commerceNom, className = '' }
     if (pendingId === commerceId) {
       sessionStorage.removeItem('bonmoment_pending_favori')
       toggleFavori(commerceId).then(isNow => {
-        if (isNow) {
-          setToast(`❤️ Tu seras alerté dès que ${commerceNom} publie une offre !`)
-          setTimeout(() => setToast(null), 4_000)
-        }
+        if (isNow) handleAfterFavori()
       })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
+
+  async function handleAfterFavori() {
+    const { data } = await supabase
+      .from('users')
+      .select('notifications_push')
+      .eq('id', user.id)
+      .single()
+
+    if (data?.notifications_push) {
+      showToast(`❤️ Tu seras alerté dès que ${commerceNom} publie une offre !`, 'success')
+    } else if (!sessionStorage.getItem(PUSH_PROMPT_KEY)) {
+      setShowPushPrompt(true)
+    } else {
+      showToast(`❤️ ${commerceNom} ajouté aux favoris !`, 'success')
+    }
+  }
 
   async function handleClick(e) {
     e.preventDefault()
@@ -53,10 +71,40 @@ export default function FavoriButton({ commerceId, commerceNom, className = '' }
     const isNowFavori = await toggleFavori(commerceId)
     setLoading(false)
 
-    if (isNowFavori) {
-      setToast(`❤️ Tu seras alerté dès que ${commerceNom} publie une offre !`)
-      setTimeout(() => setToast(null), 4_000)
+    if (isNowFavori) await handleAfterFavori()
+  }
+
+  async function handleActiverPush() {
+    setPushLoading(true)
+    sessionStorage.setItem(PUSH_PROMPT_KEY, '1')
+    setShowPushPrompt(false)
+
+    try {
+      if (!('Notification' in window)) throw new Error('unsupported')
+      const perm = await Notification.requestPermission()
+      if (perm !== 'granted') throw new Error('denied')
+
+      const reg = await navigator.serviceWorker.register('/sw.js')
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+      })
+      await supabase
+        .from('users')
+        .update({ notifications_push: true, push_subscription: sub.toJSON() })
+        .eq('id', user.id)
+      showToast('✅ Notifications activées !', 'success')
+    } catch {
+      showToast(`❤️ ${commerceNom} ajouté aux favoris !`, 'success')
     }
+
+    setPushLoading(false)
+  }
+
+  function handlePlusTard() {
+    sessionStorage.setItem(PUSH_PROMPT_KEY, '1')
+    setShowPushPrompt(false)
+    showToast(`❤️ ${commerceNom} ajouté aux favoris !`, 'success')
   }
 
   return (
@@ -81,17 +129,46 @@ export default function FavoriButton({ commerceId, commerceNom, className = '' }
         )}
       </button>
 
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-[#0A0A0A] text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-2xl max-w-[90vw] text-center">
-          {toast}
-        </div>
-      )}
-
       <AuthBottomSheet
         isOpen={showAuth}
         onClose={() => setShowAuth(false)}
         redirectAfter={typeof window !== 'undefined' ? window.location.pathname : '/'}
       />
+
+      {/* ── Prompt push (une seule fois par session) ── */}
+      {showPushPrompt && (
+        <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handlePlusTard} />
+          <div className="relative w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl px-6 pt-6 pb-10 sm:pb-6 shadow-2xl">
+            <div className="w-10 h-1 bg-[#E0E0E0] rounded-full mx-auto mb-5 sm:hidden" />
+            <p className="text-3xl text-center mb-3">🔔</p>
+            <h2 className="text-base font-black text-[#0A0A0A] text-center mb-2">
+              Active les notifications push
+            </h2>
+            <p className="text-sm text-[#3D3D3D]/70 text-center mb-6 leading-relaxed">
+              Pour être alerté dès que{' '}
+              <span className="font-bold text-[#FF6B00]">{commerceNom}</span>{' '}
+              publie une offre !
+            </p>
+            <button
+              onClick={handleActiverPush}
+              disabled={pushLoading}
+              className="w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-sm py-3.5 rounded-2xl transition-colors min-h-[48px] flex items-center justify-center mb-3"
+            >
+              {pushLoading
+                ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                : 'Activer les notifications'
+              }
+            </button>
+            <button
+              onClick={handlePlusTard}
+              className="w-full text-sm text-[#9CA3AF] py-2 hover:text-[#3D3D3D] transition-colors"
+            >
+              Plus tard
+            </button>
+          </div>
+        </div>
+      )}
     </>
   )
 }

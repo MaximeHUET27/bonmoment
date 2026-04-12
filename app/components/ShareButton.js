@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useToast } from './Toast'
+import { getFullOffreTitle } from '@/lib/offreTitle'
 
 const BASE_URL = 'https://bonmoment.app'
 
@@ -14,35 +16,22 @@ function formatBadge(offre) {
   if (offre.type_remise === 'produit_offert') return '📦 Offert'
   if (offre.type_remise === 'service_offert') return '✂️ Offert'
   if (offre.type_remise === 'concours')       return '🎰 Concours'
-  if (offre.type_remise === 'atelier')        return '🎨 Atelier'
+  if (offre.type_remise === 'atelier')        return '🎉 Évènement'
   return 'Offre'
 }
 
 function buildShareContent(offre, commerce) {
-  const nom   = commerce?.nom   || 'ce commerce'
-  const ville = commerce?.ville || 'ta ville'
-  const titre = offre?.titre    || ''
-  const nb    = offre?.nb_bons_restants
-  const url   = `${BASE_URL}/offre/${offre?.id}`
-
-  let action = ''
-  switch (offre?.type_remise) {
-    case 'pourcentage':    action = `propose -${offre.valeur}%`;  break
-    case 'montant_fixe':   action = `offre -${offre.valeur}€`;    break
-    case 'cadeau':         action = 'offre un cadeau';             break
-    case 'produit_offert': action = 'offre un produit';            break
-    case 'service_offert': action = 'offre un service';            break
-    case 'concours':       action = 'lance un concours';           break
-    case 'atelier':        action = 'propose un atelier';          break
-    default:               action = 'a une offre spéciale'
-  }
-
-  const badge  = formatBadge(offre)
-  const nbText = nb && nb !== 9999 ? ` Il reste ${nb} bons — dépêche-toi !` : ''
+  const nom        = commerce?.nom   || 'ce commerce'
+  const ville      = commerce?.ville || 'ta ville'
+  const fullTitre  = getFullOffreTitle(offre)
+  const nb         = offre?.nb_bons_restants
+  const url        = `${BASE_URL}/offre/${offre?.id}`
+  const badge      = formatBadge(offre)
+  const nbText     = nb && nb !== 9999 ? ` Il reste ${nb} bons — dépêche-toi !` : ''
 
   return {
     title: `${badge} chez ${nom} — BONMOMENT`,
-    text:  `🔥 Bon plan à ${ville} ! ${nom} ${action} : "${titre}".${nbText}`,
+    text:  `🔥 Bon plan à ${ville} ! "${fullTitre}" chez ${nom}.${nbText}`,
     url,
   }
 }
@@ -83,7 +72,8 @@ export default function ShareButton({
 }) {
   const [showMenu, setShowMenu] = useState(false)
   const [copied,   setCopied]   = useState(false)
-  const menuRef = useRef(null)
+  const menuRef    = useRef(null)
+  const { showToast } = useToast()
 
   const computed = buildShareContent(offre, commerce)
   const title = shareTitle ?? computed.title
@@ -124,6 +114,7 @@ export default function ShareButton({
       await navigator.clipboard.writeText(url)
       setCopied(true)
       setTimeout(() => setCopied(false), 2500)
+      showToast('🔗 Lien copié !')
     } catch {}
     setShowMenu(false)
   }
@@ -191,13 +182,6 @@ export default function ShareButton({
               {copied ? 'Lien copié !' : 'Copier le lien'}
             </span>
           </button>
-        </div>
-      )}
-
-      {/* ── Toast copié ── */}
-      {copied && !showMenu && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] bg-[#0A0A0A] text-white text-sm font-semibold px-4 py-2.5 rounded-2xl shadow-xl whitespace-nowrap pointer-events-none">
-          🔗 Lien copié !
         </div>
       )}
 

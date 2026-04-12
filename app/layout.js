@@ -3,6 +3,7 @@ import Link from "next/link";
 import "./globals.css";
 import { AuthProvider } from "@/app/context/AuthContext";
 import { FavorisProvider } from "@/app/context/FavorisContext";
+import { ToastProvider } from "@/app/components/Toast";
 import AdminFooterLink from "@/app/components/AdminFooterLink";
 import ChatbotWidget from "@/app/components/ChatbotWidget";
 
@@ -12,9 +13,22 @@ const montserrat = Montserrat({
   display: "swap",
 });
 
+export const viewport = {
+  themeColor: '#FF6B00',
+}
+
 export const metadata = {
   title: "BONMOMENT – Soyez là au bon moment",
   description: "Découvre les bons plans et offres exclusives des commerçants de ta ville.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "BONMOMENT",
+    statusBarStyle: "default",
+  },
+  icons: {
+    apple: "/icons/icon-192.png",
+  },
 };
 
 export default function RootLayout({ children }) {
@@ -23,6 +37,7 @@ export default function RootLayout({ children }) {
       <body className={`${montserrat.variable} antialiased`}>
         <AuthProvider>
           <FavorisProvider>
+          <ToastProvider>
           {children}
           <ChatbotWidget />
           <footer className="w-full bg-[#F5F5F5] border-t border-[#EBEBEB] px-6 py-5 mt-auto">
@@ -47,6 +62,7 @@ export default function RootLayout({ children }) {
               </p>
             </div>
           </footer>
+          </ToastProvider>
           </FavorisProvider>
         </AuthProvider>
       </body>

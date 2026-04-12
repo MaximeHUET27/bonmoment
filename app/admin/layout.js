@@ -9,10 +9,12 @@ import { useAuth } from '@/app/context/AuthContext'
 const ADMIN_EMAIL = 'bonmomentapp@gmail.com'
 
 const NAV = [
-  { href: '/admin',              label: 'Dashboard',     icon: '📊' },
-  { href: '/admin/commercants',  label: 'Commerçants',   icon: '🏪' },
-  { href: '/admin/clients',      label: 'Clients',       icon: '👥' },
-  { href: '/admin/offres',       label: 'Offres',        icon: '🎟️' },
+  { href: '/admin',                label: 'Dashboard',      icon: '📊' },
+  { href: '/admin/commercants',    label: 'Commerçants',    icon: '🏪' },
+  { href: '/admin/clients',        label: 'Clients',        icon: '👥' },
+  { href: '/admin/offres',         label: 'Offres',         icon: '🎟️' },
+  { href: '/admin/villes',         label: 'Villes',         icon: '📍' },
+  { href: '/admin/comptabilite',   label: 'Comptabilité',   icon: '💰' },
 ]
 
 export default function AdminLayout({ children }) {

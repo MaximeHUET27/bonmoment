@@ -2,53 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import SkeletonCard from './SkeletonCard'
-import OffreCard, { getCategorieFiltre } from '@/app/ville/[slug]/OffreCard'
-import VilleAbonnement from './VilleAbonnement'
+import Image from 'next/image'
+import AuthButton from './AuthButton'
 import VilleSearchOverlay from './VilleSearchOverlay'
+import OffreCard, { getCategorieFiltre } from '@/app/ville/[slug]/OffreCard'
+import SkeletonCard from './SkeletonCard'
 import { useAuth } from '@/app/context/AuthContext'
 import { toSlug } from '@/lib/utils'
-
-/* ── Barre de filtres catégorie ─────────────────────────────────────────── */
-
-const FILTERS_CATEGORIE = [
-  { id: 'tous',     label: '🔥 Tous' },
-  { id: 'resto',    label: '🍽️ Resto' },
-  { id: 'beaute',   label: '💇 Beauté' },
-  { id: 'shopping', label: '🛍️ Shopping' },
-  { id: 'loisirs',  label: '🎮 Loisirs' },
-  { id: 'autres',   label: '🏪 Autres' },
-]
-
-const FILTERS_TYPE = [
-  { id: 'remise',        label: '💰 Remise' },
-  { id: 'offerts',       label: '🎁 Offert' },
-  { id: 'service',       label: '✂️ Service' },
-  { id: 'atelier',       label: '🎨 Atelier' },
-  { id: 'concours',      label: '🎰 Concours' },
-]
-
-function getOffreFiltre(offre) {
-  // catégorie commerce
-  if (offre.commerces?.categorie_bonmoment) return offre.commerces.categorie_bonmoment
-  return getCategorieFiltre(offre.commerces?.categorie) || 'autres'
-}
-
-function getTypeFiltre(offre) {
-  const t = offre.type_remise
-  if (t === 'pourcentage' || t === 'montant_fixe' || t === 'montant') return 'remise'
-  if (t === 'cadeau' || t === 'offert' || t === 'produit_offert')      return 'offerts'
-  if (t === 'service_offert')                                           return 'service'
-  if (t === 'atelier')                                                  return 'atelier'
-  if (t === 'concours')                                                 return 'concours'
-  return null
-}
-
-function matchFiltre(offre, filtre) {
-  if (filtre === 'tous') return true
-  if (FILTERS_TYPE.some(f => f.id === filtre)) return getTypeFiltre(offre) === filtre
-  return getOffreFiltre(offre) === filtre
-}
 
 function isActive(offre) {
   return new Date(offre.date_fin) > new Date() && offre.nb_bons_restants !== 0
@@ -59,175 +19,140 @@ function isUrgent(offre) {
   return diff > 0 && (diff < 7_200_000 || offre.nb_bons_restants < 5)
 }
 
-/* ── Composant principal ────────────────────────────────────────────────── */
+export default function HomeClient({ villes, offres }) {
+  const router = useRouter()
+  const { user, supabase } = useAuth()
+  const [showOverlay,  setShowOverlay]  = useState(false)
+  const [isLoading,    setIsLoading]    = useState(true)
+  const [userResaMap,  setUserResaMap]  = useState(null)
 
-export default function HomeClient({ offres, villes }) {
-  const { user, supabase }  = useAuth()
-  const router              = useRouter()
+  useEffect(() => { setIsLoading(false) }, [])
 
-  const [ville,           setVille]           = useState(null)
-  const [viewAll,         setViewAll]         = useState(false)
-  const [filtre,          setFiltre]          = useState('tous')
-  const [isLoading,       setIsLoading]       = useState(true)
-  const [showOverlay,     setShowOverlay]     = useState(false)
-  const [villesAbonnees,  setVillesAbonnees]  = useState([])
-
-  /* Lecture localStorage + détection ?view=all côté client uniquement */
+  /* Batch fetch réservations utilisateur */
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    if (params.get('view') === 'all') {
-      setViewAll(true)
-      setVille(null)
-      try { localStorage.removeItem('bonmoment_ville') } catch {}
-    } else {
-      const savedVille = localStorage.getItem('bonmoment_ville')
-      if (savedVille) setVille(savedVille)
+    if (!user || !supabase) { setUserResaMap({}); return }
+    const offreIds = (offres || []).map(o => o.id)
+    if (!offreIds.length) { setUserResaMap({}); return }
+
+    async function fetchResas() {
+      const { data } = await supabase
+        .from('reservations')
+        .select('offre_id, statut, id, code_validation, qr_code_data')
+        .eq('user_id', user.id)
+        .in('offre_id', offreIds)
+      const map = {}
+      for (const r of (data || [])) map[r.offre_id] = r
+      setUserResaMap(map)
     }
-    setIsLoading(false)
-  }, [])
 
-  /* Chargement villes_abonnees quand user change */
-  useEffect(() => {
-    if (!user || !supabase) { setVillesAbonnees([]); return }
-    supabase
-      .from('users')
-      .select('villes_abonnees')
-      .eq('id', user.id)
-      .single()
-      .then(({ data, error }) => {
-        if (error) console.error('Erreur chargement villes abonnées:', error.message)
-        setVillesAbonnees(data?.villes_abonnees || [])
-      })
+    fetchResas()
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchResas() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, supabase])
 
-  /* Quand l'utilisateur sélectionne une ville active dans l'overlay */
   function handleVilleSelect(nomVille) {
-    setVille(nomVille)
-    setViewAll(false)
-    localStorage.setItem('bonmoment_ville', nomVille)
     router.push(`/ville/${toSlug(nomVille)}`)
   }
 
-  /* Quand l'utilisateur choisit "Toutes mes villes" dans l'overlay */
-  function handleSelectAll() {
-    setViewAll(true)
-    setVille(null)
-  }
-
-  /* ── Filtrage ── */
-  const offresFiltrees = (offres || [])
-    .filter(o => {
-      const villeOffre = o.commerces?.ville
-      if (viewAll) {
-        const villeOk = villesAbonnees.length === 0 || villesAbonnees.includes(villeOffre)
-        if (!villeOk) return false
-        if (!isActive(o)) return true  // offres expirées toujours visibles
-        return matchFiltre(o, filtre)
-      }
-      if (ville && villeOffre !== ville) return false
-      return matchFiltre(o, filtre)
-    })
-    .sort((a, b) => {
-      const now = new Date()
-      const aFini = new Date(a.date_fin) <= now ||
-        (a.nb_bons_restants !== null && a.nb_bons_restants !== 9999 && a.nb_bons_restants <= 0)
-      const bFini = new Date(b.date_fin) <= now ||
-        (b.nb_bons_restants !== null && b.nb_bons_restants !== 9999 && b.nb_bons_restants <= 0)
-      if (aFini !== bFini) return aFini ? 1 : -1
-      if (aFini) return new Date(b.date_fin) - new Date(a.date_fin)  // expirées : plus récente en premier
-      const ua = isUrgent(a) ? 1 : 0
-      const ub = isUrgent(b) ? 1 : 0
-      if (ub !== ua) return ub - ua
-      return new Date(a.date_fin) - new Date(b.date_fin)
-    })
-
-  const seulementExpirées = offresFiltrees.length > 0 && offresFiltrees.filter(isActive).length === 0
-
-  /* ── Skeleton pendant hydratation ── */
-  if (isLoading) {
-    return (
-      <div className="w-full px-4 py-4">
-        <div className="h-12 bg-[#F5F5F5] rounded-xl mb-4 animate-pulse" />
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
-        </div>
-      </div>
-    )
-  }
+  /* Tri : actives urgentes → actives → expirées */
+  const offresTriees = (offres || []).sort((a, b) => {
+    const now = new Date()
+    const aFini = new Date(a.date_fin) <= now || (a.nb_bons_restants !== null && a.nb_bons_restants !== 9999 && a.nb_bons_restants <= 0)
+    const bFini = new Date(b.date_fin) <= now || (b.nb_bons_restants !== null && b.nb_bons_restants !== 9999 && b.nb_bons_restants <= 0)
+    if (aFini !== bFini) return aFini ? 1 : -1
+    if (aFini) return new Date(b.date_fin) - new Date(a.date_fin)
+    const ua = isUrgent(a) ? 1 : 0
+    const ub = isUrgent(b) ? 1 : 0
+    if (ub !== ua) return ub - ua
+    return new Date(a.date_fin) - new Date(b.date_fin)
+  })
 
   return (
-    <div className="w-full">
+    <div className="flex flex-col min-h-screen">
 
-      {/* ── Bandeau ville ─────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#F0F0F0] bg-white sticky top-0 z-30">
+      {/* AuthButton fixe en haut à droite */}
+      <div className="fixed top-4 right-4 z-40 bg-white rounded-full shadow-sm">
+        <AuthButton />
+      </div>
+
+      {/* CSS animation pulse */}
+      <style>{`
+        @keyframes pulse-border {
+          0%, 100% { border-color: #FF6B00; box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.2); }
+          50%       { border-color: #FFB366; box-shadow: 0 0 0 8px rgba(255, 107, 0, 0); }
+        }
+        .search-ville        { animation: pulse-border 2s ease-in-out infinite; }
+        .search-ville.active { animation: none; box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.15); }
+      `}</style>
+
+      {/* ── Bloc recherche + chips ── */}
+      <div className="flex flex-col items-center px-6 pt-16 pb-8 text-center">
+
+        {/* Tagline */}
+        <p className="mb-3 text-center text-[#3D3D3D]" style={{ fontFamily: 'var(--font-montserrat)', fontWeight: 400, fontSize: '16px' }}>
+          Pour vos commerçants, soyez là au
+        </p>
+
+        {/* Logo */}
+        <Image
+          src="/LOGO.png"
+          alt="Logo BONMOMENT"
+          width={900}
+          height={450}
+          priority
+          unoptimized
+          className="w-[200px] sm:w-[280px] h-auto mb-8"
+        />
+
+        {/* Champ de recherche ville */}
         <button
           onClick={() => setShowOverlay(true)}
-          className="flex items-center gap-1.5 text-sm font-bold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors min-h-[44px]"
+          className={`search-ville${showOverlay ? ' active' : ''} w-[90%] max-w-[500px] h-14 flex items-center gap-3 px-5 rounded-[28px] border-2 border-[#FF6B00] bg-white text-left`}
+          style={{ outline: 'none' }}
+          aria-label="Rechercher une ville"
         >
-          <span>📍 {
-            viewAll
-              ? 'Toutes mes villes'
-              : ville
-              ? ville
-              : (!user || villesAbonnees.length === 0)
-              ? 'Choisir une ville'
-              : villesAbonnees.length === 1
-              ? villesAbonnees[0]
-              : 'Toutes mes villes'
-          }</span>
-          <span className="text-[#FF6B00] text-xs font-semibold">Changer ▼</span>
+          <svg className="shrink-0" width="20" height="20" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="8" stroke="#FF6B00" strokeWidth="2.2" />
+            <path d="m21 21-4.35-4.35" stroke="#FF6B00" strokeWidth="2.2" strokeLinecap="round" />
+          </svg>
+          <span className="text-lg font-normal text-[#9CA3AF] select-none">
+            Trouve ta ville...
+          </span>
         </button>
 
-        {ville && <VilleAbonnement villeNom={ville} />}
+        {/* Chips des villes actives */}
+        {villes.length > 0 && (
+          <div className="flex flex-wrap gap-2 justify-center items-center mt-6">
+            <span className="text-sm text-[#3D3D3D]/60">Villes disponibles :</span>
+            {villes.map(v => (
+              <button
+                key={v.id}
+                onClick={() => handleVilleSelect(v.nom)}
+                className="bg-[#FFF0E0] text-[#FF6B00] font-semibold text-sm px-4 py-2 rounded-[20px] hover:bg-[#FFE0C0] transition-colors min-h-[44px]"
+              >
+                {v.nom}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* ── Barre de filtres ─────────────────────────────────────────────── */}
-      <div
-        className="flex items-center gap-2 overflow-x-auto px-4 py-3 border-b border-[#F0F0F0]"
-        style={{ scrollbarWidth: 'none' }}
-      >
-        {FILTERS_CATEGORIE.map(f => (
-          <button
-            key={f.id}
-            onClick={() => setFiltre(f.id)}
-            className={`shrink-0 text-xs font-bold px-4 py-2 rounded-full transition-colors whitespace-nowrap min-h-[36px] ${
-              filtre === f.id
-                ? 'bg-[#FF6B00] text-white'
-                : 'bg-[#F5F5F5] text-[#3D3D3D] hover:bg-[#FFF0E0] hover:text-[#FF6B00]'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-        <div className="w-px h-6 bg-gray-300 mx-1 shrink-0" />
-        {FILTERS_TYPE.map(f => (
-          <button
-            key={f.id}
-            onClick={() => setFiltre(f.id)}
-            className={`shrink-0 text-xs font-bold px-4 py-2 rounded-full transition-colors whitespace-nowrap min-h-[36px] ${
-              filtre === f.id
-                ? 'bg-[#FF6B00] text-white'
-                : 'bg-[#F5F5F5] text-[#3D3D3D] hover:bg-[#FFF0E0] hover:text-[#FF6B00]'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Bannière "seulement expirées" ─────────────────────────────────── */}
-      {seulementExpirées && (
-        <p className="text-sm font-semibold text-[#3D3D3D]/60 text-center px-4 py-3 border-b border-[#F0F0F0]">
-          Tes commerçants préparent des surprises...
-        </p>
-      )}
-
-      {/* ── Grille d'offres ──────────────────────────────────────────────── */}
-      <div className="px-4 py-6">
-        {offresFiltrees.length > 0 ? (
+      {/* ── Grille des offres (toutes villes actives) ── */}
+      <div className="px-4 pb-8">
+        {isLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {offresFiltrees.map(o => (
-              <OffreCard key={o.id} offre={o} />
+            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : offresTriees.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {offresTriees.map(o => (
+              <OffreCard
+                key={o.id}
+                offre={o}
+                userReservation={userResaMap !== null ? (userResaMap[o.id] ?? null) : undefined}
+              />
             ))}
           </div>
         ) : (
@@ -241,15 +166,13 @@ export default function HomeClient({ offres, villes }) {
         )}
       </div>
 
-      {/* ── Overlay sélecteur de ville ───────────────────────────────────── */}
+      {/* Overlay sélecteur de ville */}
       <VilleSearchOverlay
         isOpen={showOverlay}
         onClose={() => setShowOverlay(false)}
         villesBonmoment={villes}
         onSelectActive={handleVilleSelect}
-        onSelectAll={handleSelectAll}
       />
-
     </div>
   )
 }

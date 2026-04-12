@@ -18,7 +18,7 @@ export default function RegistreCNIL() {
         <h1 className="text-2xl sm:text-3xl font-black text-[#0A0A0A]">Registre des activités de traitement</h1>
         <p className="text-xs text-[#3D3D3D]/60 mt-1">Article 30 RGPD — Mars 2026</p>
         <p className="text-xs text-[#3D3D3D]/50 mt-3 max-w-xl mx-auto leading-relaxed">
-          Document établi conformément à l'article 30 du Règlement Général sur la Protection des Données (RGPD — UE 2016/679). Ce registre doit être tenu à jour et présenté à la CNIL sur demande.
+          Document établi conformément à l&apos;article 30 du Règlement Général sur la Protection des Données (RGPD — UE 2016/679). Ce registre doit être tenu à jour et présenté à la CNIL sur demande.
         </p>
         <div className="mt-4">
           <Link href="/mentions-legales" className="inline-flex items-center gap-1 text-xs font-semibold text-[#FF6B00] hover:text-[#CC5500] transition-colors">
@@ -34,7 +34,7 @@ export default function RegistreCNIL() {
           <SectionTitle>Informations générales</SectionTitle>
           <table className="w-full text-sm border-collapse mt-3">
             <tbody>
-              <Tr label="Responsable de traitement" value="Maxime HUET" />
+              <Tr label="Responsable de traitement" value="Manon LISSE" />
               <Tr label="Qualité" value="Auto-entrepreneur — Éditeur de la plateforme bonmoment.app" />
               <Tr label="Adresse" value="7 rue du Chesne, 27190 Nogent-le-Sec" />
               <Tr label="Email DPO / Contact RGPD" value={<a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a>} />
@@ -203,7 +203,7 @@ export default function RegistreCNIL() {
         </div>
 
         <p className="text-xs text-[#3D3D3D]/40 text-center pt-4 border-t border-[#F5F5F5]">
-          Registre établi le Mars 2026 — Maxime HUET — 7 rue du Chesne, 27190 Nogent-le-Sec — À conserver et tenir à jour. Présentable à la CNIL sur demande.
+          Registre établi le Mars 2026 — Manon LISSE — 7 rue du Chesne, 27190 Nogent-le-Sec — À conserver et tenir à jour. Présentable à la CNIL sur demande.
         </p>
 
       </section>

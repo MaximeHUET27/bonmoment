@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 
 export async function GET(request) {
   const { searchParams, origin } = new URL(request.url)
-  const code = searchParams.get('code')
+  const code  = searchParams.get('code')
   const error = searchParams.get('error')
 
   // Paramètre de redirection post-connexion (chemin local uniquement)
@@ -18,8 +18,41 @@ export async function GET(request) {
   }
 
   if (!code) {
-    // Pas de code → retour silencieux à l'accueil
-    return NextResponse.redirect(`${origin}/`)
+    // Pas de ?code= dans l'URL.
+    // Cas possible : flux implicite Supabase — les tokens arrivent dans le fragment
+    // (#access_token=…&refresh_token=…). Le serveur ne peut pas lire le fragment,
+    // on renvoie une micro-page HTML qui le lit côté client et appelle
+    // /api/auth/set-session pour établir la session via cookie.
+    const nextEncoded = JSON.stringify(next) // safe inline JS string
+    return new Response(
+      `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="utf-8"><title>Connexion en cours…</title></head>
+<body>
+<script>
+(function () {
+  var hash = window.location.hash.slice(1)
+  var p    = new URLSearchParams(hash)
+  var at   = p.get('access_token')
+  var rt   = p.get('refresh_token')
+  var dest = ${nextEncoded}
+
+  if (at) {
+    fetch('/api/auth/set-session', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ access_token: at, refresh_token: rt })
+    }).finally(function () { window.location.replace(dest) })
+  } else {
+    // Aucun token trouvé — rediriger avec une erreur visible pour diagnostic
+    window.location.replace('/?auth_error=no_code')
+  }
+})()
+</script>
+</body>
+</html>`,
+      { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+    )
   }
 
   const cookieStore = await cookies()
@@ -29,8 +62,8 @@ export async function GET(request) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
-        getAll()                { return cookieStore.getAll() },
-        setAll(cookiesToSet)    {
+        getAll()             { return cookieStore.getAll() },
+        setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) =>
             cookieStore.set(name, value, options)
           )
@@ -47,8 +80,6 @@ export async function GET(request) {
   }
 
   // ── Insertion / mise à jour du profil public.users ──────────────────────
-  // Exécutée côté serveur au moment de la première connexion (et idempotente
-  // via ignoreDuplicates pour les connexions suivantes).
   if (data.user) {
     const u = data.user
     const { error: upsertError } = await supabase.from('users').upsert(
@@ -57,13 +88,10 @@ export async function GET(request) {
         email:      u.email,
         nom:        u.user_metadata?.full_name ?? u.user_metadata?.name ?? null,
         avatar_url: u.user_metadata?.avatar_url ?? null,
-        // badge_niveau et role restent à leur valeur par défaut ('habitant')
       },
       { onConflict: 'id', ignoreDuplicates: true }
     )
-
     if (upsertError) {
-      // Non bloquant : l'utilisateur est quand même connecté
       console.error('[auth/callback] upsert users error:', upsertError.message)
     }
   }

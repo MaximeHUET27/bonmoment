@@ -90,7 +90,7 @@ const FAQ = [
     questions: [
       {
         q: 'Combien coûte BONMOMENT ?',
-        r: "Découverte 29€ HT/mois (4 offres), Essentiel 49€ HT/mois (8 offres), Pro 79€ HT/mois (16 offres). Premier mois offert avec CB enregistrée. Bons illimités sur tous les paliers.",
+        r: "Découverte 29€/mois (4 offres), Essentiel 49€/mois (8 offres), Pro 79€/mois (16 offres). Premier mois offert avec CB enregistrée. Bons illimités sur tous les paliers.",
       },
       {
         q: 'Faut-il un SIRET ?',

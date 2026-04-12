@@ -47,23 +47,47 @@ export function AuthProvider({ children }) {
   }, [])
 
   /**
-   * Lance le flux OAuth Google (extensible aux autres providers plus tard).
-   * @param {string} provider   - 'google' | 'facebook' | 'apple' | 'azure'
+   * Lance le flux OAuth.
+   * @param {string} provider      - 'google' | 'facebook' | 'azure'
    * @param {string} redirectAfter - chemin vers lequel revenir après connexion
    */
-  function signIn(provider = 'google', redirectAfter = '/') {
+  async function signIn(provider = 'google', redirectAfter = '/') {
     // Sanitise le paramètre next (chemin local uniquement)
     const next = redirectAfter.startsWith('/') ? redirectAfter : '/'
+
+    // Azure (Microsoft) nécessite des scopes explicites pour le tenant /consumers
+    const extraOptions = provider === 'azure'
+      ? { scopes: 'openid profile email' }
+      : {}
+
     return supabase.auth.signInWithOAuth({
       provider,
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        ...extraOptions,
       },
     })
   }
 
-  function signOut() {
-    return supabase.auth.signOut()
+  async function signOut() {
+    // Nettoyer les clés localStorage liées à l'utilisateur
+    try {
+      localStorage.removeItem('bonmoment_tutoriel')
+    } catch {}
+
+    // Nettoyer toutes les clés sessionStorage utilisateur
+    try {
+      sessionStorage.removeItem('bonmoment_pending_reservation')
+      sessionStorage.removeItem('bonmoment_pending_abonne_comm')
+      sessionStorage.removeItem('bonmoment_pending_ville_overlay')
+      sessionStorage.removeItem('bonmoment_pending_favori')
+      sessionStorage.removeItem('pendingAbonnementVille')
+    } catch {}
+
+    await supabase.auth.signOut()
+
+    // Hard redirect — force un rechargement complet pour vider tous les states React
+    window.location.href = '/'
   }
 
   return (

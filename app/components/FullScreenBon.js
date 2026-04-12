@@ -3,8 +3,11 @@
 import { useState, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import ShareButton from '@/app/components/ShareButton'
+import CommerceInfoCard from '@/app/components/CommerceInfoCard'
 import { useAuth } from '@/app/context/AuthContext'
 import { formatDebut } from '@/lib/offreStatus'
+import { getFullOffreTitle } from '@/lib/offreTitle'
+import { useToast } from '@/app/components/Toast'
 
 /* QRCodeSVG chargé dynamiquement (évite SSR) */
 const QRCodeSVG = dynamic(
@@ -21,21 +24,21 @@ const QRCodeSVG = dynamic(
 
 /* ── Helpers ──────────────────────────────────────────────────────────── */
 
+function calcTimeLeft(dateFin) {
+  const diff = new Date(dateFin) - new Date()
+  if (diff <= 0) return null
+  return {
+    h:    Math.floor(diff / 3_600_000),
+    m:    Math.floor((diff % 3_600_000) / 60_000),
+    s:    Math.floor((diff % 60_000) / 1_000),
+    diff,
+  }
+}
+
 function useCountdown(dateFin) {
-  const [tl, setTl] = useState(null)
+  const [tl, setTl] = useState(() => calcTimeLeft(dateFin))
   useEffect(() => {
-    function calc() {
-      const diff = new Date(dateFin) - new Date()
-      if (diff <= 0) return null
-      return {
-        h:    Math.floor(diff / 3_600_000),
-        m:    Math.floor((diff % 3_600_000) / 60_000),
-        s:    Math.floor((diff % 60_000) / 1_000),
-        diff,
-      }
-    }
-    setTl(calc())
-    const t = setInterval(() => setTl(calc()), 1_000)
+    const t = setInterval(() => setTl(calcTimeLeft(dateFin)), 1_000)
     return () => clearInterval(t)
   }, [dateFin])
   return tl
@@ -55,7 +58,7 @@ function formatBadge(offre) {
   if (offre.type_remise === 'produit_offert') return '📦 Offert'
   if (offre.type_remise === 'service_offert') return '✂️ Offert'
   if (offre.type_remise === 'concours')       return '🎰 Concours'
-  if (offre.type_remise === 'atelier')        return '🎨 Atelier'
+  if (offre.type_remise === 'atelier')        return '🎉 Évènement'
   return 'Offre'
 }
 
@@ -69,12 +72,12 @@ function formatBadge(offre) {
  */
 export default function FullScreenBon({ reservation, offre, commerce, onClose }) {
   const { supabase }     = useAuth()
+  const { showToast }    = useToast()
   const timeLeft         = useCountdown(offre?.date_fin)
   const wakeLock         = useRef(null)
   const [entered,        setEntered]        = useState(false)
   const [confirmCancel,  setConfirmCancel]  = useState(false)
   const [cancelling,     setCancelling]     = useState(false)
-  const [cancelOk,       setCancelOk]       = useState(false)
   const [isAndroid,      setIsAndroid]      = useState(false)
   const [walletUrl,      setWalletUrl]      = useState(null)
 
@@ -87,6 +90,7 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
   /* Détection Android + chargement URL Google Wallet */
   useEffect(() => {
     const android = /Android/i.test(navigator.userAgent)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsAndroid(android)
     if (!android || !reservation?.id) return
     fetch(`/api/wallet/google?reservation_id=${reservation.id}`)
@@ -116,7 +120,7 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
         await supabase.from('offres').update({ nb_bons_restants: o.nb_bons_restants + 1 }).eq('id', offre.id)
       }
       window.dispatchEvent(new CustomEvent('bonmoment:annulation', { detail: { offreId: offre.id } }))
-      setCancelOk(true)
+      showToast('Bon annulé. Le bon a été remis en disponibilité.')
       setTimeout(() => onClose?.(), 1800)
     } catch {
       setCancelling(false)
@@ -126,16 +130,18 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
   const qrUrl      = reservation?.qr_code_data
     || `${typeof window !== 'undefined' ? window.location.origin : 'https://bonmoment.app'}/bon/${reservation?.id}`
 
-  const mapsUrl    = commerce?.adresse
-    ? `https://maps.google.com/?q=${encodeURIComponent(`${commerce.adresse}, ${commerce.ville || ''}`)}`
-    : null
-
   const programmee = offre?.date_debut && new Date(offre.date_debut) > new Date()
   const timerRed   = !programmee && timeLeft && timeLeft.diff < 1_800_000
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col sm:items-center sm:justify-center sm:bg-black/60">
-      <div className="relative bg-white flex-1 sm:flex-none overflow-y-auto sm:w-full sm:max-w-[500px] sm:max-h-[90vh] sm:rounded-3xl sm:shadow-2xl">
+    <div
+      className="fixed inset-0 z-[100] flex flex-col sm:items-center sm:justify-center sm:bg-black/60"
+      onClick={onClose ?? undefined}
+    >
+      <div
+        className="relative bg-white flex-1 sm:flex-none overflow-y-auto sm:w-full sm:max-w-[500px] sm:max-h-[90vh] sm:rounded-3xl sm:shadow-2xl"
+        onClick={e => e.stopPropagation()}
+      >
 
       {/* ── Bouton fermer ── */}
       {onClose && (
@@ -162,7 +168,7 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
             {formatBadge(offre)}
           </span>
           <p className="text-sm text-[#3D3D3D]/60 mt-0.5 leading-snug">
-            {offre?.titre}
+            {getFullOffreTitle(offre)}
           </p>
         </div>
 
@@ -207,7 +213,7 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
             <>
               <p className="text-xl font-black text-[#FF6B00]">📅 Valable à partir du</p>
               <p className="text-base font-bold text-[#FF6B00] mt-1">{formatDebut(offre.date_debut)}</p>
-              <p className="text-[11px] text-[#FF6B00]/70 mt-1 font-medium">Ce bon n'est pas encore actif</p>
+              <p className="text-[11px] text-[#FF6B00]/70 mt-1 font-medium">Ce bon n&apos;est pas encore actif</p>
             </>
           ) : timeLeft ? (
             <>
@@ -225,12 +231,8 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
           )}
         </div>
 
-        {/* ── Adresse ── */}
-        {commerce?.adresse && (
-          <p className="text-xs text-[#3D3D3D]/60 text-center">
-            📍 {commerce.adresse}{commerce.ville ? `, ${commerce.ville}` : ''}
-          </p>
-        )}
+        {/* ── Infos commerce ── */}
+        <CommerceInfoCard commerce={commerce} commerceId={commerce?.id} />
 
         {/* ── Bouton Google Wallet (Android uniquement) ── */}
         {isAndroid && walletUrl && (
@@ -244,18 +246,6 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
             </svg>
             Ajouter à Google Wallet
-          </a>
-        )}
-
-        {/* ── Bouton S'y rendre ── */}
-        {mapsUrl && (
-          <a
-            href={mapsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-2 border-2 border-[#FF6B00] text-[#FF6B00] font-bold text-sm py-3.5 rounded-2xl hover:bg-[#FFF0E0] transition-colors min-h-[48px]"
-          >
-            📍 S'y rendre
           </a>
         )}
 
@@ -306,16 +296,6 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
       </div>
       </div>
 
-      {/* Toast annulation réussie */}
-      {cancelOk && (
-        <div
-          className="fixed bottom-24 left-4 right-4 z-[200] bg-[#0A0A0A] text-white text-sm font-semibold px-4 py-3 rounded-2xl shadow-xl text-center"
-          style={{ animation: 'fadeSlideUp 0.3s ease' }}
-        >
-          Bon annulé. Le bon a été remis en disponibilité.
-          <style>{`@keyframes fadeSlideUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }`}</style>
-        </div>
-      )}
     </div>
   )
 }

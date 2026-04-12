@@ -10,7 +10,7 @@ import { useAuth } from '@/app/context/AuthContext'
 export default function NotifBottomSheet({ isOpen, onClose, villeNom }) {
   const { user, supabase } = useAuth()
   const [emailOn, setEmailOn]   = useState(true)
-  const [pushOn,  setPushOn]    = useState(false)
+  const [pushOn,  setPushOn]    = useState(true)
   const [saving,  setSaving]    = useState(false)
 
   useEffect(() => {
@@ -73,7 +73,7 @@ export default function NotifBottomSheet({ isOpen, onClose, villeNom }) {
     if (user) {
       await supabase
         .from('users')
-        .update({ notifications_email: emailOn })
+        .update({ notifications_email: emailOn, notifications_push: pushOn })
         .eq('id', user.id)
     }
     setSaving(false)

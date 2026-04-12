@@ -13,7 +13,7 @@ function formatBadge(offre) {
   if (offre.type_remise === 'produit_offert') return '📦 Offert'
   if (offre.type_remise === 'service_offert') return '✂️ Offert'
   if (offre.type_remise === 'concours')       return '🎰 Concours'
-  if (offre.type_remise === 'atelier')        return '🎨 Atelier'
+  if (offre.type_remise === 'atelier')        return '🎉 Évènement'
   return 'Offre'
 }
 
@@ -31,6 +31,7 @@ export default function FloatingBonButton() {
 
   /* ── Cherche toutes les réservations actives ── */
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!user) { setReservations([]); return }
 
     async function fetchActive() {
@@ -57,6 +58,16 @@ export default function FloatingBonButton() {
     return () => window.removeEventListener('bonmoment:reservation', fetchActive)
   }, [user, supabase])
 
+  function openBon(r) {
+    setSelected({
+      reservation: { id: r.id, code_validation: r.code_validation, qr_code_data: r.qr_code_data },
+      offre:       r.offres,
+      commerce:    r.offres?.commerces,
+    })
+    setShowBon(true)
+    setShowPicker(false)
+  }
+
   /* ── Écoute l'événement "showpicker" depuis AuthButton ── */
   useEffect(() => {
     function onShowPicker() {
@@ -65,7 +76,6 @@ export default function FloatingBonButton() {
     }
     window.addEventListener('bonmoment:showpicker', onShowPicker)
     return () => window.removeEventListener('bonmoment:showpicker', onShowPicker)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reservations])
 
   /* ── Auto-expire : retire les bons expirés ── */
@@ -84,16 +94,6 @@ export default function FloatingBonButton() {
   }, [reservations])
 
   if (!reservations.length) return null
-
-  function openBon(r) {
-    setSelected({
-      reservation: { id: r.id, code_validation: r.code_validation, qr_code_data: r.qr_code_data },
-      offre:       r.offres,
-      commerce:    r.offres?.commerces,
-    })
-    setShowBon(true)
-    setShowPicker(false)
-  }
 
   function handleClick() {
     if (reservations.length === 1) {

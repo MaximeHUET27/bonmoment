@@ -11,6 +11,7 @@ export function FavorisProvider({ children }) {
 
   /* Chargement initial + re-chargement quand le user change */
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!user || !supabase) { setFavoriIds(new Set()); return }
     supabase
       .from('users')

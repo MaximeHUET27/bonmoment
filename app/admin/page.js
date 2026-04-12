@@ -1,158 +1,104 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 
-/* ── Objectifs SaaS (référence cahier des charges) ──────────────────────── */
-const OBJ = {
-  mrr:                     1000,
-  commercants_actifs:        20,
-  clients_total:            500,
-  villes_actives:             5,
-  offres_actives:            40,
-  bons_reserves_mois:       300,
-  bons_utilises_mois:       180,
-  taux_utilisation:          60,
-  churn:                      5,   // objectif : < 5%
-  arr:                    12000,
-  arpu:                      50,
-  taux_activation:           80,
-  offres_par_commerce_mois:   4,
-  dau_mau:                   20,
-  retention_m1:              70,
+/* ── Helpers ── */
+function fmt(n) { return n?.toLocaleString('fr-FR') ?? '—' }
+function fmtEur(n) { return n != null ? n.toLocaleString('fr-FR') + ' €' : '—' }
+function fmtPct(n) { return n != null ? n + ' %' : '—' }
+
+function evolColor(e) {
+  if (e == null) return 'text-[#3D3D3D]/40'
+  return e >= 0 ? 'text-green-600' : 'text-red-500'
+}
+function evolLabel(e) {
+  if (e == null) return ''
+  return (e >= 0 ? '↑' : '↓') + Math.abs(e) + '%'
 }
 
-/* ── Helpers couleur ─────────────────────────────────────────────────────── */
-function colorKPI(val, obj, inversed = false) {
-  if (inversed) {
-    if (val <= obj)           return { text: '#22C55E', bg: '#F0FDF4', dot: '#22C55E' }
-    if (val <= obj * 1.5)     return { text: '#FF6B00', bg: '#FFF7ED', dot: '#FF6B00' }
-    return                           { text: '#EF4444', bg: '#FEF2F2', dot: '#EF4444' }
-  }
-  const pct = obj > 0 ? val / obj : 1
-  if (pct >= 1)       return { text: '#22C55E', bg: '#F0FDF4', dot: '#22C55E' }
-  if (pct >= 0.5)     return { text: '#FF6B00', bg: '#FFF7ED', dot: '#FF6B00' }
-  return                     { text: '#EF4444', bg: '#FEF2F2', dot: '#EF4444' }
+function retentionColor(v) {
+  if (v == null) return 'bg-[#F5F5F5] text-[#3D3D3D]/40'
+  if (v >= 80)   return 'bg-green-100 text-green-800'
+  if (v >= 50)   return 'bg-orange-100 text-orange-700'
+  return 'bg-red-100 text-red-700'
 }
 
-function pctProgress(val, obj) {
-  return Math.min((val / obj) * 100, 100)
-}
-
-function formatEur(n) {
-  return n?.toLocaleString('fr-FR') + ' €'
-}
-
-/* ── Carte KPI ───────────────────────────────────────────────────────────── */
-function KpiCard({ icon, label, value, obj, unit = '', inversed = false, format }) {
-  const display = format ? format(value) : `${value}${unit}`
-  const c       = colorKPI(value, obj, inversed)
-
+/* ── KpiCard ── */
+function KpiCard({ icon, label, value, evol, sub }) {
   return (
-    <div
-      className="flex flex-col gap-1 bg-white rounded-2xl px-4 py-4 shadow-sm min-w-[140px] sm:min-w-0 border border-[#F0F0F0]"
-      style={{ borderTop: `3px solid ${c.dot}` }}
-    >
-      <span className="text-2xl leading-none">{icon}</span>
-      <p
-        className="text-2xl font-black leading-tight tabular-nums"
-        style={{ color: c.text }}
-      >
-        {display}
-      </p>
+    <div className="bg-white rounded-2xl px-4 py-4 shadow-sm border border-[#F0F0F0] flex flex-col gap-1 min-w-0">
+      <div className="flex items-center justify-between">
+        <span className="text-xl">{icon}</span>
+        {evol != null && (
+          <span className={`text-[10px] font-bold ${evolColor(evol)}`}>{evolLabel(evol)}</span>
+        )}
+      </div>
+      <p className="text-xl font-black text-[#0A0A0A] tabular-nums leading-tight">{value}</p>
       <p className="text-[10px] font-semibold text-[#3D3D3D]/60 uppercase tracking-wide leading-tight">{label}</p>
-      {obj != null && (
-        <p className="text-[9px] text-[#3D3D3D]/40">
-          Obj. {format ? format(obj) : `${obj}${unit}`}
-        </p>
-      )}
+      {sub && <p className="text-[9px] text-[#3D3D3D]/40 leading-tight">{sub}</p>}
     </div>
   )
 }
 
-/* ── Ligne KPI SaaS avancé avec barre ──────────────────────────────────────── */
-function SaasRow({ icon, label, value, obj, unit = '', inversed = false, format, note }) {
-  if (value === null || value === undefined) {
-    return (
-      <div className="flex items-center gap-3 py-3 border-b border-[#F5F5F5] last:border-0">
-        <span className="text-xl w-7 shrink-0">{icon}</span>
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-bold text-[#0A0A0A]">{label}</span>
-            <span className="text-xs text-[#3D3D3D]/40">N/A</span>
-          </div>
-          {note && <p className="text-[10px] text-[#3D3D3D]/40">{note}</p>}
-        </div>
-      </div>
-    )
-  }
-
-  const c    = colorKPI(value, obj, inversed)
-  const pct  = inversed
-    ? Math.min((obj / Math.max(value, 0.01)) * 100, 100)
-    : pctProgress(value, obj)
-  const display = format ? format(value) : `${value}${unit}`
-  const objFmt  = format ? format(obj)   : `${obj}${unit}`
-
+/* ── Alerte bannière ── */
+function AlertBanner({ alertes }) {
+  const [dismissed, setDismissed] = useState([])
+  const visible = alertes.filter((_, i) => !dismissed.includes(i))
+  if (!visible.length) return null
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-[#F5F5F5] last:border-0">
-      <span className="text-xl w-7 shrink-0">{icon}</span>
-      <div className="flex-1">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-sm font-bold text-[#0A0A0A]">{label}</span>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-black tabular-nums" style={{ color: c.text }}>
-              {display}
-            </span>
-            <span className="text-[10px] text-[#3D3D3D]/40">/ {objFmt}</span>
-          </div>
+    <div className="flex flex-col gap-2">
+      {alertes.map((a, i) => dismissed.includes(i) ? null : (
+        <div
+          key={i}
+          className={`flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-sm font-semibold ${
+            a.type === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-[#FFF0E0] text-[#CC5500] border border-[#FFD0A0]'
+          }`}
+        >
+          <span>{a.msg}</span>
+          <button onClick={() => setDismissed(d => [...d, i])} className="shrink-0 text-base opacity-60 hover:opacity-100">✕</button>
         </div>
-        <div className="w-full h-2 bg-[#F0F0F0] rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-700"
-            style={{ width: `${pct}%`, backgroundColor: c.dot }}
-          />
-        </div>
-        {note && <p className="text-[10px] text-[#3D3D3D]/40 mt-1">{note}</p>}
-      </div>
+      ))}
     </div>
   )
 }
 
-/* ── Composant principal ─────────────────────────────────────────────────── */
+/* ── Skeleton ── */
+function Sk({ className }) {
+  return <div className={`bg-[#E0E0E0] rounded-xl animate-pulse ${className}`} />
+}
+
+/* ── Composant principal ── */
 export default function AdminDashboard() {
   const [data,    setData]    = useState(null)
   const [loading, setLoading] = useState(true)
-  const [error,   setError]   = useState(null)
 
   useEffect(() => {
-    fetch('/api/admin/stats')
+    fetch('/api/admin/dashboard')
       .then(r => r.json())
       .then(d => { setData(d); setLoading(false) })
-      .catch(() => { setError('Erreur de chargement'); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <span className="w-8 h-8 border-[3px] border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
+  if (loading) return (
+    <div className="flex flex-col gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        {[...Array(10)].map((_, i) => <Sk key={i} className="h-24" />)}
       </div>
-    )
-  }
-
-  if (error || !data) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh] text-red-500 font-semibold">
-        {error || 'Données indisponibles'}
+      <Sk className="h-64" />
+      <div className="grid sm:grid-cols-2 gap-4">
+        <Sk className="h-48" /><Sk className="h-48" />
       </div>
-    )
-  }
+    </div>
+  )
 
-  const { kpis, saas } = data
+  if (!data) return <p className="text-red-500 font-semibold">Erreur de chargement</p>
+
+  const { kpis, graphiques, cohorte, alertes } = data
 
   return (
     <div className="flex flex-col gap-6">
 
-      {/* ── Titre ── */}
       <div>
         <h1 className="text-2xl font-black text-[#0A0A0A]">Dashboard</h1>
         <p className="text-sm text-[#3D3D3D]/60 mt-0.5">
@@ -160,105 +106,116 @@ export default function AdminDashboard() {
         </p>
       </div>
 
-      {/* ── KPIs principaux — scroll horizontal mobile, grille desktop ── */}
+      {/* Alertes */}
+      {alertes?.length > 0 && <AlertBanner alertes={alertes} />}
+
+      {/* KPIs ligne 1 */}
       <section>
-        <h2 className="text-xs font-black uppercase tracking-widest text-[#3D3D3D]/50 mb-3">
-          KPIs du mois
-        </h2>
-        <div
-          className="flex sm:grid sm:grid-cols-3 lg:grid-cols-5 gap-3 overflow-x-auto pb-2 sm:overflow-visible sm:pb-0"
-          style={{ scrollbarWidth: 'none' }}
-        >
-          <KpiCard icon="💰" label="MRR"                  value={kpis.mrr}                  obj={OBJ.mrr}                format={formatEur} />
-          <KpiCard icon="🏪" label="Commerçants actifs"   value={kpis.commercants_actifs}   obj={OBJ.commercants_actifs} />
-          <KpiCard icon="👥" label="Clients inscrits"     value={kpis.clients_total}        obj={OBJ.clients_total} />
-          <KpiCard icon="📍" label="Villes actives"       value={kpis.villes_actives}       obj={OBJ.villes_actives} />
-          <KpiCard icon="🎟️" label="Offres actives"       value={kpis.offres_actives}       obj={OBJ.offres_actives} />
-          <KpiCard icon="📋" label="Bons réservés / mois" value={kpis.bons_reserves_mois}   obj={OBJ.bons_reserves_mois} />
-          <KpiCard icon="✅" label="Bons utilisés / mois" value={kpis.bons_utilises_mois}   obj={OBJ.bons_utilises_mois} />
-          <KpiCard icon="📈" label="Taux utilisation"     value={kpis.taux_utilisation}     obj={OBJ.taux_utilisation} unit="%" />
-          <KpiCard icon="📉" label="Churn rate"           value={kpis.churn}                obj={OBJ.churn}            unit="%" inversed />
+        <p className="text-[10px] font-black uppercase tracking-widest text-[#3D3D3D]/50 mb-2">Revenus & croissance</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <KpiCard icon="💰" label="MRR"       value={fmtEur(kpis.mrr)}   evol={kpis.mrr_evol} />
+          <KpiCard icon="📈" label="ARR"       value={fmtEur(kpis.arr)}   />
+          <KpiCard icon="👤" label="ARPU"      value={fmtEur(kpis.arpu)}  />
+          <KpiCard icon="📉" label="Churn mensuel" value={fmtPct(kpis.churn)} />
+          <KpiCard icon="🚀" label="Conv. essai→payant" value={kpis.taux_conv != null ? fmtPct(kpis.taux_conv) : 'N/A'} />
         </div>
       </section>
 
-      {/* ── KPIs SaaS avancés ── */}
-      <section className="bg-white rounded-3xl px-5 py-5 shadow-sm">
-        <h2 className="text-xs font-black uppercase tracking-widest text-[#3D3D3D]/50 mb-1">
-          KPIs SaaS avancés
-        </h2>
-        <p className="text-[11px] text-[#3D3D3D]/40 mb-4">Indicateurs de santé business</p>
-
-        <div className="grid sm:grid-cols-2 gap-x-8">
-          <div>
-            <SaasRow
-              icon="💵"
-              label="ARR (Revenu annuel récurrent)"
-              value={saas.arr}
-              obj={OBJ.arr}
-              format={formatEur}
-            />
-            <SaasRow
-              icon="👤"
-              label="ARPU (Revenu moyen par commerçant)"
-              value={saas.arpu}
-              obj={OBJ.arpu}
-              format={formatEur}
-            />
-            <SaasRow
-              icon="🚀"
-              label="Taux d'activation"
-              value={saas.taux_activation}
-              obj={OBJ.taux_activation}
-              unit="%"
-              note="Commerçants ayant publié ≥1 offre"
-            />
-          </div>
-          <div>
-            <SaasRow
-              icon="📦"
-              label="Offres / commerçant / mois"
-              value={saas.offres_par_commerce_mois}
-              obj={OBJ.offres_par_commerce_mois}
-              note="Activité de publication"
-            />
-            <SaasRow
-              icon="📡"
-              label="DAU / MAU"
-              value={saas.dau_mau}
-              obj={OBJ.dau_mau}
-              unit="%"
-              note="Engagement quotidien vs mensuel"
-            />
-            <SaasRow
-              icon="🔄"
-              label="Rétention M1"
-              value={saas.retention_m1}
-              obj={OBJ.retention_m1}
-              unit="%"
-              note={saas.retention_m1 === null ? "Pas assez de données (< 2 mois)" : "Commerçants encore actifs 1 mois après inscription"}
-            />
-          </div>
+      {/* KPIs ligne 2 */}
+      <section>
+        <p className="text-[10px] font-black uppercase tracking-widest text-[#3D3D3D]/50 mb-2">Activité & engagement</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <KpiCard icon="🏪" label="Commerçants actifs"   value={fmt(kpis.actifs)}
+            sub={`${kpis.essai} essai • ${kpis.resilies} résiliés`} />
+          <KpiCard icon="👥" label="Clients inscrits"     value={fmt(kpis.clients_tot)} evol={kpis.clients_evol}
+            sub={`${fmt(kpis.actifs_30j)} actifs 30j`} />
+          <KpiCard icon="⚡" label="Taux activation"      value={fmtPct(kpis.taux_activ)} />
+          <KpiCard icon="✅" label="Taux utilisation bons" value={fmtPct(kpis.taux_util)} evol={kpis.taux_util_evol} />
+          <KpiCard icon="📍" label="Villes actives"       value={fmt(kpis.villes_actives)} />
         </div>
       </section>
 
-      {/* ── Raccourcis vers les tables ── */}
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          { href: '/admin/commercants', icon: '🏪', label: 'Gérer les commerçants', color: '#FF6B00' },
-          { href: '/admin/clients',     icon: '👥', label: 'Voir les clients',       color: '#3B82F6' },
-          { href: '/admin/offres',      icon: '🎟️', label: 'Toutes les offres',      color: '#8B5CF6' },
-        ].map(l => (
-          <a
-            key={l.href}
-            href={l.href}
-            className="bg-white rounded-2xl px-5 py-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow border border-[#F0F0F0] hover:border-[#FF6B00]/30 group"
-          >
-            <span className="text-3xl">{l.icon}</span>
-            <span className="font-bold text-sm text-[#0A0A0A] group-hover:text-[#FF6B00] transition-colors">
-              {l.label} →
-            </span>
-          </a>
-        ))}
+      {/* Graphique MRR 12 mois */}
+      <section className="bg-white rounded-2xl p-5 shadow-sm border border-[#F0F0F0]">
+        <p className="text-sm font-bold text-[#0A0A0A] mb-4">MRR — 12 mois glissants</p>
+        <ResponsiveContainer width="100%" height={200}>
+          <AreaChart data={graphiques.mrr}>
+            <defs>
+              <linearGradient id="mrrGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor="#FF6B00" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#FF6B00" stopOpacity={0}   />
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="label" tick={{ fontSize: 10 }} />
+            <YAxis tick={{ fontSize: 10 }} tickFormatter={v => v + '€'} />
+            <Tooltip formatter={v => v + ' €'} />
+            <Area type="monotone" dataKey="mrr" stroke="#FF6B00" fill="url(#mrrGrad)" strokeWidth={2} dot={false} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </section>
+
+      {/* Graphiques inscriptions + taux util */}
+      <div className="grid sm:grid-cols-2 gap-4">
+        <section className="bg-white rounded-2xl p-5 shadow-sm border border-[#F0F0F0]">
+          <p className="text-sm font-bold text-[#0A0A0A] mb-4">Inscriptions — 6 mois</p>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={graphiques.inscriptions}>
+              <XAxis dataKey="label" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} />
+              <Tooltip />
+              <Legend wrapperStyle={{ fontSize: 10 }} />
+              <Bar dataKey="essai"   name="Essai"    fill="#FF6B00" stackId="a" />
+              <Bar dataKey="payant"  name="Payant"   fill="#CC5500" stackId="a" />
+              <Bar dataKey="clients" name="Clients"  fill="#3B82F6" />
+            </BarChart>
+          </ResponsiveContainer>
+        </section>
+
+        <section className="bg-white rounded-2xl p-5 shadow-sm border border-[#F0F0F0]">
+          <p className="text-sm font-bold text-[#0A0A0A] mb-4">Taux utilisation bons — 6 mois</p>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={graphiques.util}>
+              <XAxis dataKey="label" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} tickFormatter={v => v + '%'} domain={[0, 100]} />
+              <Tooltip formatter={v => v + ' %'} />
+              <Bar dataKey="taux" name="Taux %" fill="#22C55E" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </section>
+      </div>
+
+      {/* Heatmap rétention cohorte */}
+      <section className="bg-white rounded-2xl p-5 shadow-sm border border-[#F0F0F0]">
+        <p className="text-sm font-bold text-[#0A0A0A] mb-1">Rétention cohorte commerçants</p>
+        <p className="text-[10px] text-[#3D3D3D]/50 mb-4">% encore actifs par rapport au mois d&apos;inscription</p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-[#3D3D3D]/50">
+                <th className="text-left py-2 pr-4 font-semibold">Cohorte</th>
+                <th className="px-2 font-semibold">Total</th>
+                <th className="px-2 font-semibold">M+1</th>
+                <th className="px-2 font-semibold">M+2</th>
+                <th className="px-2 font-semibold">M+3</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(cohorte || []).map((row, i) => (
+                <tr key={i} className="border-t border-[#F5F5F5]">
+                  <td className="py-2 pr-4 font-semibold text-[#0A0A0A]">{row.label}</td>
+                  <td className="px-2 text-center">{row.total}</td>
+                  {['m1', 'm2', 'm3'].map(m => (
+                    <td key={m} className="px-2 text-center">
+                      <span className={`inline-block px-2 py-0.5 rounded font-bold ${retentionColor(row[m])}`}>
+                        {row[m] != null ? row[m] + '%' : '—'}
+                      </span>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
     </div>

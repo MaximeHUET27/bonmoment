@@ -19,6 +19,7 @@ body {
   background: #ffffff;
   color: #3D3D3D;
   font-family: var(--font-sans);
+  overflow-x: hidden;
 }
 
 @keyframes marquee {
