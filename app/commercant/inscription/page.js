@@ -11,6 +11,15 @@ import { getCategorieFiltre } from '@/app/ville/[slug]/OffreCard'
 
 const LIBRARIES = ['places']
 
+const JOURS_EN_FR = {
+  'Monday': 'Lundi', 'Tuesday': 'Mardi', 'Wednesday': 'Mercredi',
+  'Thursday': 'Jeudi', 'Friday': 'Vendredi', 'Saturday': 'Samedi', 'Sunday': 'Dimanche',
+}
+function tradJour(str) {
+  if (!str) return str
+  return str.replace(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/, d => JOURS_EN_FR[d] || d)
+}
+
 /* ── Constantes ─────────────────────────────────────────────────────────── */
 
 const MAPS_FIELDS = [
@@ -514,7 +523,7 @@ export default function InscriptionCommercant() {
                       <span className="text-sm mt-0.5 shrink-0">🕐</span>
                       <div className="flex flex-col gap-0.5">
                         {(showAllHoraires ? selectedPlace.horaires : selectedPlace.horaires.slice(0, 3)).map((h, i) => (
-                          <p key={i} className="text-xs text-[#3D3D3D]">{h}</p>
+                          <p key={i} className="text-xs text-[#3D3D3D]">{tradJour(h)}</p>
                         ))}
                         {selectedPlace.horaires.length > 3 && (
                           <button

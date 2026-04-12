@@ -10,6 +10,15 @@ import Image from 'next/image'
  *   commerceId  = string | undefined — si fourni, le nom devient un lien vers /commercant/[id]
  */
 
+const JOURS_EN_FR = {
+  'Monday': 'Lundi', 'Tuesday': 'Mardi', 'Wednesday': 'Mercredi',
+  'Thursday': 'Jeudi', 'Friday': 'Vendredi', 'Saturday': 'Samedi', 'Sunday': 'Dimanche',
+}
+function tradJour(str) {
+  if (!str) return str
+  return str.replace(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/, d => JOURS_EN_FR[d] || d)
+}
+
 /* Google weekdayDescriptions : index 0 = Lundi … 6 = Dimanche */
 function getTodayIndex() {
   const js = new Date().getDay() // 0=Dim…6=Sam
@@ -92,7 +101,7 @@ export default function CommerceInfoCard({ commerce, commerceId }) {
                 }`}
               >
                 {i === todayIdx && <span className="text-[#FF6B00] mr-1">▶</span>}
-                {desc}
+                {tradJour(desc)}
               </p>
             ))}
           </div>
