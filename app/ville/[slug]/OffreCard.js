@@ -298,7 +298,7 @@ export default function OffreCard({ offre, userReservation }) {
   return (
     <>
       <div
-        className={`bg-white rounded-xl shadow-sm overflow-hidden flex flex-row${fini ? ' opacity-60' : ''}`}
+        className={`bg-white rounded-[12px] shadow-sm overflow-hidden flex flex-row${fini ? ' opacity-60' : ''}`}
         style={{
           border: '1px solid #F0F0F0',
           ...(urgent && !fini ? { borderLeft: '3px solid #ef4444' } : {}),
@@ -328,7 +328,7 @@ export default function OffreCard({ offre, userReservation }) {
         <div className="flex-1 flex flex-col gap-1.5 px-[10px] py-2 sm:px-3 sm:py-2.5 min-w-0">
 
           {/* Ligne 1 : timer + bons + partage — barre orange */}
-          <div className="flex items-center justify-between gap-1 min-w-0 bg-[#FFF0E0] rounded-[6px] px-2 py-1">
+          <div className="flex items-center justify-between gap-1 min-w-0 bg-[#FFF0E0] rounded-[8px] px-2 py-1">
             <Link href={`/offre/${offre.id}`} className="flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
               {programmee ? (
                 <>
@@ -364,7 +364,7 @@ export default function OffreCard({ offre, userReservation }) {
 
           {/* Ligne 2 : badge + titre */}
           <Link href={`/offre/${offre.id}`} className="flex items-start gap-1.5 min-w-0">
-            <span className="shrink-0 bg-[#FF6B00] text-white font-bold text-[11px] px-2 py-0.5 rounded-[4px] whitespace-nowrap">
+            <span className="shrink-0 bg-[#FF6B00] text-white font-bold text-[11px] px-2 py-0.5 rounded-[8px] whitespace-nowrap">
               {formatBadge(offre)}
             </span>
             <span className="text-[13px] font-bold text-[#0A0A0A] line-clamp-2 leading-snug">
@@ -404,7 +404,7 @@ export default function OffreCard({ offre, userReservation }) {
               <button
                 onClick={handleAbonnerComm}
                 disabled={abonneCommLoading}
-                className={`w-full text-white font-bold text-[11px] leading-tight h-[38px] rounded-[8px] transition-all duration-200 flex items-center justify-center text-center gap-1 ${
+                className={`w-full text-white font-bold text-[11px] leading-tight h-[38px] rounded-full transition-all duration-200 flex items-center justify-center text-center gap-1 ${
                   abonneComm
                     ? 'bg-green-500'
                     : 'bg-[#F08040] hover:bg-[#D06830] active:scale-[0.97]'
@@ -426,7 +426,7 @@ export default function OffreCard({ offre, userReservation }) {
                   onClick={handleReserver}
                   disabled={status === 'loading'}
                   style={{ transform: pressing ? 'scale(0.95)' : 'scale(1)', transition: 'transform 0.15s ease' }}
-                  className={`w-full text-white font-bold text-[13px] h-[38px] rounded-[8px] flex items-center justify-center gap-1.5 ${btnColor} ${isPulsing ? 'bm-btn-pulse-cls' : ''}`}
+                  className={`w-full text-white font-bold text-[13px] h-[38px] rounded-full flex items-center justify-center gap-1.5 ${btnColor} ${isPulsing ? 'bm-btn-pulse-cls' : ''}`}
                 >
                   {status === 'loading' ? (
                     <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
