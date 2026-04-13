@@ -31,6 +31,22 @@ body {
   animation: marquee linear infinite;
 }
 
+/* Bandeau villes scrollable */
+.villes-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.villes-scroll::-webkit-scrollbar {
+  display: none;
+}
+.villes-track {
+  animation: marquee 15s linear infinite;
+}
+.villes-track:hover,
+.villes-track:active {
+  animation-play-state: paused;
+}
+
 @keyframes pulse-orange {
   0%, 100% { background-color: #FF6B00; }
   50%       { background-color: #CC5500; }
