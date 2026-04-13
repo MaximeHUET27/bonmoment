@@ -185,7 +185,7 @@ export default function DashboardPage() {
         {/* 0. BANNIÈRE ABONNEMENT — visible uniquement si pas de sub Stripe ── */}
         {commerce && !commerce.stripe_subscription_id && (
           <div className="w-full bg-[#FF6B00] rounded-xl px-4 py-3 flex flex-row items-center justify-between gap-3">
-            <p className="text-white font-bold text-[13px] sm:text-[15px] leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+            <p className="text-white font-bold text-[11px] sm:text-[13px] leading-tight">
               🔒 Pour publier des offres, choisis ton abonnement — 1<sup>er</sup> mois offert !
             </p>
             <Link
