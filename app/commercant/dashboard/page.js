@@ -351,46 +351,58 @@ function KpiCard({ emoji, label, value, sub, valueColor }) {
 /* ── Section abonnement ──────────────────────────────────────────────────── */
 
 function AbonnementSection({ commerce, offres }) {
+  const [subInfo, setSubInfo] = useState(null)   // { current_period_end, cancel_at_period_end, status }
+
+  useEffect(() => {
+    if (!commerce.stripe_subscription_id) return
+    fetch(`/api/stripe/subscription-info?subscription_id=${commerce.stripe_subscription_id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d && !d.error) setSubInfo(d) })
+      .catch(() => {})
+  }, [commerce.stripe_subscription_id])
+
   const PALIERS = {
     decouverte: { nom: 'Découverte', quota: 4,  prix: '29€/mois' },
     essentiel:  { nom: 'Essentiel',  quota: 8,  prix: '49€/mois' },
     pro:        { nom: 'Pro',        quota: 16, prix: '79€/mois' },
-    // Compatibilité clés numériques héritées
     1:          { nom: 'Découverte', quota: 4,  prix: '29€/mois' },
     2:          { nom: 'Essentiel',  quota: 8,  prix: '49€/mois' },
     3:          { nom: 'Pro',        quota: 16, prix: '79€/mois' },
   }
-  const palier = PALIERS[commerce.palier] || PALIERS['decouverte']
-  const now = new Date()
-  const debutMois = new Date(now.getFullYear(), now.getMonth(), 1)
-  const publieesMois = offres.filter(o => new Date(o.created_at || o.date_debut) >= debutMois).length
-  const restantes = Math.max(0, palier.quota - publieesMois)
-  const progPct = Math.min(100, Math.round((publieesMois / palier.quota) * 100))
-  const nextRenewal = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-  const nextRenewalStr = nextRenewal.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 
-  // Pas encore de palier → section masquée (bannière top gère le CTA)
+  const palier = PALIERS[commerce.palier] || PALIERS['decouverte']
+  const now    = new Date()
+
+  const debutMois    = new Date(now.getFullYear(), now.getMonth(), 1)
+  const publieesMois = offres.filter(o => new Date(o.created_at || o.date_debut) >= debutMois).length
+  const restantes    = Math.max(0, palier.quota - publieesMois)
+  const progPct      = Math.min(100, Math.round((publieesMois / palier.quota) * 100))
+
+  // Pas encore de palier → section masquée
   if (!commerce.palier) return null
 
-  const dateFinStr = commerce.date_fin_abonnement
-    ? new Date(commerce.date_fin_abonnement).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+  /* ── Date de renouvellement ────────────────────────────────────────────── */
+  let renewalDate = null
+
+  if (subInfo?.current_period_end) {
+    // Source de vérité : Stripe (timestamp UNIX → Date)
+    renewalDate = new Date(subInfo.current_period_end * 1000)
+  } else if (commerce.date_fin_abonnement) {
+    // Activation admin ou valeur BDD
+    renewalDate = new Date(commerce.date_fin_abonnement)
+  }
+
+  const renewalStr = renewalDate
+    ? new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(renewalDate)
     : null
+
+  /* ── Résiliation prévue : Stripe OU flag BDD ───────────────────────────── */
+  const isResiliation = commerce.resiliation_prevue || subInfo?.cancel_at_period_end === true
 
   return (
     <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
       <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">Ton abonnement</h2>
 
-      {/* Bandeau résiliation prévue */}
-      {commerce.resiliation_prevue && dateFinStr && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 flex flex-col gap-1">
-          <p className="text-xs font-black text-amber-800">
-            ⚠️ Ton abonnement prend fin le {dateFinStr}
-          </p>
-          <p className="text-[11px] text-amber-700/80">
-            Tu peux toujours publier des offres et vérifier des bons jusque-là.
-          </p>
-        </div>
-      )}
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xl font-black text-[#FF6B00]">📦 {palier.nom}</p>
@@ -411,6 +423,7 @@ function AbonnementSection({ commerce, offres }) {
           </Link>
         </div>
       </div>
+
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <p className="text-xs font-semibold text-[#0A0A0A]">{publieesMois}/{palier.quota} offres publiées ce mois</p>
@@ -425,7 +438,22 @@ function AbonnementSection({ commerce, offres }) {
           />
         </div>
       </div>
-      <p className="text-[11px] text-[#3D3D3D]/40">🔄 Renouvellement le {nextRenewalStr}</p>
+
+      {/* Date de renouvellement OU message résiliation — même emplacement */}
+      {renewalStr && (
+        isResiliation ? (
+          <div style={{ background: '#FFF8E0', borderRadius: '8px', padding: '12px' }}>
+            <p className="text-xs font-black" style={{ color: '#8B6E00' }}>
+              ⚠️ Ton abonnement prend fin le {renewalStr}
+            </p>
+            <p className="text-[11px] mt-1" style={{ color: '#8B6E00', opacity: 0.85 }}>
+              Tu peux toujours publier des offres et vérifier des bons jusque-là.
+            </p>
+          </div>
+        ) : (
+          <p className="text-[11px] text-[#3D3D3D]/40">🔄 Renouvellement le {renewalStr}</p>
+        )
+      )}
     </div>
   )
 }

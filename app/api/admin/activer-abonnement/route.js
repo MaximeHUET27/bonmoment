@@ -24,9 +24,17 @@ export async function POST(request) {
     return Response.json({ error: 'Paramètres manquants' }, { status: 400 })
   }
 
+  const dateFin = new Date()
+  dateFin.setMonth(dateFin.getMonth() + 1)
+
   const { error } = await supabaseAdmin
     .from('commerces')
-    .update({ abonnement_actif: true, palier })
+    .update({
+      abonnement_actif:    true,
+      palier,
+      date_fin_abonnement: dateFin.toISOString(),
+      resiliation_prevue:  false,
+    })
     .eq('id', commerce_id)
 
   if (error) {
