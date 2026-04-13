@@ -1,21 +1,22 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/app/context/AuthContext'
 
-export default function ResiliationPage() {
+function ResiliationContent() {
   const { user, loading, supabase } = useAuth()
-  const router = useRouter()
+  const router       = useRouter()
+  const searchParams = useSearchParams()
 
-  const [commerce,    setCommerce]    = useState(null)
-  const [stats,       setStats]       = useState(null)
-  const [fetching,    setFetching]    = useState(true)
-  const [step,        setStep]        = useState('menu')   // 'menu' | 'confirm1' | 'confirm2' | 'pause_done' | 'resil_done'
-  const [processing,  setProcessing]  = useState(false)
-  const [error,       setError]       = useState(null)
+  const [commerce,   setCommerce]   = useState(null)
+  const [stats,      setStats]      = useState(null)
+  const [fetching,   setFetching]   = useState(true)
+  const [step,       setStep]       = useState('menu')   // 'menu' | 'confirm1' | 'confirm2' | 'pause_done' | 'resil_done'
+  const [processing, setProcessing] = useState(false)
+  const [error,      setError]      = useState(null)
 
   useEffect(() => {
     if (!loading && !user) router.replace('/')
@@ -24,17 +25,25 @@ export default function ResiliationPage() {
   useEffect(() => {
     if (!user || !supabase) return
 
+    const commerceId = searchParams.get('commerce_id')
+    if (!commerceId) { router.replace('/commercant/dashboard'); return }
+
     async function load() {
-      const { data: com } = await supabase
+      const { data: com, error: comErr } = await supabase
         .from('commerces')
-        .select('id, nom, palier, stripe_subscription_id, abonnement_actif, created_at')
+        .select('id, nom, palier, abonnement_actif, stripe_subscription_id, stripe_customer_id, created_at')
+        .eq('id', commerceId)
         .eq('owner_id', user.id)
-        .maybeSingle()
+        .single()
+
+      if (comErr || !com) {
+        router.replace('/commercant/dashboard')
+        return
+      }
 
       setCommerce(com)
 
-      if (com?.id) {
-        // Offres publiées total + IDs
+      if (com.id) {
         const [{ count: nbOffres }, { data: offresData }] = await Promise.all([
           supabase.from('offres').select('id', { count: 'exact', head: true }).eq('commerce_id', com.id),
           supabase.from('offres').select('id').eq('commerce_id', com.id),
@@ -42,7 +51,7 @@ export default function ResiliationPage() {
 
         const offreIds = (offresData || []).map(o => o.id)
 
-        let nbBons = 0
+        let nbBons    = 0
         let nbClients = 0
 
         if (offreIds.length > 0) {
@@ -55,31 +64,21 @@ export default function ResiliationPage() {
           nbClients = new Set((clientsData || []).map(r => r.user_id)).size
         }
 
-        // Avis Google générés
-        const { count: nbAvis } = await supabase
-          .from('avis_google_clics')
-          .select('id', { count: 'exact', head: true })
-          .eq('commerce_id', com.id)
-
-        // Feedbacks clients reçus
+        const { count: nbAvis }      = await supabase
+          .from('avis_google_clics').select('id', { count: 'exact', head: true }).eq('commerce_id', com.id)
         const { count: nbFeedbacks } = await supabase
-          .from('feedbacks_commerce')
-          .select('id', { count: 'exact', head: true })
-          .eq('commerce_id', com.id)
+          .from('feedbacks_commerce').select('id', { count: 'exact', head: true }).eq('commerce_id', com.id)
 
-        // Durée en mois depuis création
         const created = com.created_at ? new Date(com.created_at) : new Date()
-        const now     = new Date()
-        const diffMs  = now - created
-        const mois    = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24 * 30)))
+        const mois    = Math.max(1, Math.round((new Date() - created) / (1000 * 60 * 60 * 24 * 30)))
 
         const PALIER_LABELS = { decouverte: 'Découverte', essentiel: 'Essentiel', pro: 'Pro' }
 
         setStats({
-          nbOffres:   nbOffres  ?? 0,
+          nbOffres:    nbOffres    ?? 0,
           nbBons,
           nbClients,
-          nbAvis:     nbAvis    ?? 0,
+          nbAvis:      nbAvis      ?? 0,
           nbFeedbacks: nbFeedbacks ?? 0,
           mois,
           palierLabel: PALIER_LABELS[com.palier] || '—',
@@ -90,13 +89,12 @@ export default function ResiliationPage() {
     }
 
     load()
-  }, [user, supabase])
+  }, [user, supabase, searchParams, router])
 
   async function handlePause() {
     if (!commerce?.id || processing) return
     setProcessing(true)
     setError(null)
-
     try {
       const res  = await fetch('/api/stripe/resiliation', {
         method:  'POST',
@@ -104,11 +102,8 @@ export default function ResiliationPage() {
         body:    JSON.stringify({ commerce_id: commerce.id, action: 'pause' }),
       })
       const data = await res.json()
-      if (data.ok) {
-        setStep('pause_done')
-      } else {
-        setError(data.error || 'Erreur lors de la mise en pause')
-      }
+      if (data.ok) setStep('pause_done')
+      else setError(data.error || 'Erreur lors de la mise en pause')
     } catch (e) {
       setError(e.message)
     } finally {
@@ -120,7 +115,6 @@ export default function ResiliationPage() {
     if (!commerce?.id || processing) return
     setProcessing(true)
     setError(null)
-
     try {
       const res  = await fetch('/api/stripe/resiliation', {
         method:  'POST',
@@ -128,11 +122,8 @@ export default function ResiliationPage() {
         body:    JSON.stringify({ commerce_id: commerce.id, action: 'resilier' }),
       })
       const data = await res.json()
-      if (data.ok) {
-        setStep('resil_done')
-      } else {
-        setError(data.error || 'Erreur lors de la résiliation')
-      }
+      if (data.ok) setStep('resil_done')
+      else setError(data.error || 'Erreur lors de la résiliation')
     } catch (e) {
       setError(e.message)
     } finally {
@@ -148,7 +139,7 @@ export default function ResiliationPage() {
     )
   }
 
-  /* ── DONE STATES ─────────────────────────────────────────────────────────── */
+  /* ── DONE STATES ── */
 
   if (step === 'pause_done') {
     return (
@@ -177,10 +168,12 @@ export default function ResiliationPage() {
           <p className="text-5xl">👋</p>
           <h1 className="text-2xl font-black text-[#0A0A0A]">Résiliation confirmée</h1>
           <p className="text-sm text-[#3D3D3D]/70 leading-relaxed">
-            Ton abonnement sera résilié en fin de période en cours.
-            Tu conserves l&apos;accès à toutes les fonctionnalités jusqu&apos;à cette date.
+            Ton abonnement a été résilié. Tu conserves l&apos;accès aux fonctionnalités jusqu&apos;à
+            la fin de la période en cours.
           </p>
-          <p className="text-xs text-[#3D3D3D]/40">Tu recevras un email de confirmation Stripe.</p>
+          {commerce?.stripe_subscription_id && (
+            <p className="text-xs text-[#3D3D3D]/40">Tu recevras un email de confirmation Stripe.</p>
+          )}
         </div>
         <Link href="/commercant/dashboard" className="bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-sm px-8 py-4 rounded-2xl transition-colors">
           Retour au dashboard →
@@ -189,14 +182,10 @@ export default function ResiliationPage() {
     )
   }
 
-  const PALIER_LABELS = {
-    decouverte: 'Découverte',
-    essentiel:  'Essentiel',
-    pro:        'Pro',
-    1:          'Découverte',
-    2:          'Essentiel',
-    3:          'Pro',
-  }
+  /* ── L'utilisateur a un abonnement actif si abonnement_actif ET palier non null ── */
+  const hasAbonnement = commerce?.abonnement_actif === true && commerce?.palier != null
+  /* La pause n'est disponible que pour les abonnements Stripe (pas admin-bypass) */
+  const hasStripe     = Boolean(commerce?.stripe_subscription_id)
 
   return (
     <main className="min-h-screen bg-white flex flex-col">
@@ -211,7 +200,7 @@ export default function ResiliationPage() {
 
       <section className="flex-1 px-4 py-8 max-w-lg mx-auto w-full flex flex-col gap-6">
 
-        {/* ── Bilan ──────────────────────────────────────────────────────── */}
+        {/* ── Bilan ── */}
         <div className="bg-[#F5F5F5] rounded-3xl px-6 py-5 flex flex-col gap-4">
           <h2 className="text-xs font-black text-[#0A0A0A] uppercase tracking-widest">Ton bilan BONMOMENT</h2>
           <div className="grid grid-cols-2 gap-3">
@@ -247,8 +236,22 @@ export default function ResiliationPage() {
           )}
         </div>
 
-        {/* ── Pause ──────────────────────────────────────────────────────── */}
-        {commerce?.stripe_subscription_id && step === 'menu' && (
+        {/* ── Pas d'abonnement ── */}
+        {!hasAbonnement && (
+          <div className="bg-orange-50 border border-orange-200 rounded-3xl px-6 py-5 flex flex-col gap-3 text-center">
+            <p className="text-sm font-bold text-orange-800">Aucun abonnement actif</p>
+            <p className="text-xs text-orange-700/70">Tu n&apos;as pas encore souscrit à un abonnement BONMOMENT.</p>
+            <Link
+              href={`/commercant/abonnement?commerce_id=${commerce?.id}`}
+              className="self-center bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-sm px-6 py-3 rounded-2xl transition-colors"
+            >
+              Activer mon abonnement →
+            </Link>
+          </div>
+        )}
+
+        {/* ── Pause (Stripe uniquement) ── */}
+        {hasAbonnement && hasStripe && step === 'menu' && (
           <div className="bg-blue-50 border border-blue-200 rounded-3xl px-6 py-5 flex flex-col gap-3">
             <div className="flex flex-col gap-1">
               <h2 className="text-sm font-black text-blue-900">⏸ Faire une pause d&apos;un mois</h2>
@@ -260,7 +263,9 @@ export default function ResiliationPage() {
             <button
               onClick={handlePause}
               disabled={processing}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-black text-sm py-3 rounded-2xl transition-colors flex items-center justify-center gap-2 min-h-[44px]"
+              className={`w-full font-black text-sm py-3 rounded-2xl transition-colors flex items-center justify-center gap-2 min-h-[44px] text-white ${
+                processing ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
+              }`}
             >
               {processing
                 ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -270,8 +275,8 @@ export default function ResiliationPage() {
           </div>
         )}
 
-        {/* ── Résiliation ────────────────────────────────────────────────── */}
-        {commerce?.stripe_subscription_id && step === 'menu' && (
+        {/* ── Résiliation (tous abonnements actifs) ── */}
+        {hasAbonnement && step === 'menu' && (
           <div className="flex flex-col gap-2 items-center">
             <button
               onClick={() => setStep('confirm1')}
@@ -282,12 +287,12 @@ export default function ResiliationPage() {
           </div>
         )}
 
-        {/* ── Confirm step 1 ─────────────────────────────────────────────── */}
+        {/* ── Confirm step 1 ── */}
         {step === 'confirm1' && (
           <div className="bg-red-50 border border-red-200 rounded-3xl px-6 py-5 flex flex-col gap-4">
             <h2 className="text-sm font-black text-red-800">Tu es sûr(e) de vouloir résilier ?</h2>
             <p className="text-xs text-red-700/80 leading-relaxed">
-              Ton abonnement sera actif jusqu&apos;en fin de période en cours.
+              Ton abonnement sera résilié immédiatement.
               Tes offres seront désactivées et tu perdras l&apos;accès au dashboard commerçant.
             </p>
             <div className="flex flex-col gap-2">
@@ -307,7 +312,7 @@ export default function ResiliationPage() {
           </div>
         )}
 
-        {/* ── Confirm step 2 ─────────────────────────────────────────────── */}
+        {/* ── Confirm step 2 ── */}
         {step === 'confirm2' && (
           <div className="bg-red-50 border border-red-200 rounded-3xl px-6 py-5 flex flex-col gap-4">
             <h2 className="text-sm font-black text-red-800">Dernière confirmation</h2>
@@ -318,7 +323,9 @@ export default function ResiliationPage() {
               <button
                 onClick={handleResilier}
                 disabled={processing}
-                className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-black text-sm py-3 rounded-2xl transition-colors flex items-center justify-center gap-2 min-h-[44px]"
+                className={`w-full font-black text-sm py-3 rounded-2xl transition-colors flex items-center justify-center gap-2 min-h-[44px] text-white ${
+                  processing ? 'bg-red-300 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 cursor-pointer'
+                }`}
               >
                 {processing
                   ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -335,21 +342,7 @@ export default function ResiliationPage() {
           </div>
         )}
 
-        {/* ── Pas d'abonnement Stripe ─────────────────────────────────────── */}
-        {!commerce?.stripe_subscription_id && (
-          <div className="bg-orange-50 border border-orange-200 rounded-3xl px-6 py-5 flex flex-col gap-3 text-center">
-            <p className="text-sm font-bold text-orange-800">Aucun abonnement actif</p>
-            <p className="text-xs text-orange-700/70">Tu n&apos;as pas encore souscrit à un abonnement BONMOMENT.</p>
-            <Link
-              href="/commercant/abonnement"
-              className="self-center bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-sm px-6 py-3 rounded-2xl transition-colors"
-            >
-              Activer mon abonnement →
-            </Link>
-          </div>
-        )}
-
-        {/* ── Erreur ─────────────────────────────────────────────────────── */}
+        {/* ── Erreur ── */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3">
             <p className="text-xs text-red-600 font-semibold">{error}</p>
@@ -365,5 +358,17 @@ export default function ResiliationPage() {
 
       </section>
     </main>
+  )
+}
+
+export default function ResiliationPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <span className="w-8 h-8 border-[3px] border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <ResiliationContent />
+    </Suspense>
   )
 }

@@ -21,46 +21,51 @@ export async function POST(request) {
     return Response.json({ error: 'Paramètres manquants' }, { status: 400 })
   }
 
-  // Vérifie la propriété ET récupère l'ID subscription
+  // Vérifie la propriété ET récupère les colonnes Stripe + statut
   const { data: commerce } = await supabase
     .from('commerces')
-    .select('stripe_subscription_id')
+    .select('stripe_subscription_id, abonnement_actif, palier')
     .eq('id', commerce_id)
     .eq('owner_id', user.id)
     .maybeSingle()
 
-  if (!commerce?.stripe_subscription_id) {
-    return Response.json({ error: 'Abonnement Stripe introuvable' }, { status: 404 })
+  if (!commerce || (!commerce.abonnement_actif && !commerce.palier)) {
+    return Response.json({ error: 'Aucun abonnement actif' }, { status: 404 })
   }
 
-  const subId = commerce.stripe_subscription_id
+  const subId = commerce.stripe_subscription_id  // peut être null (activation admin)
 
-  /* ── Pause 1 mois ── */
+  /* ── Pause 1 mois (Stripe uniquement) ── */
   if (action === 'pause') {
-    const resumesAt = Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60 // +30 jours
+    if (!subId) {
+      return Response.json({ error: 'La pause n\'est disponible que pour les abonnements Stripe' }, { status: 400 })
+    }
 
+    const resumesAt = Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60 // +30 jours
     await stripe.subscriptions.update(subId, {
       pause_collection: {
-        behavior:   'void',    // les invoices pendant la pause sont voidées (non prélevées)
-        resumes_at: resumesAt, // reprise automatique après 30 jours
+        behavior:   'void',
+        resumes_at: resumesAt,
       },
     })
 
     return Response.json({ ok: true, message: 'Abonnement mis en pause pour 1 mois' })
   }
 
-  /* ── Résiliation fin de mois ── */
+  /* ── Résiliation ── */
   if (action === 'resilier') {
-    await stripe.subscriptions.update(subId, {
-      cancel_at_period_end: true,
-    })
+    if (subId) {
+      // Stripe : annulation fin de période
+      await stripe.subscriptions.update(subId, { cancel_at_period_end: true })
+    }
 
-    // Anticipation côté BDD — le webhook 'customer.subscription.deleted' confirmera
+    // Dans tous les cas : mise à jour BDD immédiate
     await supabaseAdmin.from('commerces').update({
       abonnement_actif: false,
+      palier:           null,
     }).eq('id', commerce_id)
 
-    return Response.json({ ok: true, message: 'Résiliation programmée en fin de mois' })
+    return Response.json({ ok: true, message: 'Résiliation confirmée' })
   }
 
   return Response.json({ error: `Action invalide : "${action}"` }, { status: 400 })

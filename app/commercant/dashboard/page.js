@@ -388,7 +388,7 @@ function AbonnementSection({ commerce, offres }) {
             Changer
           </Link>
           <Link
-            href="/commercant/resiliation"
+            href={`/commercant/resiliation?commerce_id=${commerce.id}`}
             className="text-xs font-bold text-[#3D3D3D]/60 border border-[#E0E0E0] px-3 py-1.5 rounded-full hover:border-[#FF6B00] hover:text-[#FF6B00] transition-colors min-h-[36px] flex items-center"
           >
             Gérer
