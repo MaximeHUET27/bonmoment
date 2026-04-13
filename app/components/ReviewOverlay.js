@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useToast } from './Toast'
 
 export default function ReviewOverlay({ reservationId, commerceId, commerceNom, placeId, onClose }) {
   const [step,        setStep]        = useState('stars')
@@ -9,22 +10,25 @@ export default function ReviewOverlay({ reservationId, commerceId, commerceNom, 
   const [commentaire, setCommentaire] = useState('')
   const [sending,     setSending]     = useState(false)
   const [toast,       setToast]       = useState(false)
+  const { showToast } = useToast()
 
-  const handleStarClick = useCallback((n) => {
+  const handleStarClick = useCallback(async (n) => {
     setNote(n)
-    setStep(n >= 4 ? 'google' : 'feedback')
-  }, [])
-
-  const handleGoogleClick = useCallback(async () => {
-    try {
-      await fetch('/api/avis-google', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reservation_id: reservationId, commerce_id: commerceId, note }),
-      })
-    } catch {}
-    window.open(`https://search.google.com/local/writereview?placeid=${placeId}`, '_blank', 'noopener')
-    onClose()
-  }, [reservationId, commerceId, note, placeId, onClose])
+    if (n >= 4) {
+      /* 4-5 étoiles : INSERT BDD + ouvre Google + ferme */
+      try {
+        await fetch('/api/avis-google', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reservation_id: reservationId, commerce_id: commerceId, note: n }),
+        })
+      } catch {}
+      window.open(`https://search.google.com/local/writereview?placeid=${placeId}`, '_blank', 'noopener')
+      showToast('Merci ! ⭐')
+      setTimeout(onClose, 1000)
+    } else {
+      setStep('feedback')
+    }
+  }, [reservationId, commerceId, placeId, onClose, showToast])
 
   const handleFeedbackSend = useCallback(async () => {
     setSending(true)
@@ -64,19 +68,6 @@ export default function ReviewOverlay({ reservationId, commerceId, commerceNom, 
                 </button>
               ))}
             </div>
-            <button onClick={onClose} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">Plus tard</button>
-          </>
-        )}
-        {step === 'google' && (
-          <>
-            <p className="text-2xl">🎉</p>
-            <p className="text-lg font-black text-[#0A0A0A] text-center">Merci !</p>
-            <p className="text-sm text-[#3D3D3D] text-center leading-relaxed">
-              Aide <span className="font-bold">{commerceNom}</span> en partageant ton expérience :
-            </p>
-            <button onClick={handleGoogleClick} className="w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-bold text-base py-4 rounded-2xl transition-colors flex items-center justify-center gap-2">
-              ⭐ Laisser un avis
-            </button>
             <button onClick={onClose} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">Plus tard</button>
           </>
         )}
