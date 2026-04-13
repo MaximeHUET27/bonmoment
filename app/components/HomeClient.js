@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import AuthButton from './AuthButton'
@@ -22,9 +22,11 @@ function isUrgent(offre) {
 export default function HomeClient({ villes, offres }) {
   const router = useRouter()
   const { user, supabase } = useAuth()
-  const [showOverlay,  setShowOverlay]  = useState(false)
-  const [isLoading,    setIsLoading]    = useState(true)
-  const [userResaMap,  setUserResaMap]  = useState(null)
+  const [showOverlay,    setShowOverlay]    = useState(false)
+  const [isLoading,      setIsLoading]      = useState(true)
+  const [userResaMap,    setUserResaMap]    = useState(null)
+  const [villesPaused,   setVillesPaused]   = useState(false)
+  const pauseTimerRef = useRef(null)
 
   useEffect(() => { setIsLoading(false) }, [])
 
@@ -54,6 +56,14 @@ export default function HomeClient({ villes, offres }) {
 
   function handleVilleSelect(nomVille) {
     router.push(`/ville/${toSlug(nomVille)}`)
+  }
+
+  function handleVillesTouchStart() {
+    clearTimeout(pauseTimerRef.current)
+    setVillesPaused(true)
+  }
+  function handleVillesTouchEnd() {
+    pauseTimerRef.current = setTimeout(() => setVillesPaused(false), 3000)
   }
 
   /* Tri : actives urgentes → actives → expirées */
@@ -124,14 +134,32 @@ export default function HomeClient({ villes, offres }) {
 
         {/* Chips des villes actives */}
         {villes.length > 0 && (
-          <div className="flex items-center mt-6 gap-2 overflow-hidden">
-            <span className="text-[11px] text-[#3D3D3D]/50 flex-shrink-0">Villes disponibles :</span>
-            <div className="villes-scroll flex overflow-x-auto" style={{ minWidth: 0 }}>
-              {/* Dupliquer les chips seulement si > 3 villes pour l'effet boucle infini */}
+          /* Bleed full-width hors du px-6 parent */
+          <div style={{ width: '100vw', position: 'relative', left: '50%', transform: 'translateX(-50%)', marginTop: '24px' }}>
+
+            {/* Label centré au-dessus du bandeau */}
+            <p style={{ fontSize: '11px', color: 'rgba(61,61,61,0.5)', textAlign: 'center', marginBottom: '4px' }}>
+              Villes disponibles :
+            </p>
+
+            {/* Bandeau : overflow hidden en lecture auto, overflow auto quand l'utilisateur scrolle */}
+            <div
+              className="villes-scroll"
+              style={{ overflow: villesPaused ? 'auto' : 'hidden', paddingLeft: '16px' }}
+              onTouchStart={handleVillesTouchStart}
+              onTouchEnd={handleVillesTouchEnd}
+            >
+              {/* Track animé — les deux sets côte à côte pour une boucle sans coupure */}
               <div
-                className={villes.length > 3 ? 'villes-track flex gap-2' : 'flex gap-2'}
-                style={{ width: 'max-content' }}
+                className={villes.length > 3 ? 'villes-track' : ''}
+                style={{
+                  display: 'flex',
+                  gap: '8px',
+                  width: 'max-content',
+                  ...(villes.length > 3 && { animationPlayState: villesPaused ? 'paused' : 'running' }),
+                }}
               >
+                {/* Set 1 */}
                 {villes.map(v => (
                   <button
                     key={v.id}
@@ -142,7 +170,7 @@ export default function HomeClient({ villes, offres }) {
                     {v.nom}
                   </button>
                 ))}
-                {/* Doublon pour la boucle infinie (uniquement si > 3 villes) */}
+                {/* Set 2 — doublon pour la boucle infinie seamless (uniquement si > 3 villes) */}
                 {villes.length > 3 && villes.map(v => (
                   <button
                     key={`dup-${v.id}`}

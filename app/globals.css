@@ -40,11 +40,7 @@ body {
   display: none;
 }
 .villes-track {
-  animation: marquee 15s linear infinite;
-}
-.villes-track:hover,
-.villes-track:active {
-  animation-play-state: paused;
+  animation: marquee 20s linear infinite;
 }
 
 @keyframes pulse-orange {
