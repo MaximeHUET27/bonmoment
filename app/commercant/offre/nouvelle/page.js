@@ -148,7 +148,7 @@ function NouvelleOffrePageInner() {
       const commerceId = searchParams.get('commerce')
       const { data: list } = await supabase
         .from('commerces')
-        .select('id, nom, categorie, ville, adresse, palier, note_google, photo_url, tutoriel_complete, stripe_subscription_id')
+        .select('id, nom, categorie, ville, adresse, palier, note_google, photo_url, tutoriel_complete, abonnement_actif')
         .eq('owner_id', user.id)
 
       const all  = list || []
@@ -157,7 +157,7 @@ function NouvelleOffrePageInner() {
       if (!data) { router.replace('/'); return }
 
       // Sécurité : pas d'abonnement Stripe actif → retour page abonnement
-      if (!data.stripe_subscription_id) { router.replace('/commercant/abonnement'); return }
+      if (!data.abonnement_actif) { router.replace(`/commercant/abonnement?commerce_id=${data.id}`); return }
 
       setCommerce(data)
 
