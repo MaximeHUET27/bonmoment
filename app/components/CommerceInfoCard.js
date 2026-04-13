@@ -118,16 +118,6 @@ export default function CommerceInfoCard({ commerce, commerceId, placeId }) {
           />
         )}
 
-        {/* Bouton Laisser un avis — fiche commerce uniquement */}
-        {commerceId && placeId && (
-          <button
-            onClick={() => user ? setShowReview(true) : setShowAuth(true)}
-            className="w-full flex items-center justify-center gap-2 border-2 border-[#FF6B00] text-[#FF6B00] font-bold text-sm py-3 rounded-2xl hover:bg-[#FFF0E0] transition-colors min-h-[44px] mt-1"
-          >
-            ⭐ Laisser un avis
-          </button>
-        )}
-
         {/* Bouton S'y rendre */}
         {mapsUrl && (
           <a
@@ -138,6 +128,16 @@ export default function CommerceInfoCard({ commerce, commerceId, placeId }) {
           >
             📍 S&apos;y rendre
           </a>
+        )}
+
+        {/* Bouton Laisser un avis */}
+        {commerceId && placeId && (
+          <button
+            onClick={() => user ? setShowReview(true) : setShowAuth(true)}
+            className="w-full flex items-center justify-center gap-2 border-2 border-[#FF6B00] text-[#FF6B00] font-bold text-sm py-3 rounded-2xl hover:bg-[#FFF0E0] transition-colors min-h-[44px] mt-1"
+          >
+            ⭐ Laisser un avis
+          </button>
         )}
 
       </div>

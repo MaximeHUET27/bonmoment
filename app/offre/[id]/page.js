@@ -79,7 +79,7 @@ export default async function OffrePage({ params }) {
   const [{ data: offre }, { count: reservationsCount }] = await Promise.all([
     supabase
       .from('offres')
-      .select('*, commerces(id, nom, categorie, adresse, ville, description, photo_url, note_google, telephone, horaires)')
+      .select('*, commerces(id, nom, categorie, adresse, ville, description, photo_url, note_google, telephone, horaires, place_id)')
       .eq('id', id)
       .single(),
     supabase
@@ -178,7 +178,7 @@ export default async function OffrePage({ params }) {
           </div>
 
           {/* Bloc unifié commerce — nom = lien cliquable vers /commercant/[id] */}
-          <CommerceInfoCard commerce={commerce} commerceId={commerce?.id} />
+          <CommerceInfoCard commerce={commerce} commerceId={commerce?.id} placeId={commerce?.place_id ?? null} />
 
           {/* Description */}
           {commerce?.description && (
