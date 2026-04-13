@@ -51,11 +51,19 @@ export default function AbonnementPage() {
       .select('id, nom, palier')
       .eq('owner_id', user.id)
       .maybeSingle()
-      .then(({ data }) => { setCommerce(data); setFetching(false) })
+      .then(({ data, error }) => {
+        if (error) console.error('Erreur chargement commerce:', error)
+        setCommerce(data)
+        setFetching(false)
+      })
   }, [user, supabase])
 
   async function handleChoix(palier) {
-    if (!cgvAccepted || !commerce?.id || choosing) return
+    if (!cgvAccepted || choosing) return
+    if (!commerce?.id) {
+      setError('Commerce introuvable — reconnecte-toi ou rafraîchis la page.')
+      return
+    }
     setChoosing(palier)
     setError(null)
 
