@@ -46,12 +46,14 @@ export default function AbonnementPage() {
 
   useEffect(() => {
     if (!user || !supabase) return
+    console.log('USER:', user?.id, user?.email)
     supabase
       .from('commerces')
       .select('id, nom, palier')
       .eq('owner_id', user.id)
       .maybeSingle()
       .then(({ data, error }) => {
+        console.log('COMMERCE QUERY RESULT:', data, error)
         if (error) console.error('Erreur chargement commerce:', error)
         setCommerce(data)
         setFetching(false)
