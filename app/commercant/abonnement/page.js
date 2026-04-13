@@ -48,7 +48,7 @@ export default function AbonnementPage() {
     if (!user || !supabase) return
     supabase
       .from('commerces')
-      .select('id, palier, stripe_subscription_id')
+      .select('id, nom, palier')
       .eq('owner_id', user.id)
       .maybeSingle()
       .then(({ data }) => { setCommerce(data); setFetching(false) })
@@ -127,7 +127,7 @@ export default function AbonnementPage() {
         {/* ── Cartes paliers ── */}
         <div className="flex flex-col gap-4">
           {PLANS.map(plan => {
-            const isDisabled = !cgvAccepted || choosing !== null || !commerce
+            const isDisabled = !cgvAccepted || choosing !== null
             return (
               <div
                 key={plan.key}
