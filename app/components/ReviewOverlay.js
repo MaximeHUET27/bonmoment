@@ -51,7 +51,9 @@ export default function ReviewOverlay({ reservationId, commerceId, commerceNom, 
       <div className="bg-white rounded-3xl px-6 py-8 w-full max-w-sm flex flex-col items-center gap-5 shadow-2xl">
         {step === 'stars' && (
           <>
-            <p className="text-base font-black text-[#0A0A0A] text-center">✅ Bon validé !</p>
+            {reservationId && (
+              <p className="text-base font-black text-[#0A0A0A] text-center">✅ Bon validé !</p>
+            )}
             <p className="text-base font-bold text-[#0A0A0A] text-center leading-snug">
               Comment s&apos;est passée ton expérience chez <span className="text-[#FF6B00]">{commerceNom}</span> ?
             </p>
@@ -70,10 +72,10 @@ export default function ReviewOverlay({ reservationId, commerceId, commerceNom, 
             <p className="text-2xl">🎉</p>
             <p className="text-lg font-black text-[#0A0A0A] text-center">Merci !</p>
             <p className="text-sm text-[#3D3D3D] text-center leading-relaxed">
-              Aide <span className="font-bold">{commerceNom}</span> en partageant ton expérience sur Google :
+              Aide <span className="font-bold">{commerceNom}</span> en partageant ton expérience :
             </p>
             <button onClick={handleGoogleClick} className="w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-bold text-base py-4 rounded-2xl transition-colors flex items-center justify-center gap-2">
-              ⭐ Laisser un avis Google
+              ⭐ Laisser un avis
             </button>
             <button onClick={onClose} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">Plus tard</button>
           </>

@@ -1,9 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { formatHoraire } from '@/lib/formatHoraires'
 import FavoriButton from './FavoriButton'
+import { useAuth } from '@/app/context/AuthContext'
+import AuthBottomSheet from './AuthBottomSheet'
+import ReviewOverlay from './ReviewOverlay'
 
 /**
  * Carte d'infos d'un commerce : photo, nom, note Google, adresse, téléphone, horaires, lien Maps.
@@ -18,7 +22,11 @@ function getTodayIndex() {
   return js === 0 ? 6 : js - 1  // → 0=Lun…6=Dim
 }
 
-export default function CommerceInfoCard({ commerce, commerceId }) {
+export default function CommerceInfoCard({ commerce, commerceId, placeId }) {
+  const { user } = useAuth()
+  const [showReview, setShowReview] = useState(false)
+  const [showAuth,   setShowAuth]   = useState(false)
+
   if (!commerce) return null
 
   const mapsUrl = commerce.adresse
@@ -34,6 +42,7 @@ export default function CommerceInfoCard({ commerce, commerceId }) {
   const todayIdx = getTodayIndex()
 
   return (
+    <>
     <div className="w-full rounded-2xl border border-[#F0F0F0] overflow-hidden">
 
       {/* Photo */}
@@ -109,6 +118,16 @@ export default function CommerceInfoCard({ commerce, commerceId }) {
           />
         )}
 
+        {/* Bouton Laisser un avis — fiche commerce uniquement */}
+        {commerceId && placeId && (
+          <button
+            onClick={() => user ? setShowReview(true) : setShowAuth(true)}
+            className="w-full flex items-center justify-center gap-2 border-2 border-[#FF6B00] text-[#FF6B00] font-bold text-sm py-3 rounded-2xl hover:bg-[#FFF0E0] transition-colors min-h-[44px] mt-1"
+          >
+            ⭐ Laisser un avis
+          </button>
+        )}
+
         {/* Bouton S'y rendre */}
         {mapsUrl && (
           <a
@@ -123,5 +142,22 @@ export default function CommerceInfoCard({ commerce, commerceId }) {
 
       </div>
     </div>
+
+    {showReview && (
+      <ReviewOverlay
+        reservationId={null}
+        commerceId={commerceId}
+        commerceNom={commerce.nom || ''}
+        placeId={placeId}
+        onClose={() => setShowReview(false)}
+      />
+    )}
+
+    <AuthBottomSheet
+      isOpen={showAuth}
+      onClose={() => setShowAuth(false)}
+      redirectAfter={typeof window !== 'undefined' ? window.location.pathname : '/'}
+    />
+    </>
   )
 }

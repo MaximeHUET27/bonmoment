@@ -22,13 +22,13 @@ export async function POST(request) {
   const body = await request.json().catch(() => ({}))
   const { reservation_id, commerce_id, note, commentaire } = body
 
-  if (!reservation_id || !commerce_id || !note) {
+  if (!commerce_id || !note) {
     return NextResponse.json({ error: 'Paramètres manquants' }, { status: 400 })
   }
 
   const { error } = await admin
     .from('feedbacks_commerce')
-    .insert({ reservation_id, commerce_id, user_id: user.id, note, commentaire: commentaire || null })
+    .insert({ reservation_id: reservation_id || null, commerce_id, user_id: user.id, note, commentaire: commentaire || null })
 
   if (error) {
     console.error('[feedback-commerce] insert error:', error.message)

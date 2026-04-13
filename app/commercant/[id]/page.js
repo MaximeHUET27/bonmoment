@@ -10,7 +10,7 @@ export default async function CommercantPage({ params }) {
   const supabase = await createClient()
 
   const [{ data: commerce }, { data: offres }] = await Promise.all([
-    supabase.from('commerces').select('id, nom, categorie, adresse, ville, description, photo_url, note_google, horaires, telephone, abonnement_actif').eq('id', id).single(),
+    supabase.from('commerces').select('id, nom, categorie, adresse, ville, description, photo_url, note_google, horaires, telephone, abonnement_actif, place_id').eq('id', id).single(),
     supabase
       .from('offres')
       .select('*')
@@ -65,7 +65,7 @@ export default async function CommercantPage({ params }) {
         </p>
 
         {/* Carte infos commerce */}
-        <CommerceInfoCard commerce={commerce} commerceId={commerce.id} />
+        <CommerceInfoCard commerce={commerce} commerceId={commerce.id} placeId={commerce.place_id ?? null} />
 
         {commerce.description && (
           <p className="text-sm text-[#3D3D3D] leading-relaxed mt-4 mb-2">{commerce.description}</p>

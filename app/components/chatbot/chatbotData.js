@@ -141,7 +141,7 @@ export const NODES = {
   'h-res-6': {
     type: 'answer',
     question: "Comment laisser un avis sur un commerce ?",
-    response: `Pour laisser un avis sur un commerce :\n\n1. Ouvre la page du commerce sur BONMOMENT\n2. Appuie sur le bouton **⭐ Laisser un avis Google**\n3. La fiche Google du commerce s'ouvre directement\n4. Note et rédige ton avis — il sera visible par tous ! 🌟\n\nTon avis aide le commerce à se développer et la communauté à faire de bons choix.`,
+    response: `Pour laisser un avis sur un commerce :\n\n1. Ouvre la **fiche du commerce** sur BONMOMENT\n2. Appuie sur le bouton **⭐ Laisser un avis**\n3. Note ton expérience de 1 à 5 étoiles\n4. Pour les super expériences, tu peux aussi partager ton retour en ligne 🌟\n\nTon avis aide le commerce à se développer et la communauté à faire de bons choix.`,
   },
 
   /* ── Villes et abonnements ── */

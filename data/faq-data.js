@@ -83,7 +83,7 @@ const FAQ = [
       },
       {
         q: "Comment laisser un avis sur un commerce ?",
-        r: "Les avis se font directement sur Google Maps. Depuis la page du commerce sur BONMOMENT, appuie sur le bouton ⭐ Laisser un avis Google — cela ouvre la fiche Google du commerce où tu peux noter et commenter.",
+        r: "Tu peux laisser un avis depuis la fiche du commerce en appuyant sur '⭐ Laisser un avis'. Note ton expérience de 1 à 5 étoiles. Ton avis aide le commerce à se développer.",
       },
       {
         q: 'Comment utiliser mon bon en caisse ?',

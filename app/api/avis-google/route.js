@@ -21,9 +21,11 @@ export async function POST(request) {
   const body = await request.json().catch(() => ({}))
   const { reservation_id, commerce_id, note } = body
 
-  if (!reservation_id || !commerce_id || !note) {
+  if (!commerce_id || !note) {
     return NextResponse.json({ error: 'Paramètres manquants' }, { status: 400 })
   }
+
+  if (!reservation_id) return NextResponse.json({ success: true })
 
   const { error } = await admin
     .from('avis_google_clics')
