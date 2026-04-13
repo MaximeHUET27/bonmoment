@@ -6,6 +6,7 @@ import { FavorisProvider } from "@/app/context/FavorisContext";
 import { ToastProvider } from "@/app/components/Toast";
 import AdminFooterLink from "@/app/components/AdminFooterLink";
 import ChatbotWidget from "@/app/components/ChatbotWidget";
+import ReviewPolling from "@/app/components/ReviewPolling";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -40,6 +41,7 @@ export default function RootLayout({ children }) {
           <FavorisProvider>
           <ToastProvider>
           {children}
+          <ReviewPolling />
           <ChatbotWidget />
           <footer className="w-full bg-[#F5F5F5] border-t border-[#EBEBEB] px-6 py-5 mt-auto">
             <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">

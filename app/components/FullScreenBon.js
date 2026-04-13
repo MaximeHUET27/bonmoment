@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import ShareButton from '@/app/components/ShareButton'
 import CommerceInfoCard from '@/app/components/CommerceInfoCard'
@@ -62,106 +62,6 @@ function formatBadge(offre) {
   return 'Offre'
 }
 
-/* ── Overlay de review ────────────────────────────────────────────────── */
-
-function ReviewOverlay({ reservationId, commerceId, commerceNom, placeId, onClose }) {
-  const [step,        setStep]        = useState('stars')
-  const [note,        setNote]        = useState(0)
-  const [hover,       setHover]       = useState(0)
-  const [commentaire, setCommentaire] = useState('')
-  const [sending,     setSending]     = useState(false)
-  const [toast,       setToast]       = useState(false)
-
-  const handleStarClick = useCallback(async (n) => {
-    setNote(n)
-    setStep(n >= 4 ? 'google' : 'feedback')
-  }, [])
-
-  const handleGoogleClick = useCallback(async () => {
-    try {
-      await fetch('/api/avis-google', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reservation_id: reservationId, commerce_id: commerceId, note }),
-      })
-    } catch {}
-    window.open(`https://search.google.com/local/writereview?placeid=${placeId}`, '_blank', 'noopener')
-    onClose()
-  }, [reservationId, commerceId, note, placeId, onClose])
-
-  const handleFeedbackSend = useCallback(async () => {
-    setSending(true)
-    try {
-      await fetch('/api/feedback-commerce', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reservation_id: reservationId, commerce_id: commerceId, note, commentaire }),
-      })
-    } catch {}
-    setSending(false)
-    setToast(true)
-    setTimeout(onClose, 1800)
-  }, [reservationId, commerceId, note, commentaire, onClose])
-
-  const activeStars = hover || note
-  const starStyle = (i) => ({
-    fontSize: '40px', cursor: 'pointer',
-    color: i <= activeStars ? '#FF6B00' : '#D1D5DB',
-    transition: 'color 0.1s', lineHeight: 1, userSelect: 'none',
-  })
-
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 px-6">
-      <div className="bg-white rounded-3xl px-6 py-8 w-full max-w-sm flex flex-col items-center gap-5 shadow-2xl">
-        {step === 'stars' && (
-          <>
-            <p className="text-base font-black text-[#0A0A0A] text-center">✅ Bon validé !</p>
-            <p className="text-base font-bold text-[#0A0A0A] text-center leading-snug">
-              Comment s&apos;est passée ton expérience chez <span className="text-[#FF6B00]">{commerceNom}</span> ?
-            </p>
-            <div className="flex gap-3" role="group" aria-label="Note">
-              {[1,2,3,4,5].map(i => (
-                <button key={i} onClick={() => handleStarClick(i)} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(0)} style={starStyle(i)} aria-label={`${i} étoile${i>1?'s':''}`}>
-                  {i <= activeStars ? '★' : '☆'}
-                </button>
-              ))}
-            </div>
-            <button onClick={onClose} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">Plus tard</button>
-          </>
-        )}
-        {step === 'google' && (
-          <>
-            <p className="text-2xl">🎉</p>
-            <p className="text-lg font-black text-[#0A0A0A] text-center">Merci !</p>
-            <p className="text-sm text-[#3D3D3D] text-center leading-relaxed">
-              Aide <span className="font-bold">{commerceNom}</span> en partageant ton expérience sur Google :
-            </p>
-            <button onClick={handleGoogleClick} className="w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-bold text-base py-4 rounded-2xl transition-colors flex items-center justify-center gap-2">
-              ⭐ Laisser un avis Google
-            </button>
-            <button onClick={onClose} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">Plus tard</button>
-          </>
-        )}
-        {step === 'feedback' && (
-          <>
-            <p className="text-lg font-black text-[#0A0A0A] text-center">Merci pour ton retour 🙏</p>
-            <textarea value={commentaire} onChange={e => setCommentaire(e.target.value)} rows={3}
-              placeholder="Qu'est-ce qui pourrait être amélioré ?"
-              className="w-full border border-[#E0E0E0] rounded-2xl px-4 py-3 text-sm text-[#0A0A0A] resize-none outline-none focus:border-[#FF6B00] transition-colors"
-            />
-            {toast ? (
-              <div className="w-full text-center text-sm font-bold text-green-600 py-2">Merci, ton avis a été transmis !</div>
-            ) : (
-              <button onClick={handleFeedbackSend} disabled={sending} className="w-full bg-[#FF6B00] hover:bg-[#CC5500] disabled:opacity-60 text-white font-bold text-base py-4 rounded-2xl transition-colors">
-                {sending ? 'Envoi…' : 'Envoyer mon avis'}
-              </button>
-            )}
-            <button onClick={onClose} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">Passer</button>
-          </>
-        )}
-      </div>
-    </div>
-  )
-}
-
 /* ── Composant ────────────────────────────────────────────────────────── */
 
 /**
@@ -175,9 +75,7 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
   const { showToast }    = useToast()
   const timeLeft         = useCountdown(offre?.date_fin)
   const wakeLock         = useRef(null)
-  const prevStatutRef    = useRef(reservation?.statut)
   const [entered,        setEntered]        = useState(false)
-  const [showReview,     setShowReview]     = useState(false)
   const [confirmCancel,  setConfirmCancel]  = useState(false)
   const [cancelling,     setCancelling]     = useState(false)
   const [isAndroid,      setIsAndroid]      = useState(false)
@@ -212,37 +110,6 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
     acquire()
     return () => { wakeLock.current?.release().catch(() => {}) }
   }, [])
-
-  /* Polling : détecte validation par le commerçant */
-  useEffect(() => {
-    const placeId = commerce?.place_id
-    const commerceId = commerce?.id
-    const hasValidPlace = placeId && !placeId.startsWith('test_')
-    if (!hasValidPlace || !commerceId || !reservation?.id) return
-    if (reservation?.statut === 'utilisee') return
-
-    const sessionKey = `avis_demande_${reservation.id}`
-    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(sessionKey)) return
-
-    let stopped = false
-
-    async function pollStatut() {
-      try {
-        const res = await fetch(`/api/bon-statut/${reservation.id}`)
-        if (!res.ok) return
-        const { statut } = await res.json()
-        if (statut === 'utilisee' && prevStatutRef.current !== 'utilisee') {
-          prevStatutRef.current = 'utilisee'
-          if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(sessionKey, '1')
-          clearInterval(interval)
-          setTimeout(() => { if (!stopped) setShowReview(true) }, 2000)
-        }
-      } catch {}
-    }
-
-    const interval = setInterval(pollStatut, 3000)
-    return () => { stopped = true; clearInterval(interval) }
-  }, [reservation?.id, reservation?.statut, commerce?.id, commerce?.place_id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleCancel() {
     setCancelling(true)
@@ -429,16 +296,6 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
       </div>
       </div>
 
-      {/* Overlay review après validation */}
-      {showReview && (
-        <ReviewOverlay
-          reservationId={reservation.id}
-          commerceId={commerce?.id}
-          commerceNom={commerce?.nom}
-          placeId={commerce?.place_id}
-          onClose={() => setShowReview(false)}
-        />
-      )}
     </div>
   )
 }
