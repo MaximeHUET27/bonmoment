@@ -118,7 +118,7 @@ function AbonnementContent() {
         </p>
       </header>
 
-      <section className="flex-1 px-4 py-8 max-w-2xl mx-auto w-full flex flex-col gap-5">
+      <section className="flex-1 px-4 py-8 max-w-4xl mx-auto w-full flex flex-col gap-5">
 
         {/* ── CGV + TVA — EN HAUT, avant les cartes ── */}
         <div className="bg-[#F5F5F5] rounded-2xl px-4 py-4 flex flex-col gap-2">
@@ -142,16 +142,16 @@ function AbonnementContent() {
           </p>
         </div>
 
-        {/* ── Cartes paliers ── */}
-        <div className="flex flex-col gap-4">
+        {/* ── Cartes paliers — row sur desktop, colonne sur mobile ── */}
+        <div className="flex flex-col md:flex-row gap-4 md:gap-3 md:items-stretch">
           {PLANS.map(plan => {
             const isDisabled = !cgvAccepted || choosing !== null
             return (
               <div
                 key={plan.key}
-                className={`relative bg-white rounded-3xl px-6 py-6 flex flex-col gap-3 border-2 transition-all ${
+                className={`relative bg-white rounded-3xl px-5 py-6 flex flex-col gap-3 border-2 transition-all flex-1 md:max-w-[280px] ${
                   plan.populaire
-                    ? 'border-[#FF6B00] shadow-lg shadow-orange-100'
+                    ? 'border-[#FF6B00] shadow-lg shadow-orange-100 md:scale-[1.03]'
                     : 'border-[#F0F0F0]'
                 }`}
               >
@@ -174,7 +174,7 @@ function AbonnementContent() {
                 </div>
 
                 {/* Caractéristiques */}
-                <ul className="flex flex-col gap-1.5 text-sm text-[#3D3D3D]">
+                <ul className="flex flex-col gap-1.5 text-sm text-[#3D3D3D] flex-1">
                   <li className="flex items-center gap-2">
                     <span className="text-[#FF6B00] font-bold">✓</span>
                     {plan.offres} offres/mois
@@ -209,13 +209,13 @@ function AbonnementContent() {
               </div>
             )
           })}
-
-          {!cgvAccepted && (
-            <p className="text-center text-xs text-[#3D3D3D]/50">
-              Accepte les CGV pour continuer
-            </p>
-          )}
         </div>
+
+        {!cgvAccepted && (
+          <p className="text-center text-xs text-[#3D3D3D]/50">
+            Accepte les CGV pour continuer
+          </p>
+        )}
 
         {/* ── Erreur ── */}
         {error && (
