@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/app/context/AuthContext'
+import IOSInstallPrompt, { isIOSNonStandalone } from './IOSInstallPrompt'
 
 /**
  * Bottom sheet affiché après l'abonnement à une ville.
@@ -9,9 +10,10 @@ import { useAuth } from '@/app/context/AuthContext'
  */
 export default function NotifBottomSheet({ isOpen, onClose, villeNom }) {
   const { user, supabase } = useAuth()
-  const [emailOn, setEmailOn]   = useState(true)
-  const [pushOn,  setPushOn]    = useState(true)
-  const [saving,  setSaving]    = useState(false)
+  const [emailOn,       setEmailOn]       = useState(true)
+  const [pushOn,        setPushOn]        = useState(true)
+  const [saving,        setSaving]        = useState(false)
+  const [showIOSPrompt, setShowIOSPrompt] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -23,48 +25,43 @@ export default function NotifBottomSheet({ isOpen, onClose, villeNom }) {
 
   if (!isOpen) return null
 
-  async function demandePush() {
-    if (!('Notification' in window)) return false
-    const perm = await Notification.requestPermission()
-    if (perm !== 'granted') return false
-
-    try {
-      const reg     = await navigator.serviceWorker.register('/sw.js')
-      const sub     = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-      })
-      const subJson = sub.toJSON()
-      await fetch('/api/push/subscribe', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ endpoint: subJson.endpoint, keys: subJson.keys }),
-      })
-      return true
-    } catch {
-      return false
-    }
-  }
-
   async function handleTogglePush() {
     if (!user) return
+
     if (!pushOn) {
-      const granted = await demandePush()
-      if (granted) {
+      /* iOS non-standalone : push impossible sans PWA */
+      if (isIOSNonStandalone()) {
+        setShowIOSPrompt(true)
+        return
+      }
+
+      if (!('Notification' in window)) return
+
+      /* requestPermission EN PREMIER — directement dans le handler de clic,
+         sans aucun await préalable, pour respecter le contexte de geste iOS */
+      const perm = await Notification.requestPermission()
+      if (perm !== 'granted') return
+
+      try {
+        const reg     = await navigator.serviceWorker.register('/sw.js')
+        const sub     = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+        })
+        const subJson = sub.toJSON()
+        await fetch('/api/push/subscribe', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ endpoint: subJson.endpoint, keys: subJson.keys }),
+        })
         setPushOn(true)
-        await supabase
-          .from('users')
-          .update({ notifications_push: true })
-          .eq('id', user.id)
+        await supabase.from('users').update({ notifications_push: true }).eq('id', user.id)
+      } catch {
+        /* souscription échouée — ne pas activer */
       }
     } else {
       setPushOn(false)
-      if (user) {
-        await supabase
-          .from('users')
-          .update({ notifications_push: false })
-          .eq('id', user.id)
-      }
+      await supabase.from('users').update({ notifications_push: false }).eq('id', user.id)
     }
   }
 
@@ -81,6 +78,11 @@ export default function NotifBottomSheet({ isOpen, onClose, villeNom }) {
   }
 
   return (
+    <>
+    <IOSInstallPrompt
+      forceOpen={showIOSPrompt}
+      onForceClose={() => setShowIOSPrompt(false)}
+    />
     <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl px-6 pt-6 pb-10 sm:pb-6 shadow-2xl">
@@ -132,5 +134,6 @@ export default function NotifBottomSheet({ isOpen, onClose, villeNom }) {
         </button>
       </div>
     </div>
+    </>
   )
 }
