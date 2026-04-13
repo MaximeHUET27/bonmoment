@@ -7,6 +7,7 @@ import { ToastProvider } from "@/app/components/Toast";
 import AdminFooterLink from "@/app/components/AdminFooterLink";
 import ChatbotWidget from "@/app/components/ChatbotWidget";
 import ReviewPolling from "@/app/components/ReviewPolling";
+import IOSInstallPrompt from "@/app/components/IOSInstallPrompt";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -43,6 +44,7 @@ export default function RootLayout({ children }) {
           {children}
           <ReviewPolling />
           <ChatbotWidget />
+          <IOSInstallPrompt />
           <footer className="w-full bg-[#F5F5F5] border-t border-[#EBEBEB] px-6 py-5 mt-auto">
             <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
               <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-[#3D3D3D]/70">

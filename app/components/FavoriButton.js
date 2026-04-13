@@ -5,6 +5,7 @@ import { useAuth } from '@/app/context/AuthContext'
 import { useFavoris } from '@/app/context/FavorisContext'
 import AuthBottomSheet from './AuthBottomSheet'
 import { useToast } from './Toast'
+import IOSInstallPrompt, { isIOSNonStandalone } from './IOSInstallPrompt'
 
 const PUSH_PROMPT_KEY = 'bonmoment_push_prompt_shown'
 
@@ -24,6 +25,7 @@ export default function FavoriButton({ commerceId, commerceNom, className = '', 
   const [loading,        setLoading]        = useState(false)
   const [showPushPrompt, setShowPushPrompt] = useState(false)
   const [pushLoading,    setPushLoading]    = useState(false)
+  const [showIOSPrompt,  setShowIOSPrompt]  = useState(false)
 
   const favori = isFavori(commerceId)
 
@@ -75,10 +77,16 @@ export default function FavoriButton({ commerceId, commerceNom, className = '', 
   }
 
   async function handleActiverPush() {
-    setPushLoading(true)
     sessionStorage.setItem(PUSH_PROMPT_KEY, '1')
     setShowPushPrompt(false)
 
+    /* iOS non-standalone : les push nécessitent la PWA → guider l'installation */
+    if (isIOSNonStandalone()) {
+      setShowIOSPrompt(true)
+      return
+    }
+
+    setPushLoading(true)
     try {
       if (!('Notification' in window)) throw new Error('unsupported')
       const perm = await Notification.requestPermission()
@@ -189,6 +197,11 @@ export default function FavoriButton({ commerceId, commerceNom, className = '', 
           </div>
         </div>
       )}
+
+      <IOSInstallPrompt
+        forceOpen={showIOSPrompt}
+        onForceClose={() => setShowIOSPrompt(false)}
+      />
     </>
   )
 }

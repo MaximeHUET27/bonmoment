@@ -10,6 +10,7 @@ import { toSlug } from '@/lib/utils'
 import { useToast } from '@/app/components/Toast'
 import { triggerConfetti } from '@/lib/confetti'
 import AddToHomeScreen from '@/app/components/AddToHomeScreen'
+import IOSInstallPrompt, { isIOSNonStandalone } from '@/app/components/IOSInstallPrompt'
 
 /* ── Helpers badges ────────────────────────────────────────────────────────── */
 
@@ -62,6 +63,7 @@ export default function ProfilPage() {
   const [confirmDelete,      setConfirmDelete]       = useState(false)
   const [deleting,           setDeleting]            = useState(false)
   const [showVilleOverlay,   setShowVilleOverlay]    = useState(false)
+  const [showIOSPrompt,      setShowIOSPrompt]       = useState(false)
 
   /* Auth guard */
   useEffect(() => {
@@ -146,6 +148,11 @@ export default function ProfilPage() {
 
   async function togglePushNotif() {
     if (!profile.notifications_push) {
+      /* iOS non-standalone : les push nécessitent la PWA */
+      if (isIOSNonStandalone()) {
+        setShowIOSPrompt(true)
+        return
+      }
       if (!('Notification' in window)) {
         showToast('Les notifications push ne sont pas supportées sur cet appareil.')
         return
@@ -523,6 +530,11 @@ export default function ProfilPage() {
         villesBonmoment={villesBonmoment}
         onSelectActive={abonnerVille}
         onSubscribed={abonnerVille}
+      />
+
+      <IOSInstallPrompt
+        forceOpen={showIOSPrompt}
+        onForceClose={() => setShowIOSPrompt(false)}
       />
     </main>
   )
