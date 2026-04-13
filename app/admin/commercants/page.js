@@ -168,9 +168,11 @@ function FicheCommercant({ id, onClose, onRefresh }) {
               ['Note Google',   c.note_google],
               ['Palier',        PALIER_LABEL[c.palier] || c.palier],
               ['MRR individuel',PALIER_PRIX[c.palier || 'decouverte'] + ' €'],
-              ['Inscription',   fmtDate(c.created_at)],
-              ['Fin essai',     fmtDate(c.date_fin_essai)],
-              ['Stripe ID',     c.stripe_customer_id],
+              ['Inscription',       fmtDate(c.created_at)],
+              ['Fin essai',         fmtDate(c.date_fin_essai)],
+              ['Stripe customer',   c.stripe_customer_id],
+              ['Stripe sub',        c.stripe_subscription_id],
+              ['Résiliation prév.', c.resiliation_prevue ? `Oui — fin ${fmtDate(c.date_fin_abonnement)}` : null],
             ].map(([k, v]) => v ? (
               <div key={k} className="flex justify-between py-1 border-b border-[#E8E8E8] last:border-0 text-sm">
                 <span className="text-[#3D3D3D]/60">{k}</span>

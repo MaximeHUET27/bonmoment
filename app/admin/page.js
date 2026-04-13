@@ -135,6 +135,19 @@ export default function AdminDashboard() {
         </div>
       </section>
 
+      {/* KPIs ligne 3 */}
+      <section>
+        <p className="text-[10px] font-black uppercase tracking-widest text-[#3D3D3D]/50 mb-2">Opérations ce mois</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <KpiCard icon="🎟️" label="Bons réservés"       value={fmt(kpis.bons_reserves_mois)} />
+          <KpiCard icon="✅" label="Bons utilisés"        value={fmt(kpis.bons_utilises_mois)} />
+          <KpiCard icon="⚠️" label="Résiliations prévues" value={fmt(kpis.resiliations_prev)}
+            sub="fin de période programmée" />
+          <KpiCard icon="🆓" label="Actifs sans palier"   value={fmt(kpis.non_abonnes)}
+            sub="activés manuellement" />
+        </div>
+      </section>
+
       {/* Graphique MRR 12 mois */}
       <section className="bg-white rounded-2xl p-5 shadow-sm border border-[#F0F0F0]">
         <p className="text-sm font-bold text-[#0A0A0A] mb-4">MRR — 12 mois glissants</p>

@@ -66,8 +66,24 @@ const FAQ = [
         r: "Un bon par offre. Pas de limite sur le nombre total de bons sur différentes offres.",
       },
       {
+        q: "Comment recevoir les offres de ma ville ?",
+        r: "Abonne-toi à ta ville en cliquant sur le ♡ en haut de la page ville. Tu recevras un email chaque matin avec les offres du jour, et des notifications push si tu les as activées dans ton profil.",
+      },
+      {
+        q: "Comment activer les notifications d'un commerce ?",
+        r: "Sur la carte d'une offre ou la page du commerce, clique sur le ❤️ cœur pour l'ajouter en favori. Tu seras notifié en priorité dès qu'il publie une nouvelle offre. Active les notifications push dans Profil → Notifications pour ne rien rater.",
+      },
+      {
         q: "Mon bon a expiré, c'est grave ?",
         r: "Pas du tout ! Aucune pénalité. Le bon expire simplement à la fin de l'offre. Reviens vite, de nouvelles offres arrivent régulièrement !",
+      },
+      {
+        q: "Mon bon a expiré, puis-je en avoir un autre ?",
+        r: "Un bon expiré ne peut pas être réutilisé, mais tu peux réserver un nouveau bon dès que le commerçant publie une nouvelle offre. Ajoute-le en favori pour être alerté en premier !",
+      },
+      {
+        q: "Comment laisser un avis sur un commerce ?",
+        r: "Les avis se font directement sur Google Maps. Depuis la page du commerce sur BONMOMENT, appuie sur le bouton ⭐ Laisser un avis Google — cela ouvre la fiche Google du commerce où tu peux noter et commenter.",
       },
       {
         q: 'Comment utiliser mon bon en caisse ?',
@@ -123,6 +139,22 @@ const FAQ = [
       {
         q: 'Comment parrainer ?',
         r: "Mon commerce → Parrainage → Partage ton code. Le filleul et toi recevez une remise selon le palier choisi (Découverte -10€, Essentiel -15€, Pro -20€). Max 3 parrainages/mois.",
+      },
+      {
+        q: 'Comment voir mes statistiques ?',
+        r: "Dashboard → section Statistiques. Tu vois les bons réservés, utilisés, le taux d'utilisation, les nouveaux clients touchés et les créneaux horaires les plus actifs.",
+      },
+      {
+        q: 'Comment fonctionnent les avis Google ?',
+        r: "Quand un client utilise son bon chez toi, il est invité à laisser un avis sur ta fiche Google Business. Plus tu publies d'offres, plus tu génères de passages en boutique et donc d'avis.",
+      },
+      {
+        q: 'Comment changer de palier ?',
+        r: "Mon commerce → Abonnement → Changer de formule. Le changement est pris en compte au prochain cycle de facturation. Tu peux monter ou descendre en palier à tout moment.",
+      },
+      {
+        q: 'Comment imprimer mon QR code vitrine ?',
+        r: "Dashboard → Mon QR code → Télécharger (format A4 haute résolution). Imprime-le et affiche-le en vitrine pour que tes clients scannent directement ta page BONMOMENT.",
       },
     ],
   },

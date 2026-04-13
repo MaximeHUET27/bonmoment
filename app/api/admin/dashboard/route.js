@@ -55,7 +55,7 @@ export async function GET() {
     { data: offresRec14j },
     { data: usersMoisPre },
   ] = await Promise.all([
-    admin.from('commerces').select('id, nom, email, abonnement_actif, palier, ville, created_at, date_fin_essai'),
+    admin.from('commerces').select('id, nom, email, abonnement_actif, palier, ville, created_at, date_fin_essai, resiliation_prevue'),
     admin.from('users').select('id, created_at'),
     admin.from('offres').select('id, commerce_id, created_at, statut, date_debut, date_fin'),
     admin.from('reservations').select('id, offre_id, statut, created_at, utilise_at').gte('created_at', debutMois),
@@ -124,6 +124,12 @@ export async function GET() {
 
   /* ── Villes actives ── */
   const villesActives = new Set(comm.filter(c => c.abonnement_actif && c.ville).map(c => c.ville)).size
+
+  /* ── KPIs opérationnels ── */
+  const nonAbonnes       = comm.filter(c => c.abonnement_actif && !c.palier).length
+  const resiliationsPrev = comm.filter(c => c.resiliation_prevue).length
+  const bonsReservesMois = rMois.length
+  const bonsUtilisesMois = utilisesMois
 
   /* ── Graphique MRR 12 mois ── */
   const graphMRR = []
@@ -220,6 +226,10 @@ export async function GET() {
       taux_activ:  tauxActiv,
       taux_util:   tauxUtil,   taux_util_evol: evol(tauxUtil, tauxUtilPre),
       villes_actives: villesActives,
+      non_abonnes:         nonAbonnes,
+      resiliations_prev:   resiliationsPrev,
+      bons_reserves_mois:  bonsReservesMois,
+      bons_utilises_mois:  bonsUtilisesMois,
     },
     graphiques: { mrr: graphMRR, inscriptions: graphInscriptions, util: graphUtil },
     cohorte,

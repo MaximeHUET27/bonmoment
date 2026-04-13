@@ -96,11 +96,12 @@ export const NODES = {
     type: 'menu',
     message: "Ta question sur les bons ?",
     options: [
-      { label: "Comment réserver un bon ?",                    nodeId: 'h-res-1' },
-      { label: "Où retrouver mon bon ?",                       nodeId: 'h-res-2' },
-      { label: "Comment présenter mon bon en caisse ?",        nodeId: 'h-res-3' },
-      { label: "Mon bon a expiré, que faire ?",                nodeId: 'h-res-4' },
+      { label: "Comment réserver un bon ?",                       nodeId: 'h-res-1' },
+      { label: "Où retrouver mon bon ?",                          nodeId: 'h-res-2' },
+      { label: "Comment présenter mon bon en caisse ?",           nodeId: 'h-res-3' },
+      { label: "Mon bon a expiré, que faire ?",                   nodeId: 'h-res-4' },
       { label: "Puis-je réserver plusieurs fois la même offre ?", nodeId: 'h-res-5' },
+      { label: "Comment laisser un avis sur un commerce ?",       nodeId: 'h-res-6' },
     ],
   },
 
@@ -137,16 +138,23 @@ export const NODES = {
     response: `Non, chaque offre est limitée à **un bon par habitant**.\n\nC'est une règle équitable : plus de monde peut profiter de chaque offre !\n\nMais tu peux réserver autant d'offres différentes que tu veux. 🎯`,
   },
 
+  'h-res-6': {
+    type: 'answer',
+    question: "Comment laisser un avis sur un commerce ?",
+    response: `Pour laisser un avis sur un commerce :\n\n1. Ouvre la page du commerce sur BONMOMENT\n2. Appuie sur le bouton **⭐ Laisser un avis Google**\n3. La fiche Google du commerce s'ouvre directement\n4. Note et rédige ton avis — il sera visible par tous ! 🌟\n\nTon avis aide le commerce à se développer et la communauté à faire de bons choix.`,
+  },
+
   /* ── Villes et abonnements ── */
 
   'h-villes': {
     type: 'menu',
     message: "Ta question sur les villes ?",
     options: [
-      { label: "Comment m'abonner à une ville ?",              nodeId: 'h-vil-1' },
-      { label: "Comment m'abonner à plusieurs villes ?",       nodeId: 'h-vil-2' },
-      { label: "Comment suivre un commerce en favori ?",       nodeId: 'h-vil-3' },
-      { label: "Comment ne plus recevoir les emails ?",        nodeId: 'h-vil-4' },
+      { label: "Comment m'abonner à une ville ?",                    nodeId: 'h-vil-1' },
+      { label: "Comment m'abonner à plusieurs villes ?",             nodeId: 'h-vil-2' },
+      { label: "Comment suivre un commerce en favori ?",             nodeId: 'h-vil-3' },
+      { label: "Comment ne plus recevoir les emails ?",              nodeId: 'h-vil-4' },
+      { label: "Recevoir les notifs d'un commerce spécifique ?",     nodeId: 'h-vil-5' },
     ],
   },
 
@@ -180,6 +188,15 @@ export const NODES = {
     response: `Pour gérer tes emails et notifications :\n\nVa dans **Profil → Notifications** et décoche les catégories dont tu ne veux plus.\n\nTu peux aussi te désabonner directement depuis le lien en bas de chaque email BONMOMENT. 📧`,
     actions: [
       { label: '🔔 Mes notifications', type: 'redirect', path: '/profil' },
+    ],
+  },
+
+  'h-vil-5': {
+    type: 'answer',
+    question: "Recevoir les notifs d'un commerce spécifique ?",
+    response: `Pour être notifié en priorité des offres d'un commerce :\n\n1. Ouvre une offre de ce commerce\n2. Clique sur le **❤️ cœur** pour l'ajouter en favori\n3. Active les **notifications push** dans **Profil → Notifications**\n\nTu recevras une alerte instantanée dès que ce commerce publie une nouvelle offre ! 🔔`,
+    actions: [
+      { label: '🔔 Activer les notifs', type: 'redirect', path: '/profil' },
     ],
   },
 
@@ -438,8 +455,9 @@ export const NODES = {
     type: 'menu',
     message: "Ta question sur les statistiques ?",
     options: [
-      { label: "Où voir mes statistiques ?",         nodeId: 'c-sta-1' },
-      { label: "Que signifient les indicateurs ?",   nodeId: 'c-sta-2' },
+      { label: "Où voir mes statistiques ?",            nodeId: 'c-sta-1' },
+      { label: "Que signifient les indicateurs ?",      nodeId: 'c-sta-2' },
+      { label: "Avis Google et rapport mensuel ?",      nodeId: 'c-sta-3' },
     ],
   },
 
@@ -456,6 +474,15 @@ export const NODES = {
     type: 'answer',
     question: "Que signifient les indicateurs ?",
     response: `Voici le détail de tes indicateurs :\n\n🎟️ **Bons réservés** — nombre de réservations ce mois\n✅ **Bons utilisés** — bons effectivement présentés en caisse\n📊 **Taux d'utilisation** — % de bons réservés qui ont été utilisés (objectif : > 50%)\n👥 **Nouveaux clients** — habitants uniques ayant réservé ce mois\n📅 **Jours actifs** — jours de la semaine où tes clients viennent le plus\n⏰ **Heures de pointe** — créneaux horaires avec le plus de réservations`,
+  },
+
+  'c-sta-3': {
+    type: 'answer',
+    question: "Avis Google et rapport mensuel ?",
+    response: `**Avis Google** 🌟\nChaque client qui utilise un bon est invité à laisser un avis sur ta fiche Google Business. Plus tu publies d'offres, plus tu génères de passages en boutique — et donc plus d'avis organiques.\n\nTu peux voir le nombre d'avis reçus ce mois dans ton **Dashboard → Statistiques**.\n\n**Rapport mensuel** 📋\nChaque 1er du mois, tu reçois par email un résumé complet du mois écoulé : bons réservés/utilisés, nouveaux clients, taux d'utilisation et évolution vs le mois précédent.`,
+    actions: [
+      { label: '📊 Voir mes stats', type: 'redirect', path: '/commercant/dashboard' },
+    ],
   },
 
   /* ── Mon commerce ── */
@@ -533,24 +560,24 @@ export const NODES = {
   'c-ab-3': {
     type: 'answer',
     question: "Comment changer de palier ?",
-    response: `Pour changer de formule, contacte l'équipe BONMOMENT :\n\n📧 Envoie-nous un message via le formulaire de contact\n✉️ Indique le palier souhaité (Découverte / Essentiel / Pro)\n\nLe changement est effectif au prochain cycle de facturation. Aucune interruption de service.`,
+    response: `Tu peux changer de formule directement depuis ton dashboard :\n\n1. Va dans **Mon commerce → Abonnement**\n2. Clique sur **Changer de formule**\n3. Sélectionne le nouveau palier (Découverte / Essentiel / Pro)\n4. Confirme — le changement est effectif au **prochain cycle de facturation**\n\nAucune interruption de service. Tu peux monter ou descendre librement. 🔄`,
     actions: [
-      { label: '📧 Changer de palier', type: 'redirect', path: '/aide/contact' },
+      { label: '📊 Mon abonnement', type: 'redirect', path: '/commercant/dashboard' },
     ],
   },
 
   'c-ab-4': {
     type: 'answer',
     question: "Quels sont les tarifs ?",
-    response: `BONMOMENT propose 3 formules :\n\n🆓 **Découverte** — 29 €/mois\n→ 4 offres par mois\n\n⭐ **Essentiel** — 49 €/mois\n→ 8 offres par mois\n\n🚀 **Pro** — 79 €/mois\n→ 16 offres par mois\n\nTous les paliers incluent : validation QR, statistiques, QR code vitrine et parrainage. 💼`,
+    response: `BONMOMENT propose 3 formules :\n\n🆓 **Découverte** — 29 €/mois\n→ 4 offres par mois\n\n⭐ **Essentiel** — 49 €/mois\n→ 8 offres par mois\n\n🚀 **Pro** — 79 €/mois\n→ 16 offres par mois\n\nTous les paliers incluent : validation QR, statistiques, QR code vitrine et parrainage. 💼\n\n_Prix nets — TVA non applicable, article 293 B du CGI._`,
   },
 
   'c-ab-5': {
     type: 'answer',
     question: "Comment résilier ou mettre en pause ?",
-    response: `Pour résilier ou suspendre ton abonnement :\n\nContacte l'équipe BONMOMENT via le formulaire de contact.\n\nLa résiliation prend effet à la fin de la période en cours, sans frais supplémentaires. Tes données et statistiques sont conservées 12 mois après résiliation.`,
+    response: `Tu gères tout ça directement depuis ton dashboard :\n\n**Résilier :** Mon commerce → Abonnement → Résilier\n→ La résiliation prend effet à la **fin du mois en cours**. Tu restes actif jusqu'à cette date, sans frais supplémentaires.\n\n**Mettre en pause :** Mon commerce → Abonnement → Mettre en pause\n→ Ton compte est suspendu temporairement. Tes données et stats sont conservées.\n\nPas d'engagement, pas de pénalité. 👍`,
     actions: [
-      { label: '📧 Contacter l\'équipe', type: 'redirect', path: '/aide/contact' },
+      { label: '📊 Gérer mon abonnement', type: 'redirect', path: '/commercant/dashboard' },
     ],
   },
 
