@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/app/context/AuthContext'
@@ -30,9 +30,10 @@ const PLANS = [
   },
 ]
 
-export default function AbonnementPage() {
+function AbonnementContent() {
   const { user, loading, supabase } = useAuth()
-  const router = useRouter()
+  const router       = useRouter()
+  const searchParams = useSearchParams()
 
   const [commerce,      setCommerce]      = useState(null)
   const [fetching,      setFetching]      = useState(true)
@@ -46,19 +47,26 @@ export default function AbonnementPage() {
 
   useEffect(() => {
     if (!user || !supabase) return
-    console.log('USER:', user?.id, user?.email)
+
+    const commerceId = searchParams.get('commerce_id')
+    if (!commerceId) { router.replace('/commercant/dashboard'); return }
+
     supabase
       .from('commerces')
       .select('id, nom, palier')
-      .eq('owner_id', user.id)
-      .maybeSingle()
+      .eq('id', commerceId)
+      .eq('owner_id', user.id)   // vérifie l'appartenance
+      .single()
       .then(({ data, error }) => {
-        console.log('COMMERCE QUERY RESULT:', data, error)
-        if (error) console.error('Erreur chargement commerce:', error)
+        if (error || !data) {
+          console.error('Commerce introuvable ou accès refusé:', error)
+          router.replace('/commercant/dashboard')
+          return
+        }
         setCommerce(data)
         setFetching(false)
       })
-  }, [user, supabase])
+  }, [user, supabase, searchParams, router])
 
   async function handleChoix(palier) {
     if (!cgvAccepted || choosing) return
@@ -231,5 +239,17 @@ export default function AbonnementPage() {
 
       </section>
     </main>
+  )
+}
+
+export default function AbonnementPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <span className="w-8 h-8 border-[3px] border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <AbonnementContent />
+    </Suspense>
   )
 }

@@ -189,7 +189,7 @@ export default function DashboardPage() {
               🔒 Pour publier des offres, choisis ton abonnement — 1<sup>er</sup> mois offert !
             </p>
             <Link
-              href="/commercant/abonnement"
+              href={`/commercant/abonnement?commerce_id=${commerce.id}`}
               className="shrink-0 bg-white text-[#FF6B00] font-black text-xs px-3 py-2 rounded-lg hover:bg-[#FFF0E0] transition-colors whitespace-nowrap"
             >
               Choisir mon palier →
@@ -379,7 +379,7 @@ function AbonnementSection({ commerce, offres }) {
         </div>
         <div className="flex gap-2">
           <Link
-            href="/commercant/abonnement"
+            href={`/commercant/abonnement?commerce_id=${commerce.id}`}
             className="text-xs font-bold text-[#FF6B00] border border-[#FF6B00] px-3 py-1.5 rounded-full hover:bg-[#FFF0E0] transition-colors min-h-[36px] flex items-center"
           >
             Changer
