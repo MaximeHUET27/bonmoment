@@ -21,7 +21,6 @@ export async function GET(request) {
     .from('commerces')
     .select(`${COMMERCE_BASE}, offres (${OFFRES_SELECT})`)
     .eq('ville', ville)
-    .eq('abonnement_actif', true)
     .not('latitude', 'is', null)
     .not('longitude', 'is', null)
 

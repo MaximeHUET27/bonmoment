@@ -55,7 +55,7 @@ function AbonnementContent() {
 
     supabase
       .from('commerces')
-      .select('id, nom, palier')
+      .select('id, nom, palier, stripe_customer_id, stripe_subscription_id')
       .eq('id', commerceId)
       .eq('owner_id', user.id)   // vérifie l'appartenance
       .single()
@@ -102,11 +102,12 @@ function AbonnementContent() {
     }
 
     /* ── Flow Stripe normal ── */
+    const isFirstSubscription = !commerce?.stripe_customer_id && !commerce?.stripe_subscription_id
     try {
       const res  = await fetch('/api/stripe/checkout', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ palier, commerce_id: commerce.id }),
+        body:    JSON.stringify({ palier, commerce_id: commerce.id, isFirstSubscription }),
       })
       const data = await res.json()
       if (data.url) {
@@ -137,10 +138,17 @@ function AbonnementContent() {
           <Image src="/LOGO.png" alt="Logo BONMOMENT" width={600} height={300} unoptimized priority className="w-[110px] h-auto mx-auto" />
         </Link>
         <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00] mb-1">Espace commerçant</p>
-        <h1 className="text-2xl font-black text-[#0A0A0A]">Choisir un palier</h1>
-        <p className="text-xs text-[#3D3D3D]/60 mt-1">
-          Premier mois offert · Sans engagement · Résiliable à tout moment
-        </p>
+        {commerce && !commerce.stripe_customer_id && !commerce.stripe_subscription_id ? (
+          <>
+            <h1 className="text-2xl font-black text-[#0A0A0A]">Choisis ton abonnement — 1<sup>er</sup> mois offert !</h1>
+            <p className="text-xs text-[#3D3D3D]/60 mt-1">Sans engagement · Résiliable à tout moment</p>
+          </>
+        ) : (
+          <>
+            <h1 className="text-2xl font-black text-[#0A0A0A]">Change ton abonnement</h1>
+            <p className="text-xs text-[#3D3D3D]/60 mt-1">Sans engagement · Résiliable à tout moment</p>
+          </>
+        )}
         {isAdmin && (
           <p className="inline-block mt-2 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">
             🔑 Mode admin — activation sans paiement
@@ -213,10 +221,12 @@ function AbonnementContent() {
                     <span className="text-[#FF6B00] font-bold">✓</span>
                     Bons illimités
                   </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#FF6B00] font-bold">✓</span>
-                    1<sup>er</sup> mois offert
-                  </li>
+                  {!commerce?.stripe_customer_id && !commerce?.stripe_subscription_id && (
+                    <li className="flex items-center gap-2">
+                      <span className="text-[#FF6B00] font-bold">✓</span>
+                      1<sup>er</sup> mois offert
+                    </li>
+                  )}
                 </ul>
 
                 {/* Bouton — style piloté par React, pas par CSS :disabled */}

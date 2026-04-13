@@ -182,17 +182,20 @@ export default function DashboardPage() {
       {/* ── Corps ────────────────────────────────────────────────────────── */}
       <div className="flex-1 w-full max-w-xl mx-auto px-5 py-6 flex flex-col gap-5">
 
-        {/* 0. BANNIÈRE ABONNEMENT — visible uniquement si pas de sub Stripe ── */}
+        {/* 0. BANNIÈRE ABONNEMENT — visible uniquement si abonnement inactif ── */}
         {commerce && !commerce.abonnement_actif && (
           <div className="w-full bg-[#FF6B00] rounded-xl px-4 py-3 flex flex-row items-center justify-between gap-3">
             <p className="text-white font-bold text-[11px] sm:text-[13px] leading-tight">
-              🔒 Pour publier des offres, choisis ton abonnement — 1<sup>er</sup> mois offert !
+              {commerce.stripe_customer_id
+                ? '⚠️ Ton abonnement est inactif — Renouvelle pour publier de nouvelles offres'
+                : <>🔒 Pour publier des offres, choisis ton abonnement — 1<sup>er</sup> mois offert !</>
+              }
             </p>
             <Link
               href={`/commercant/abonnement?commerce_id=${commerce.id}`}
               className="shrink-0 bg-white text-[#FF6B00] font-black text-xs px-3 py-2 rounded-lg hover:bg-[#FFF0E0] transition-colors whitespace-nowrap"
             >
-              Choisir mon palier →
+              {commerce.stripe_customer_id ? 'Renouveler →' : 'Choisir mon palier →'}
             </Link>
           </div>
         )}

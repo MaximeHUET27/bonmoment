@@ -61,8 +61,7 @@ function matchFiltre(offre, filtre) {
 function isActive(offre) {
   return (
     new Date(offre.date_fin) > new Date() &&
-    offre.nb_bons_restants !== 0 &&
-    offre.commerces?.abonnement_actif === true
+    offre.nb_bons_restants !== 0
   )
 }
 

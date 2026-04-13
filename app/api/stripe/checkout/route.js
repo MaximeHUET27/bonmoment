@@ -9,7 +9,7 @@ export async function POST(request) {
   if (!user) return Response.json({ error: 'Non authentifié' }, { status: 401 })
 
   const body = await request.json().catch(() => ({}))
-  const { palier, commerce_id } = body
+  const { palier, commerce_id, isFirstSubscription } = body
 
   const priceId = {
     decouverte: process.env.STRIPE_PRICE_DECOUVERTE,
@@ -47,13 +47,13 @@ export async function POST(request) {
     payment_method_types: ['card'],
     line_items:           [{ price: priceId, quantity: 1 }],
     subscription_data: {
-      trial_period_days: 30,
+      ...(isFirstSubscription ? { trial_period_days: 30 } : {}),
       metadata: { commerce_id, palier, user_id: user.id },
     },
     customer_email: user.email,
     metadata:       { commerce_id, palier, user_id: user.id },
     success_url:    `${siteUrl}/commercant/abonnement/succes?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url:     `${siteUrl}/commercant/abonnement`,
+    cancel_url:     `${siteUrl}/commercant/abonnement?commerce_id=${commerce_id}`,
     locale:         'fr',
   })
 
