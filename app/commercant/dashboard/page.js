@@ -38,7 +38,7 @@ export default function DashboardPage() {
       // Sélection complète avec les nouvelles colonnes
       let { data, error } = await supabase
         .from('commerces')
-        .select('id, nom, categorie, ville, adresse, note_google, palier, photo_url, telephone, horaires, maps_url, stripe_subscription_id, stripe_customer_id, abonnement_actif')
+        .select('id, nom, categorie, ville, adresse, note_google, palier, photo_url, telephone, horaires, maps_url, stripe_subscription_id, stripe_customer_id, abonnement_actif, resiliation_prevue, date_fin_abonnement')
         .eq('owner_id', user.id)
 
       // Fallback si les colonnes maps_url/palier n'existent pas encore en BDD
@@ -372,9 +372,25 @@ function AbonnementSection({ commerce, offres }) {
   // Pas encore de palier → section masquée (bannière top gère le CTA)
   if (!commerce.palier) return null
 
+  const dateFinStr = commerce.date_fin_abonnement
+    ? new Date(commerce.date_fin_abonnement).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : null
+
   return (
     <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
       <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">Ton abonnement</h2>
+
+      {/* Bandeau résiliation prévue */}
+      {commerce.resiliation_prevue && dateFinStr && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 flex flex-col gap-1">
+          <p className="text-xs font-black text-amber-800">
+            ⚠️ Ton abonnement prend fin le {dateFinStr}
+          </p>
+          <p className="text-[11px] text-amber-700/80">
+            Tu peux toujours publier des offres et vérifier des bons jusque-là.
+          </p>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xl font-black text-[#FF6B00]">📦 {palier.nom}</p>

@@ -17,6 +17,7 @@ function ResiliationContent() {
   const [step,       setStep]       = useState('menu')   // 'menu' | 'confirm1' | 'confirm2' | 'pause_done' | 'resil_done'
   const [processing, setProcessing] = useState(false)
   const [error,      setError]      = useState(null)
+  const [dateFin,    setDateFin]    = useState(null)   // date de fin d'abonnement après résiliation
 
   useEffect(() => {
     if (!loading && !user) router.replace('/')
@@ -122,8 +123,12 @@ function ResiliationContent() {
         body:    JSON.stringify({ commerce_id: commerce.id, action: 'resilier' }),
       })
       const data = await res.json()
-      if (data.ok) setStep('resil_done')
-      else setError(data.error || 'Erreur lors de la résiliation')
+      if (data.ok) {
+        if (data.date_fin) setDateFin(data.date_fin)
+        setStep('resil_done')
+      } else {
+        setError(data.error || 'Erreur lors de la résiliation')
+      }
     } catch (e) {
       setError(e.message)
     } finally {
@@ -161,15 +166,25 @@ function ResiliationContent() {
   }
 
   if (step === 'resil_done') {
+    const dateFinStr = dateFin
+      ? new Date(dateFin).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+      : null
+
     return (
       <main className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center gap-8">
         <Image src="/LOGO.png" alt="Logo BONMOMENT" width={600} height={300} unoptimized priority className="w-[110px] h-auto" />
         <div className="flex flex-col gap-4 max-w-sm">
           <p className="text-5xl">👋</p>
-          <h1 className="text-2xl font-black text-[#0A0A0A]">Résiliation confirmée</h1>
+          <h1 className="text-2xl font-black text-[#0A0A0A]">Résiliation prise en compte</h1>
           <p className="text-sm text-[#3D3D3D]/70 leading-relaxed">
-            Ton abonnement a été résilié. Tu conserves l&apos;accès aux fonctionnalités jusqu&apos;à
-            la fin de la période en cours.
+            Ta résiliation est confirmée. Tu gardes l&apos;accès à toutes les fonctionnalités
+            {dateFinStr
+              ? <> jusqu&apos;au <strong className="text-[#FF6B00]">{dateFinStr}</strong>.</>
+              : ' jusqu\'à la fin de la période en cours.'
+            }
+          </p>
+          <p className="text-xs text-[#3D3D3D]/50 leading-relaxed">
+            Tu pourras continuer à publier des offres et vérifier des bons jusqu&apos;à cette date.
           </p>
           {commerce?.stripe_subscription_id && (
             <p className="text-xs text-[#3D3D3D]/40">Tu recevras un email de confirmation Stripe.</p>

@@ -41,7 +41,7 @@ export async function POST(request) {
       return Response.json({ error: 'La pause n\'est disponible que pour les abonnements Stripe' }, { status: 400 })
     }
 
-    const resumesAt = Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60 // +30 jours
+    const resumesAt = Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60
     await stripe.subscriptions.update(subId, {
       pause_collection: {
         behavior:   'void',
@@ -52,20 +52,30 @@ export async function POST(request) {
     return Response.json({ ok: true, message: 'Abonnement mis en pause pour 1 mois' })
   }
 
-  /* ── Résiliation ── */
+  /* ── Résiliation (fin de période, pas immédiate) ── */
   if (action === 'resilier') {
+    let dateFin
+
     if (subId) {
-      // Stripe : annulation fin de période
-      await stripe.subscriptions.update(subId, { cancel_at_period_end: true })
+      // Stripe : annulation en fin de période en cours
+      const updatedSub = await stripe.subscriptions.update(subId, {
+        cancel_at_period_end: true,
+      })
+      dateFin = new Date(updatedSub.current_period_end * 1000).toISOString()
+    } else {
+      // Admin bypass : fin de mois en cours
+      const now = new Date()
+      dateFin = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
     }
 
-    // Dans tous les cas : mise à jour BDD immédiate
+    // Marquer la résiliation prévue en BDD — NE PAS désactiver l'abonnement
+    // C'est le webhook customer.subscription.deleted qui mettra abonnement_actif = false
     await supabaseAdmin.from('commerces').update({
-      abonnement_actif: false,
-      palier:           null,
+      resiliation_prevue:   true,
+      date_fin_abonnement:  dateFin,
     }).eq('id', commerce_id)
 
-    return Response.json({ ok: true, message: 'Résiliation confirmée' })
+    return Response.json({ ok: true, date_fin: dateFin })
   }
 
   return Response.json({ error: `Action invalide : "${action}"` }, { status: 400 })

@@ -31,7 +31,7 @@ export async function POST(request) {
 
       /* ── Paiement initié + trial démarré ── */
       case 'checkout.session.completed': {
-        const session    = event.data.object
+        const session = event.data.object
         const { commerce_id, palier } = session.metadata || {}
         if (!commerce_id) break
 
@@ -40,11 +40,13 @@ export async function POST(request) {
           palier:                 palier || 'decouverte',
           stripe_customer_id:     session.customer,
           stripe_subscription_id: session.subscription,
+          resiliation_prevue:     false,
+          date_fin_abonnement:    null,
         }).eq('id', commerce_id)
         break
       }
 
-      /* ── Mise à jour subscription (pause, reprise, changement palier) ── */
+      /* ── Mise à jour subscription (pause, reprise, cancel_at_period_end, changement palier) ── */
       case 'customer.subscription.updated': {
         const sub         = event.data.object
         const commerce_id = sub.metadata?.commerce_id
@@ -53,13 +55,25 @@ export async function POST(request) {
         const updates = {
           abonnement_actif: sub.status === 'active' || sub.status === 'trialing',
         }
+
         if (sub.metadata?.palier) updates.palier = sub.metadata.palier
+
+        if (sub.cancel_at_period_end) {
+          // Résiliation programmée — l'abonnement reste actif jusqu'à la fin de période
+          // Ne pas toucher à abonnement_actif ici (peut encore être actif/trialing)
+          updates.resiliation_prevue  = true
+          updates.date_fin_abonnement = new Date(sub.current_period_end * 1000).toISOString()
+        } else {
+          // Résiliation annulée ou abonnement repris normalement
+          updates.resiliation_prevue  = false
+          updates.date_fin_abonnement = null
+        }
 
         await supabaseAdmin.from('commerces').update(updates).eq('id', commerce_id)
         break
       }
 
-      /* ── Résiliation confirmée ── */
+      /* ── Résiliation effective — la période est vraiment terminée ── */
       case 'customer.subscription.deleted': {
         const sub         = event.data.object
         const commerce_id = sub.metadata?.commerce_id
@@ -67,7 +81,10 @@ export async function POST(request) {
 
         await supabaseAdmin.from('commerces').update({
           abonnement_actif:       false,
+          palier:                 null,
           stripe_subscription_id: null,
+          resiliation_prevue:     false,
+          date_fin_abonnement:    null,
         }).eq('id', commerce_id)
         break
       }
@@ -76,7 +93,7 @@ export async function POST(request) {
       case 'invoice.payment_failed': {
         const invoice = event.data.object
         console.warn('Paiement échoué — customer:', invoice.customer, '— invoice:', invoice.id)
-        // TODO: envoyer email de relance via Brevo (suspension après 7 jours gérée par Stripe smart retries)
+        // TODO: envoyer email de relance via Brevo
         break
       }
 
