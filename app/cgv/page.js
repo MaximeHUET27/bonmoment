@@ -141,6 +141,9 @@ export default function CGV() {
           <p className="mt-2">
             Avant la confirmation de résiliation, un bilan complet de l&apos;abonnement est présenté (bons utilisés, offres publiées, CA estimé généré).
           </p>
+          <p className="mt-2">
+            Une option de pause d&apos;un mois est proposée avant confirmation de la résiliation. Pendant la pause, le compte reste actif mais aucun prélèvement n&apos;est effectué. À l&apos;issue du mois de pause, l&apos;abonnement reprend automatiquement.
+          </p>
           <SubTitle className="mt-4">5.3 Résiliation par BONMOMENT</SubTitle>
           <p className="mt-2">BONMOMENT se réserve le droit de résilier un abonnement en cas de :</p>
           <ul className="list-disc pl-5 mt-2 space-y-1">

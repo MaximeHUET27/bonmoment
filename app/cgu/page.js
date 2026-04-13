@@ -33,6 +33,7 @@ export default function CGU() {
           <table className="w-full text-sm border-collapse mt-4">
             <tbody>
               <Tr label="Éditeur" value="Manon LISSE — Micro-entrepreneur" />
+              <Tr label="SIRET" value="10314509000017" />
               <Tr label="Adresse" value="7 rue du Chesne, 27190 Nogent-le-Sec" />
               <Tr label="Email" value={<a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a>} />
               <Tr label="Site" value={<a href="https://bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">bonmoment.app</a>} last />
@@ -56,7 +57,11 @@ export default function CGU() {
             <li>Fournir des informations exactes et à jour</li>
             <li>Être responsable de la confidentialité de votre accès</li>
           </ul>
-          <SubTitle className="mt-4">2.3 Résiliation du compte</SubTitle>
+          <SubTitle className="mt-4">2.3 Abonnement automatique à la ville</SubTitle>
+          <p className="mt-2">
+            Lors de votre première réservation d&apos;un bon, votre compte est automatiquement abonné aux alertes email de la ville concernée. Vous recevrez un récapitulatif quotidien des offres disponibles. Vous pouvez vous désabonner à tout moment depuis votre profil ou via le lien de désinscription dans chaque email.
+          </p>
+          <SubTitle className="mt-4">2.4 Résiliation du compte</SubTitle>
           <p className="mt-2">
             Vous pouvez supprimer votre compte à tout moment depuis les paramètres de l&apos;application via le bouton « Supprimer mon compte ». La suppression entraîne l&apos;effacement de toutes vos données personnelles dans un délai de 30 jours.
           </p>

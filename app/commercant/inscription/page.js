@@ -286,7 +286,19 @@ export default function InscriptionCommercant() {
       return
     }
 
-    // 3.5 Upload de la photo dans Supabase Storage (non-bloquant)
+    // 3.5 Génération automatique du code parrainage pour le nouveau commerçant (non-bloquant)
+    if (insertData?.id) {
+      const codeParrain = generateCodeParrainage()
+      const expireAt = new Date(); expireAt.setMonth(expireAt.getMonth() + 3)
+      supabase.from('codes_parrainage').insert({
+        commerce_id: insertData.id,
+        code:        codeParrain,
+        expire_at:   expireAt.toISOString(),
+        statut:      'actif',
+      }).then(({ error }) => { if (error) console.error('Code parrainage auto:', error.message) })
+    }
+
+    // 3.6 Upload de la photo dans Supabase Storage (non-bloquant)
     // Remplace l'URL Google temporaire par une URL Supabase permanente
     if (insertData?.id && selectedPlace.photo_url) {
       fetch('/api/upload-photo-commerce', {
@@ -296,7 +308,7 @@ export default function InscriptionCommercant() {
       }).catch(err => console.error('upload-photo-commerce:', err))
     }
 
-    // 3.6 Upsert de la ville dans la table villes (non-bloquant)
+    // 3.7 Upsert de la ville dans la table villes (non-bloquant)
     if (selectedPlace.ville) {
       fetch('/api/upsert-ville', {
         method:  'POST',

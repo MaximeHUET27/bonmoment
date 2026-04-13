@@ -30,6 +30,7 @@ export default function Confidentialite() {
           <table className="w-full text-sm border-collapse mt-3">
             <tbody>
               <Tr label="Responsable de traitement" value="Manon LISSE" />
+              <Tr label="SIRET" value="10314509000017" />
               <Tr label="Adresse" value="7 rue du Chesne, 27190 Nogent-le-Sec" />
               <Tr label="Email DPO / Contact RGPD" value={<a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a>} />
               <Tr label="Site web" value={<a href="https://bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">bonmoment.app</a>} last />
