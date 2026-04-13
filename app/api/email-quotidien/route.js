@@ -110,9 +110,12 @@ export async function GET(request) {
     return Response.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
-  /* Déterminer l'heure actuelle pour filtrer par badge */
-  const heureUTC  = new Date().getUTCHours()
-  const heureFR   = (heureUTC + 1) % 24  // UTC+1 (heure Europe/Paris hiver ; adapter pour l'été)
+  /* Déterminer l'heure actuelle pour filtrer par badge (gère UTC+1 hiver / UTC+2 été) */
+  const now    = new Date()
+  const heureFR = parseInt(
+    new Intl.DateTimeFormat('fr-FR', { hour: 'numeric', hour12: false, timeZone: 'Europe/Paris' }).format(now),
+    10,
+  )
   const badgeCible = Object.entries(BADGE_HEURES).find(([, h]) => h === heureFR)?.[0]
 
   if (!badgeCible) {

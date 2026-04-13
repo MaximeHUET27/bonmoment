@@ -100,6 +100,14 @@ export function useReservation() {
       setReservation(finalRes)
       setStatus('success')
       window.dispatchEvent(new Event('bonmoment:reservation'))
+
+      /* Notification push non-bloquante → commerçant */
+      fetch('/api/push/notify-reservation', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ offre_id: offre.id }),
+      }).catch(() => {})
+
       return finalRes
 
     } catch (err) {

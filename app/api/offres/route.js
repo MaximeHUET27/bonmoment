@@ -2,6 +2,7 @@ import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/rate-limit'
+import { sendPushToMany } from '@/lib/push'
 
 const QUOTA_PAR_PALIER = { decouverte: 4, essentiel: 8, pro: 16 }
 
@@ -31,7 +32,7 @@ export async function POST(request) {
 
   const { data: commerce, error: commerceErr } = await admin
     .from('commerces')
-    .select('id, palier')
+    .select('id, nom, ville, palier')
     .eq('id', commerceId)
     .eq('owner_id', user.id)
     .maybeSingle()
@@ -76,6 +77,34 @@ export async function POST(request) {
     console.error('Erreur insertion offre:', insertErr.message)
     return NextResponse.json({ error: insertErr.message }, { status: 500 })
   }
+
+  /* ── Notification push non-bloquante aux abonnés du commerce ── */
+  ;(async () => {
+    try {
+      const { data: abonnes } = await admin
+        .from('users')
+        .select('id')
+        .contains('commerces_abonnes', [commerce.id])
+
+      if (!abonnes?.length) return
+
+      const { data: subs } = await admin
+        .from('push_subscriptions')
+        .select('id, endpoint, p256dh, auth')
+        .in('user_id', abonnes.map(u => u.id))
+
+      if (!subs?.length) return
+
+      const offreUrl = `/offre/${inserted.id}`
+      await sendPushToMany(
+        subs,
+        { title: `🔥 Nouvelle offre — ${commerce.nom}`, body: body.titre, url: offreUrl },
+        admin,
+      )
+    } catch (e) {
+      console.error('[push/offre]', e.message)
+    }
+  })()
 
   return NextResponse.json({ success: true, id: inserted.id })
 }
