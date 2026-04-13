@@ -182,6 +182,21 @@ export default function DashboardPage() {
       {/* ── Corps ────────────────────────────────────────────────────────── */}
       <div className="flex-1 w-full max-w-xl mx-auto px-5 py-6 flex flex-col gap-5">
 
+        {/* 0. BANNIÈRE ABONNEMENT — visible uniquement si pas de sub Stripe ── */}
+        {commerce && !commerce.stripe_subscription_id && (
+          <div className="w-full bg-[#FF6B00] rounded-xl px-4 py-4 flex flex-col gap-3">
+            <p className="text-white font-bold text-sm leading-snug">
+              🔒 Pour publier des offres, choisis ton abonnement — 1<sup>er</sup> mois offert !
+            </p>
+            <Link
+              href="/commercant/abonnement"
+              className="self-start bg-white text-[#FF6B00] font-black text-sm px-5 py-2.5 rounded-xl hover:bg-[#FFF0E0] transition-colors"
+            >
+              Choisir mon palier →
+            </Link>
+          </div>
+        )}
+
         {/* 1. Boutons principaux ──────────────────────────────────────────── */}
         {commerce && (
           <div className="flex gap-4">
@@ -191,12 +206,21 @@ export default function DashboardPage() {
             >
               ✅ Vérifier un bon
             </Link>
-            <Link
-              href={`/commercant/offre/nouvelle?commerce=${commerce.id}`}
-              className="flex-1 border-2 border-[#FF6B00] text-[#FF6B00] bg-white hover:bg-[#FFF0E0] font-semibold text-lg py-4 rounded-xl transition-colors flex items-center justify-center text-center"
-            >
-              ✨ Créer une offre
-            </Link>
+            {commerce.stripe_subscription_id ? (
+              <Link
+                href={`/commercant/offre/nouvelle?commerce=${commerce.id}`}
+                className="flex-1 border-2 border-[#FF6B00] text-[#FF6B00] bg-white hover:bg-[#FFF0E0] font-semibold text-lg py-4 rounded-xl transition-colors flex items-center justify-center text-center"
+              >
+                ✨ Créer une offre
+              </Link>
+            ) : (
+              <div className="flex-1 flex flex-col items-center gap-1">
+                <div className="w-full opacity-50 cursor-not-allowed pointer-events-none border-2 border-[#D0D0D0] text-[#D0D0D0] bg-white font-semibold text-lg py-4 rounded-xl flex items-center justify-center text-center select-none">
+                  ✨ Créer une offre
+                </div>
+                <p className="text-[11px] text-[#3D3D3D]/50 text-center leading-tight">Choisis un abonnement pour créer ta première offre</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -342,24 +366,8 @@ function AbonnementSection({ commerce, offres }) {
   const nextRenewal = new Date(now.getFullYear(), now.getMonth() + 1, 1)
   const nextRenewalStr = nextRenewal.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 
-  // Pas encore d'abonnement Stripe actif
-  if (!commerce.stripe_subscription_id) {
-    return (
-      <div className="bg-[#FFF0E0] border-2 border-[#FF6B00] rounded-3xl px-6 py-5 flex flex-col gap-3">
-        <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">Ton abonnement</h2>
-        <p className="text-sm text-[#3D3D3D]/80 leading-relaxed">
-          Tu n&apos;as pas encore activé ton abonnement BONMOMENT. Choisis un palier pour publier tes offres.
-        </p>
-        <p className="text-xs text-[#3D3D3D]/50">Premier mois offert · Sans engagement</p>
-        <Link
-          href="/commercant/abonnement"
-          className="self-start bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-sm px-5 py-3 rounded-2xl transition-colors"
-        >
-          Activer mon abonnement →
-        </Link>
-      </div>
-    )
-  }
+  // Pas encore d'abonnement Stripe actif → section masquée (bannière top gère le CTA)
+  if (!commerce.stripe_subscription_id) return null
 
   return (
     <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">

@@ -164,7 +164,19 @@ export default function AbonnementPage() {
               </button>
             </div>
           ))}
+
+          {/* Message si CGV non cochées */}
+          {!cgv && (
+            <p className="text-center text-xs text-[#3D3D3D]/50">
+              Accepte les CGV pour continuer
+            </p>
+          )}
         </div>
+
+        {/* ── Mention TVA ── */}
+        <p className="text-center text-[11px] text-[#3D3D3D]/40">
+          TVA non applicable, article 293 B du CGI.
+        </p>
 
         {/* ── CGV obligatoires ── */}
         <div className="bg-[#F5F5F5] rounded-2xl px-4 py-4">
@@ -181,12 +193,8 @@ export default function AbonnementPage() {
                 Conditions Générales de Vente
               </Link>
               {' '}de BONMOMENT.
-              <span className="block text-[#3D3D3D]/50 mt-0.5">TVA non applicable, article 293 B du CGI.</span>
             </p>
           </label>
-          {!cgv && (
-            <p className="text-[11px] text-[#3D3D3D]/40 mt-2 ml-7">← Cochez pour activer les boutons</p>
-          )}
         </div>
 
         {/* ── Erreur ── */}
