@@ -307,7 +307,7 @@ export default function OffreCard({ offre, userReservation }) {
 
         {/* ── Photo commerce (côté gauche) ── */}
         <div
-          className="relative w-[110px] sm:w-[140px] shrink-0 self-stretch"
+          className="relative w-[90px] sm:w-[140px] shrink-0 self-stretch"
           style={{ minHeight: 120 }}
         >
           {commerce?.photo_url ? (
@@ -325,49 +325,49 @@ export default function OffreCard({ offre, userReservation }) {
         </div>
 
         {/* ── Infos (côté droit) ── */}
-        <div className="flex-1 flex flex-col gap-1.5 px-3 py-2.5 min-w-0">
+        <div className="flex-1 flex flex-col gap-1.5 px-[10px] py-2 sm:px-3 sm:py-2.5 min-w-0">
 
-          {/* Ligne 1 : timer + bons + partage */}
-          <div className="flex items-center justify-between gap-1 min-w-0">
+          {/* Ligne 1 : timer + bons + partage — barre orange */}
+          <div className="flex items-center justify-between gap-1 min-w-0 bg-[#FFF0E0] rounded-[6px] px-2 py-1">
             <Link href={`/offre/${offre.id}`} className="flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
               {programmee ? (
                 <>
                   <span className="text-[10px] shrink-0">📅</span>
-                  <span className="text-[11px] font-bold text-[#FF6B00] truncate">
+                  <span className="text-[11px] font-semibold text-[#FF6B00] truncate">
                     Début le {formatDebut(offre.date_debut)}
                   </span>
                 </>
               ) : (
                 <>
-                  <span className="text-[10px] shrink-0">⏱</span>
+                  <span className="text-[10px] shrink-0 text-[#FF6B00]">⏱</span>
                   {timeLeft ? (
-                    <span className={`text-[11px] font-black tabular-nums whitespace-nowrap ${urgent && !fini ? 'text-red-500' : 'text-[#0A0A0A]'}`}>
+                    <span className={`text-[11px] tabular-nums whitespace-nowrap font-semibold ${urgent && !fini ? 'text-red-500' : 'text-[#FF6B00]'}`}>
                       {String(timeLeft.h).padStart(2, '0')}h{' '}
                       {String(timeLeft.m).padStart(2, '0')}m{' '}
                       {String(timeLeft.s).padStart(2, '0')}s
                     </span>
                   ) : (
-                    <span className="text-[11px] font-black text-[#3D3D3D]/60">Trop tard !</span>
+                    <span className="text-[11px] font-semibold text-[#FF6B00]/60">Trop tard !</span>
                   )}
                 </>
               )}
             </Link>
             <div className="flex items-center gap-1.5 shrink-0">
               <Link href={`/offre/${offre.id}`}>
-                <span className={`text-[11px] font-bold ${nbPulse ? 'text-red-500 animate-pulse' : 'text-[#3D3D3D]'}`}>
+                <span className={`text-[11px] font-bold text-[#FF6B00] ${nbPulse ? 'animate-pulse' : ''}`}>
                   {nbBons === null || nbBons === 9999 ? '∞' : `🎟 ${nbBons}`}
                 </span>
               </Link>
-              <ShareButton offre={offre} commerce={commerce} />
+              <span className="text-[#FF6B00]"><ShareButton offre={offre} commerce={commerce} /></span>
             </div>
           </div>
 
           {/* Ligne 2 : badge + titre */}
-          <Link href={`/offre/${offre.id}`} className="flex items-center gap-1.5 min-w-0 overflow-hidden">
-            <span className="shrink-0 bg-[#FFF0E0] text-[#FF6B00] font-black text-[11px] px-2 py-0.5 rounded-lg whitespace-nowrap">
+          <Link href={`/offre/${offre.id}`} className="flex items-start gap-1.5 min-w-0">
+            <span className="shrink-0 bg-[#FF6B00] text-white font-bold text-[11px] px-2 py-0.5 rounded-[4px] whitespace-nowrap">
               {formatBadge(offre)}
             </span>
-            <span className="text-[13px] font-bold text-[#0A0A0A] truncate">
+            <span className="text-[13px] font-bold text-[#0A0A0A] line-clamp-2 leading-snug">
               {getFullOffreTitle(offre)}
             </span>
           </Link>
@@ -382,7 +382,7 @@ export default function OffreCard({ offre, userReservation }) {
                 <span className="text-[10px] text-[#3D3D3D]/40 shrink-0">·</span>
               </>
             )}
-            <span className="text-[12px] font-semibold text-[#1A1A1A] truncate flex-1 min-w-0">{commerce?.nom}</span>
+            <span className="text-[12px] font-semibold text-[#1A1A1A] flex-1 min-w-0 break-words">{commerce?.nom}</span>
             {commerce?.note_google && (
               <span className="text-[10px] font-bold text-yellow-500 shrink-0 ml-1">⭐ {commerce.note_google}</span>
             )}
@@ -404,7 +404,7 @@ export default function OffreCard({ offre, userReservation }) {
               <button
                 onClick={handleAbonnerComm}
                 disabled={abonneCommLoading}
-                className={`w-full text-white font-bold text-[11px] leading-tight h-9 rounded-full transition-all duration-200 flex items-center justify-center text-center gap-1 ${
+                className={`w-full text-white font-bold text-[11px] leading-tight h-[38px] rounded-[8px] transition-all duration-200 flex items-center justify-center text-center gap-1 ${
                   abonneComm
                     ? 'bg-green-500'
                     : 'bg-[#F08040] hover:bg-[#D06830] active:scale-[0.97]'
@@ -426,7 +426,7 @@ export default function OffreCard({ offre, userReservation }) {
                   onClick={handleReserver}
                   disabled={status === 'loading'}
                   style={{ transform: pressing ? 'scale(0.95)' : 'scale(1)', transition: 'transform 0.15s ease' }}
-                  className={`w-full text-white font-bold text-[13px] h-9 rounded-full flex items-center justify-center gap-1.5 ${btnColor} ${isPulsing ? 'bm-btn-pulse-cls' : ''}`}
+                  className={`w-full text-white font-bold text-[13px] h-[38px] rounded-[8px] flex items-center justify-center gap-1.5 ${btnColor} ${isPulsing ? 'bm-btn-pulse-cls' : ''}`}
                 >
                   {status === 'loading' ? (
                     <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
