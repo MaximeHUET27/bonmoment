@@ -182,8 +182,8 @@ export default function DashboardPage() {
       {/* ── Corps ────────────────────────────────────────────────────────── */}
       <div className="flex-1 w-full max-w-xl mx-auto px-5 py-6 flex flex-col gap-5">
 
-        {/* 0. BANNIÈRE ABONNEMENT — visible uniquement si abonnement inactif ── */}
-        {commerce && !commerce.abonnement_actif && (
+        {/* 0. BANNIÈRE ABONNEMENT — visible uniquement si pas de palier actif ── */}
+        {commerce && !commerce.palier && (
           <div className="w-full bg-[#FF6B00] rounded-xl px-4 py-3 flex flex-row items-center justify-between gap-3">
             <p className="text-white font-bold text-[11px] sm:text-[13px] leading-tight">
               {commerce.stripe_customer_id
@@ -209,7 +209,7 @@ export default function DashboardPage() {
             >
               ✅ Vérifier un bon
             </Link>
-            {commerce.abonnement_actif ? (
+            {commerce.palier ? (
               <Link
                 href={`/commercant/offre/nouvelle?commerce=${commerce.id}`}
                 className="flex-1 h-[60px] border-2 border-[#FF6B00] text-[#FF6B00] bg-white hover:bg-[#FFF0E0] font-semibold text-lg rounded-xl transition-colors flex items-center justify-center text-center"
@@ -369,8 +369,8 @@ function AbonnementSection({ commerce, offres }) {
   const nextRenewal = new Date(now.getFullYear(), now.getMonth() + 1, 1)
   const nextRenewalStr = nextRenewal.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 
-  // Pas encore d'abonnement Stripe actif → section masquée (bannière top gère le CTA)
-  if (!commerce.abonnement_actif) return null
+  // Pas encore de palier → section masquée (bannière top gère le CTA)
+  if (!commerce.palier) return null
 
   return (
     <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">

@@ -34,17 +34,11 @@ export default function ResiliationPage() {
       setCommerce(com)
 
       if (com?.id) {
-        // Offres publiées total
-        const { count: nbOffres } = await supabase
-          .from('offres')
-          .select('id', { count: 'exact', head: true })
-          .eq('commerce_id', com.id)
-
-        // IDs offres
-        const { data: offresData } = await supabase
-          .from('offres')
-          .select('id')
-          .eq('commerce_id', com.id)
+        // Offres publiées total + IDs
+        const [{ count: nbOffres }, { data: offresData }] = await Promise.all([
+          supabase.from('offres').select('id', { count: 'exact', head: true }).eq('commerce_id', com.id),
+          supabase.from('offres').select('id').eq('commerce_id', com.id),
+        ])
 
         const offreIds = (offresData || []).map(o => o.id)
 
@@ -52,21 +46,26 @@ export default function ResiliationPage() {
         let nbClients = 0
 
         if (offreIds.length > 0) {
-          const { count: bons } = await supabase
-            .from('reservations')
-            .select('id', { count: 'exact', head: true })
-            .in('offre_id', offreIds)
-            .eq('statut', 'utilisee')
-
-          const { data: clientsData } = await supabase
-            .from('reservations')
-            .select('user_id')
-            .in('offre_id', offreIds)
-
-          const uniqueClients = new Set((clientsData || []).map(r => r.user_id))
+          const [{ count: bons }, { data: clientsData }] = await Promise.all([
+            supabase.from('reservations').select('id', { count: 'exact', head: true })
+              .in('offre_id', offreIds).eq('statut', 'utilisee'),
+            supabase.from('reservations').select('user_id').in('offre_id', offreIds),
+          ])
           nbBons    = bons ?? 0
-          nbClients = uniqueClients.size
+          nbClients = new Set((clientsData || []).map(r => r.user_id)).size
         }
+
+        // Avis Google générés
+        const { count: nbAvis } = await supabase
+          .from('avis_google_clics')
+          .select('id', { count: 'exact', head: true })
+          .eq('commerce_id', com.id)
+
+        // Feedbacks clients reçus
+        const { count: nbFeedbacks } = await supabase
+          .from('feedbacks_commerce')
+          .select('id', { count: 'exact', head: true })
+          .eq('commerce_id', com.id)
 
         // Durée en mois depuis création
         const created = com.created_at ? new Date(com.created_at) : new Date()
@@ -74,7 +73,17 @@ export default function ResiliationPage() {
         const diffMs  = now - created
         const mois    = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24 * 30)))
 
-        setStats({ nbOffres: nbOffres ?? 0, nbBons, nbClients, mois })
+        const PALIER_LABELS = { decouverte: 'Découverte', essentiel: 'Essentiel', pro: 'Pro' }
+
+        setStats({
+          nbOffres:   nbOffres  ?? 0,
+          nbBons,
+          nbClients,
+          nbAvis:     nbAvis    ?? 0,
+          nbFeedbacks: nbFeedbacks ?? 0,
+          mois,
+          palierLabel: PALIER_LABELS[com.palier] || '—',
+        })
       }
 
       setFetching(false)
@@ -219,13 +228,21 @@ export default function ResiliationPage() {
               <p className="text-[11px] text-[#3D3D3D]/60">👥 clients touchés</p>
             </div>
             <div className="bg-white rounded-2xl px-4 py-3 flex flex-col gap-0.5">
+              <p className="text-2xl font-black text-[#FF6B00]">{stats?.nbAvis ?? '—'}</p>
+              <p className="text-[11px] text-[#3D3D3D]/60">⭐ avis Google générés</p>
+            </div>
+            <div className="bg-white rounded-2xl px-4 py-3 flex flex-col gap-0.5">
+              <p className="text-2xl font-black text-[#FF6B00]">{stats?.nbFeedbacks ?? '—'}</p>
+              <p className="text-[11px] text-[#3D3D3D]/60">💬 retours clients</p>
+            </div>
+            <div className="bg-white rounded-2xl px-4 py-3 flex flex-col gap-0.5">
               <p className="text-2xl font-black text-[#FF6B00]">{stats?.mois ?? '—'}</p>
               <p className="text-[11px] text-[#3D3D3D]/60">📅 mois avec nous</p>
             </div>
           </div>
-          {commerce && (
+          {stats?.palierLabel && (
             <p className="text-xs text-center text-[#3D3D3D]/40">
-              Palier actuel : <strong className="text-[#FF6B00]">{PALIER_LABELS[commerce.palier] || 'Découverte'}</strong>
+              Palier actuel : <strong className="text-[#FF6B00]">{stats.palierLabel}</strong>
             </p>
           )}
         </div>

@@ -6,6 +6,13 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/app/context/AuthContext'
 
+const FEATURES_COMMUNES = [
+  'Bons illimités',
+  'Statistiques en temps réel',
+  'Avis Google automatiques',
+  'Rapport mensuel',
+]
+
 const PLANS = [
   {
     key:      'decouverte',
@@ -13,6 +20,7 @@ const PLANS = [
     prix:     29,
     offres:   4,
     populaire: false,
+    features: ['4 offres/mois', ...FEATURES_COMMUNES],
   },
   {
     key:      'essentiel',
@@ -20,6 +28,7 @@ const PLANS = [
     prix:     49,
     offres:   8,
     populaire: true,
+    features: ['8 offres/mois', ...FEATURES_COMMUNES],
   },
   {
     key:      'pro',
@@ -27,6 +36,7 @@ const PLANS = [
     prix:     79,
     offres:   16,
     populaire: false,
+    features: ['16 offres/mois', ...FEATURES_COMMUNES],
   },
 ]
 
@@ -212,18 +222,16 @@ function AbonnementContent() {
                 </div>
 
                 {/* Caractéristiques */}
-                <ul className="flex flex-col gap-1.5 text-sm text-[#3D3D3D] flex-1">
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#FF6B00] font-bold">✓</span>
-                    {plan.offres} offres/mois
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#FF6B00] font-bold">✓</span>
-                    Bons illimités
-                  </li>
+                <ul className="flex flex-col gap-1.5 text-xs text-[#3D3D3D] flex-1">
+                  {plan.features.map(f => (
+                    <li key={f} className="flex items-center gap-2">
+                      <span className="text-[#FF6B00] font-bold shrink-0">✓</span>
+                      {f}
+                    </li>
+                  ))}
                   {!commerce?.stripe_customer_id && !commerce?.stripe_subscription_id && (
                     <li className="flex items-center gap-2">
-                      <span className="text-[#FF6B00] font-bold">✓</span>
+                      <span className="text-[#FF6B00] font-bold shrink-0">✓</span>
                       1<sup>er</sup> mois offert
                     </li>
                   )}
