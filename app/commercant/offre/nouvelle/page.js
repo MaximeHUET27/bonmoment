@@ -148,7 +148,7 @@ function NouvelleOffrePageInner() {
       const commerceId = searchParams.get('commerce')
       const { data: list } = await supabase
         .from('commerces')
-        .select('id, nom, categorie, ville, adresse, palier, note_google, tutoriel_complete')
+        .select('id, nom, categorie, ville, adresse, palier, note_google, photo_url, tutoriel_complete')
         .eq('owner_id', user.id)
 
       const all  = list || []
@@ -267,10 +267,11 @@ function NouvelleOffrePageInner() {
     date_debut:       buildISO(dateOffre, heureDebut),
     date_fin:         buildISO(dateOffre, heureFin),
     commerces: {
-      nom:        commerce?.nom        || 'Mon commerce',
-      categorie:  commerce?.categorie  || null,
-      ville:      commerce?.ville      || null,
+      nom:         commerce?.nom         || 'Mon commerce',
+      categorie:   commerce?.categorie   || null,
+      ville:       commerce?.ville       || null,
       note_google: commerce?.note_google || null,
+      photo_url:   commerce?.photo_url   || null,
     },
   }
 
@@ -739,7 +740,7 @@ function NouvelleOffrePageInner() {
           <p className="text-[11px] font-bold uppercase tracking-widest text-[#3D3D3D]/50 mb-3 px-1">
             Aperçu client en temps réel
           </p>
-          <div className="max-w-[280px] mx-auto">
+          <div className="max-w-[700px] mx-auto">
             <OffreCard offre={previewOffre} />
           </div>
         </section>

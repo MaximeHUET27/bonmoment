@@ -113,7 +113,7 @@ export default function HomeClient({ villes, offres }) {
           height={450}
           priority
           unoptimized
-          className="w-[200px] sm:w-[280px] h-auto mb-8"
+          className="w-[260px] sm:w-[364px] h-auto mb-8"
         />
 
         {/* Champ de recherche ville */}
