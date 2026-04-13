@@ -156,20 +156,20 @@ export default function ProfilPage() {
         return
       }
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js')
-        const sub = await reg.pushManager.subscribe({
+        const reg     = await navigator.serviceWorker.register('/sw.js')
+        const sub     = await reg.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
         })
-        await supabase
-          .from('users')
-          .update({ notifications_push: true, push_subscription: sub.toJSON() })
-          .eq('id', user.id)
+        const subJson = sub.toJSON()
+        await fetch('/api/push/subscribe', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ endpoint: subJson.endpoint, keys: subJson.keys }),
+        })
       } catch {
-        await supabase
-          .from('users')
-          .update({ notifications_push: true })
-          .eq('id', user.id)
+        // Subscription PushManager échouée — on marque quand même le flag
+        await supabase.from('users').update({ notifications_push: true }).eq('id', user.id)
       }
     } else {
       await supabase
