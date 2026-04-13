@@ -40,6 +40,15 @@ export async function POST(request) {
   if (commerceErr || !commerce)
     return NextResponse.json({ error: 'Commerce introuvable' }, { status: 403 })
 
+  /* ── Vérification dates ──────────────────────────────────────────────── */
+  const now = new Date()
+  if (body.date_fin && new Date(body.date_fin) <= now) {
+    return NextResponse.json({ error: 'Impossible de publier une offre déjà expirée' }, { status: 400 })
+  }
+  if (body.date_debut && new Date(body.date_debut) < new Date(now.getTime() - 5 * 60 * 1000)) {
+    return NextResponse.json({ error: "L'heure de début est dans le passé" }, { status: 400 })
+  }
+
   /* ── Vérification quota ──────────────────────────────────────────────── */
   const palier    = commerce.palier || 'decouverte'
   const limite    = QUOTA_PAR_PALIER[palier] ?? 4

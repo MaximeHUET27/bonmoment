@@ -247,6 +247,14 @@ function NouvelleOffrePageInner() {
   const diff = diffHours(dateOffre, heureDebut, heureFin)
   const erreurHoraire = diff <= 0 ? "L'heure de fin doit être après l'heure de début." : null
 
+  /* ── Validation dates passées (temps réel) ── */
+  const erreurDateDebut = new Date(`${dateOffre}T${heureDebut}:00`) < new Date()
+    ? "L'heure de début ne peut pas être dans le passé"
+    : null
+  const erreurDateFin = new Date(`${dateOffre}T${heureFin}:00`) <= new Date()
+    ? "L'heure de fin ne peut pas être dans le passé"
+    : null
+
   /* ── Durée formatée ── */
   const dureeLabel = diff > 0
     ? diff < 1
@@ -294,6 +302,9 @@ function NouvelleOffrePageInner() {
     }
     if (!illimite && (!nbBons || nbBons < 1)) errs.nbBons = 'Indique un nombre de bons valide.'
     if (erreurHoraire) errs.horaire = erreurHoraire
+    const now = new Date()
+    if (new Date(`${dateOffre}T${heureDebut}:00`) < now) errs.dateDebut = "L'heure de début ne peut pas être dans le passé"
+    if (new Date(`${dateOffre}T${heureFin}:00`) <= now)  errs.dateFin   = "L'heure de fin ne peut pas être dans le passé"
     if (estRecurrente && joursRecurrence.length === 0) errs.jours = 'Sélectionne au moins un jour.'
     return errs
   }
@@ -691,6 +702,16 @@ function NouvelleOffrePageInner() {
               ⚠ {erreurHoraire || errors.horaire}
             </p>
           )}
+          {(erreurDateDebut || errors.dateDebut) && (
+            <p className="text-xs text-red-500 mt-2 font-semibold">
+              ⚠ {erreurDateDebut || errors.dateDebut}
+            </p>
+          )}
+          {(erreurDateFin || errors.dateFin) && (
+            <p className="text-xs text-red-500 mt-2 font-semibold">
+              ⚠ {erreurDateFin || errors.dateFin}
+            </p>
+          )}
         </section>
 
         {/* ══ 6. RÉCURRENCE ══════════════════════════════════════════════ */}
@@ -761,7 +782,7 @@ function NouvelleOffrePageInner() {
          
           id="tut-publier"
           type="submit"
-          disabled={submitting || quotaAtteint || !!erreurHoraire}
+          disabled={submitting || quotaAtteint || !!erreurHoraire || !!erreurDateDebut || !!erreurDateFin}
           className="w-full bg-[#FF6B00] hover:bg-[#CC5500] disabled:bg-[#D0D0D0] disabled:cursor-not-allowed text-white font-black text-base py-4 rounded-2xl transition-colors duration-200 shadow-lg shadow-orange-200/60 min-h-[56px] flex items-center justify-center gap-2"
         >
           {submitting ? (
