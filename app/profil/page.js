@@ -97,7 +97,7 @@ export default function ProfilPage() {
       ] = await Promise.all([
         supabase
           .from('users')
-          .select('nom, email, avatar_url, badge_niveau, villes_abonnees, commerces_abonnes, notifications_email, notifications_push')
+          .select('nom, email, avatar_url, badge_niveau, villes_abonnees, commerces_abonnes, notifications_email, notifications_email_push, notifications_push')
           .eq('id', user.id)
           .single(),
         supabase
@@ -144,6 +144,12 @@ export default function ProfilPage() {
     const next = !profile.notifications_email
     await supabase.from('users').update({ notifications_email: next }).eq('id', user.id)
     setProfile(p => ({ ...p, notifications_email: next }))
+  }
+
+  async function toggleEmailPushNotif() {
+    const next = !(profile.notifications_email_push ?? true)
+    await supabase.from('users').update({ notifications_email_push: next }).eq('id', user.id)
+    setProfile(p => ({ ...p, notifications_email_push: next }))
   }
 
   async function togglePushNotif() {
@@ -441,8 +447,14 @@ export default function ProfilPage() {
           <Toggle
             value={profile.notifications_email ?? true}
             onChange={toggleEmailNotif}
-            label="📧 Email quotidien"
-            sublabel="Bons plans du lendemain chaque soir"
+            label="✉️ Email quotidien (21h)"
+            sublabel="Récap des bons plans du lendemain chaque soir"
+          />
+          <Toggle
+            value={profile.notifications_email_push ?? true}
+            onChange={toggleEmailPushNotif}
+            label="📩 Email instantané"
+            sublabel="Un email dès qu'une offre est publiée dans ta ville ou chez un favori"
           />
           <Toggle
             value={profile.notifications_push ?? false}

@@ -59,7 +59,7 @@ export default function CGU() {
           </ul>
           <SubTitle className="mt-4">2.3 Abonnement automatique à la ville</SubTitle>
           <p className="mt-2">
-            Lors de votre première réservation d&apos;un bon, votre compte est automatiquement abonné aux alertes email de la ville concernée. Vous recevrez un récapitulatif quotidien des offres disponibles. Vous pouvez vous désabonner à tout moment depuis votre profil ou via le lien de désinscription dans chaque email.
+            Lors de votre première réservation d&apos;un bon, votre compte est automatiquement abonné aux alertes email de la ville concernée. Vous recevrez un récapitulatif quotidien des offres disponibles. Vous recevrez également un email instantané à chaque publication d&apos;offre par un commerce que vous suivez ou dans une ville à laquelle vous êtes abonné. Vous pouvez désactiver ces emails instantanés à tout moment depuis votre profil ou via le lien de désinscription dans chaque email.
           </p>
           <SubTitle className="mt-4">2.4 Résiliation du compte</SubTitle>
           <p className="mt-2">

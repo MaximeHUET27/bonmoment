@@ -106,5 +106,31 @@ export async function POST(request) {
     }
   })()
 
+  /* ── Mail Push — email instantané aux abonnés (non-bloquant) ── */
+  ;(async () => {
+    try {
+      const offreTitre = body.titre || ''
+      await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'https://bonmoment.app'}/api/email-push`, {
+        method:  'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${process.env.CRON_SECRET}`,
+        },
+        body: JSON.stringify({
+          commerce_id:    commerce.id,
+          commerce_nom:   commerce.nom,
+          commerce_ville: commerce.ville,
+          offre_id:       inserted.id,
+          offre_titre:    offreTitre,
+          offre_type:     body.type_remise,
+          offre_valeur:   body.valeur ?? null,
+          offre_date_fin: body.date_fin,
+        }),
+      })
+    } catch (err) {
+      console.error('[email-push/offre]', err.message)
+    }
+  })()
+
   return NextResponse.json({ success: true, id: inserted.id })
 }

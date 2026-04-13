@@ -206,7 +206,7 @@ export const NODES = {
     type: 'menu',
     message: "Ta question sur ton compte ?",
     options: [
-      { label: "Comment modifier mes notifications ?",               nodeId: 'h-cpt-1' },
+      { label: "Comment recevoir les notifications ?",               nodeId: 'h-cpt-1' },
       { label: "Comment ajouter BONMOMENT sur mon téléphone ?",      nodeId: 'h-cpt-2' },
       { label: "Comment supprimer mon compte ?",                     nodeId: 'h-cpt-3' },
     ],
@@ -214,10 +214,10 @@ export const NODES = {
 
   'h-cpt-1': {
     type: 'answer',
-    question: "Comment modifier mes notifications ?",
-    response: `Pour gérer tes notifications :\n\nVa dans **Profil → Notifications**.\n\nTu peux activer ou désactiver les alertes pour chaque ville, ou autoriser/refuser les notifications push depuis les paramètres de ton navigateur. 🔔`,
+    question: "Comment recevoir les notifications ?",
+    response: `Tu peux recevoir les bons plans de 3 façons :\n\n📩 **Email instantané** — dès qu'une offre est publiée par un commerce favori ou dans ta ville\n✉️ **Email récap à 21h** — un seul email chaque soir avec les offres du lendemain\n🔔 **Notification push** — alerte instantanée sur ton téléphone\n\nGère tes préférences depuis **Profil → Notifications**.`,
     actions: [
-      { label: '⚙️ Mon profil', type: 'redirect', path: '/profil' },
+      { label: '⚙️ Mes notifications', type: 'redirect', path: '/profil' },
     ],
   },
 

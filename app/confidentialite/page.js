@@ -277,6 +277,7 @@ export default function Confidentialite() {
           <p className="mt-3">BONMOMENT peut vous envoyer les communications suivantes selon vos préférences :</p>
           <ul className="list-disc pl-5 mt-2 space-y-1">
             <li><strong className="text-[#0A0A0A]">Email quotidien à 21h</strong> : récapitulatif des offres du lendemain sur vos villes abonnées</li>
+            <li><strong className="text-[#0A0A0A]">Email instantané</strong> : notification par email envoyée en temps réel lors de la publication d&apos;une offre par un commerce suivi ou dans une ville abonnée. Activé par défaut lors de l&apos;inscription, désactivable depuis les paramètres du compte. Base légale : exécution du service (article 6.1.b du RGPD), avec possibilité de désactivation à tout moment</li>
             <li><strong className="text-[#0A0A0A]">Notifications push</strong> : alertes en temps réel pour les commerces favoris</li>
           </ul>
           <p className="mt-3">

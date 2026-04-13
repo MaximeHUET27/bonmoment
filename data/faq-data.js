@@ -67,7 +67,7 @@ const FAQ = [
       },
       {
         q: "Comment recevoir les offres de ma ville ?",
-        r: "Abonne-toi à ta ville en cliquant sur le ♡ en haut de la page ville. Tu recevras un email chaque matin avec les offres du jour, et des notifications push si tu les as activées dans ton profil.",
+        r: "Abonne-toi à ta ville en cliquant sur le ♡ en haut de la page ville. Tu recevras : un email récap chaque soir à 21h, un email instantané à chaque nouvelle offre publiée, et des notifications push si tu les as activées dans ton profil.",
       },
       {
         q: "Comment activer les notifications d'un commerce ?",
@@ -84,6 +84,10 @@ const FAQ = [
       {
         q: "Comment laisser un avis sur un commerce ?",
         r: "Tu peux laisser un avis depuis la fiche du commerce en appuyant sur '⭐ Laisser un avis'. Note ton expérience de 1 à 5 étoiles. Ton avis aide le commerce à se développer.",
+      },
+      {
+        q: "Je reçois trop d'emails, comment réduire ?",
+        r: "Depuis ton profil → Notifications, tu peux choisir : l'email quotidien du soir (1 seul email récap), les emails instantanés (un email par offre publiée), ou les notifications push. Désactive ceux que tu ne veux plus.",
       },
       {
         q: 'Comment utiliser mon bon en caisse ?',
