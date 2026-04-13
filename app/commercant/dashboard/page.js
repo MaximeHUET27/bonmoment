@@ -184,13 +184,13 @@ export default function DashboardPage() {
 
         {/* 0. BANNIÈRE ABONNEMENT — visible uniquement si pas de sub Stripe ── */}
         {commerce && !commerce.stripe_subscription_id && (
-          <div className="w-full bg-[#FF6B00] rounded-xl px-4 py-4 flex flex-col gap-3">
-            <p className="text-white font-bold text-sm leading-snug">
+          <div className="w-full bg-[#FF6B00] rounded-xl px-4 py-3 flex flex-row items-center justify-between gap-3">
+            <p className="text-white font-bold text-[13px] sm:text-[15px] leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
               🔒 Pour publier des offres, choisis ton abonnement — 1<sup>er</sup> mois offert !
             </p>
             <Link
               href="/commercant/abonnement"
-              className="self-start bg-white text-[#FF6B00] font-black text-sm px-5 py-2.5 rounded-xl hover:bg-[#FFF0E0] transition-colors"
+              className="shrink-0 bg-white text-[#FF6B00] font-black text-xs px-3 py-2 rounded-lg hover:bg-[#FFF0E0] transition-colors whitespace-nowrap"
             >
               Choisir mon palier →
             </Link>
@@ -199,26 +199,26 @@ export default function DashboardPage() {
 
         {/* 1. Boutons principaux ──────────────────────────────────────────── */}
         {commerce && (
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-start">
             <Link
               href={`/commercant/valider?commerce=${commerce.id}`}
-              className="flex-1 bg-[#FF6B00] hover:bg-[#CC5500] text-white font-semibold text-lg py-4 rounded-xl transition-colors flex items-center justify-center text-center"
+              className="flex-1 h-[60px] bg-[#FF6B00] hover:bg-[#CC5500] text-white font-semibold text-lg rounded-xl transition-colors flex items-center justify-center text-center"
             >
               ✅ Vérifier un bon
             </Link>
             {commerce.stripe_subscription_id ? (
               <Link
                 href={`/commercant/offre/nouvelle?commerce=${commerce.id}`}
-                className="flex-1 border-2 border-[#FF6B00] text-[#FF6B00] bg-white hover:bg-[#FFF0E0] font-semibold text-lg py-4 rounded-xl transition-colors flex items-center justify-center text-center"
+                className="flex-1 h-[60px] border-2 border-[#FF6B00] text-[#FF6B00] bg-white hover:bg-[#FFF0E0] font-semibold text-lg rounded-xl transition-colors flex items-center justify-center text-center"
               >
                 ✨ Créer une offre
               </Link>
             ) : (
-              <div className="flex-1 flex flex-col items-center gap-1">
-                <div className="w-full opacity-50 cursor-not-allowed pointer-events-none border-2 border-[#D0D0D0] text-[#D0D0D0] bg-white font-semibold text-lg py-4 rounded-xl flex items-center justify-center text-center select-none">
+              <div className="flex-1 flex flex-col items-center">
+                <div className="w-full h-[60px] opacity-50 cursor-not-allowed pointer-events-none border-2 border-[#D0D0D0] text-[#D0D0D0] bg-white font-semibold text-lg rounded-xl flex items-center justify-center text-center select-none">
                   ✨ Créer une offre
                 </div>
-                <p className="text-[11px] text-[#3D3D3D]/50 text-center leading-tight">Choisis un abonnement pour créer ta première offre</p>
+                <p className="mt-1 text-[11px] text-[#3D3D3D]/50 text-center leading-tight">Choisis un abonnement pour créer ta première offre</p>
               </div>
             )}
           </div>
