@@ -262,8 +262,8 @@ export default function InscriptionCommercant() {
       parrainCodeId = codeRow.id
     }
 
-    // 3. Insertion du commerce
-    const { error: insertError } = await supabase.from('commerces').insert({
+    // 3. Insertion du commerce (on récupère l'id pour l'upload de photo)
+    const { data: insertData, error: insertError } = await supabase.from('commerces').insert({
       owner_id:            user.id,
       place_id:            selectedPlace.place_id,
       nom:                 selectedPlace.nom,
@@ -278,7 +278,7 @@ export default function InscriptionCommercant() {
       latitude:            selectedPlace.latitude,
       longitude:           selectedPlace.longitude,
       abonnement_actif:    true,
-    })
+    }).select('id').single()
 
     if (insertError) {
       setSubmitError(insertError.message)
@@ -286,7 +286,17 @@ export default function InscriptionCommercant() {
       return
     }
 
-    // 3.5 Upsert de la ville dans la table villes (non-bloquant)
+    // 3.5 Upload de la photo dans Supabase Storage (non-bloquant)
+    // Remplace l'URL Google temporaire par une URL Supabase permanente
+    if (insertData?.id && selectedPlace.photo_url) {
+      fetch('/api/upload-photo-commerce', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ commerce_id: insertData.id, photo_url_google: selectedPlace.photo_url }),
+      }).catch(err => console.error('upload-photo-commerce:', err))
+    }
+
+    // 3.6 Upsert de la ville dans la table villes (non-bloquant)
     if (selectedPlace.ville) {
       fetch('/api/upsert-ville', {
         method:  'POST',
