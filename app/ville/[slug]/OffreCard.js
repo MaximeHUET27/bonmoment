@@ -297,174 +297,156 @@ export default function OffreCard({ offre, userReservation }) {
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-[#F0F0F0] shadow-sm overflow-hidden flex flex-col relative">
+      <div
+        className={`bg-white rounded-xl shadow-sm overflow-hidden flex flex-row${fini ? ' opacity-60' : ''}`}
+        style={{
+          border: '1px solid #F0F0F0',
+          ...(urgent && !fini ? { borderLeft: '3px solid #ef4444' } : {}),
+        }}
+      >
 
-        {/* Fond photo commerce */}
-        {commerce?.photo_url && (
-          <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden>
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `url(${commerce.photo_url})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                filter: fini ? 'grayscale(100%)' : 'none',
-                opacity: 0.30,
-              }}
+        {/* ── Photo commerce (côté gauche) ── */}
+        <div
+          className="relative w-[110px] sm:w-[140px] shrink-0 self-stretch"
+          style={{ minHeight: 120 }}
+        >
+          {commerce?.photo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={commerce.photo_url}
+              alt={commerce?.nom || ''}
+              className={`absolute inset-0 w-full h-full object-cover${fini ? ' grayscale' : ''}`}
             />
-            <div
-              className="absolute inset-0"
-              style={{ backgroundColor: fini ? 'rgba(255,255,255,0.80)' : 'rgba(255,255,255,0.65)' }}
-            />
-          </div>
-        )}
-
-        {/* Zone 1 : header + corps grisés pour les cartes expirées */}
-        <div className={`relative z-10 ${fini ? 'opacity-50 grayscale cursor-pointer' : ''}`}>
-
-        {/* ── Header : countdown (ligne 1) + bons + partage (ligne 2) ── */}
-        <div className={`flex flex-col gap-0.5 px-2 pt-1.5 pb-1 ${
-          programmee ? 'bg-[#FFF0E0]' :
-          urgent && !fini ? 'bg-red-50' : 'bg-[#F5F5F5]'
-        }`}>
-          {/* Ligne 1 : timer pleine largeur */}
-          <Link href={`/offre/${offre.id}`} className="flex items-center gap-1 min-w-0">
-            {programmee ? (
-              <>
-                <span className="text-sm">📅</span>
-                <span className="text-xs font-bold text-[#FF6B00] truncate">
-                  Début le {formatDebut(offre.date_debut)}
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="text-sm">⏱</span>
-                {timeLeft ? (
-                  <span className={`text-[12px] font-black tabular-nums whitespace-nowrap ${
-                    urgent && !fini ? 'text-red-500' : 'text-[#0A0A0A]'
-                  }`}>
-                    {urgent && !fini && <span className="font-semibold mr-0.5 text-[10px]">Urgent —</span>}
-                    {String(timeLeft.h).padStart(2, '0')}h{' '}
-                    {String(timeLeft.m).padStart(2, '0')}m{' '}
-                    {String(timeLeft.s).padStart(2, '0')}s
-                  </span>
-                ) : (
-                  <span className="text-xs font-black text-[#3D3D3D]/60">Trop tard !</span>
-                )}
-              </>
-            )}
-          </Link>
-          {/* Ligne 2 : bons restants + bouton partage */}
-          <div className="flex items-center justify-between">
-            <Link href={`/offre/${offre.id}`}>
-              <span className={`text-[11px] font-bold ${nbPulse ? 'text-red-500 animate-pulse' : 'text-[#3D3D3D]'}`}>
-                {nbBons === null || nbBons === 9999
-                  ? '∞ bons'
-                  : `🎫 ${nbBons}`}
-              </span>
-            </Link>
-            <ShareButton offre={offre} commerce={commerce} />
-          </div>
+          ) : (
+            <div className="absolute inset-0 bg-[#F5F5F5] flex items-center justify-center">
+              <span className="text-3xl">🏪</span>
+            </div>
+          )}
         </div>
 
-        {/* ── Corps : cliquable → détail ── */}
-        <Link href={`/offre/${offre.id}`} className="block flex-1 px-3 py-3 sm:py-4 flex flex-col gap-1.5 sm:gap-2.5">
+        {/* ── Infos (côté droit) ── */}
+        <div className="flex-1 flex flex-col gap-1.5 px-3 py-2.5 min-w-0">
 
-          {/* Badge remise */}
-          {(() => {
-            const badge = formatBadge(offre)
-            return (
-              <div className="flex items-center justify-center bg-[#FFF0E0] rounded-xl py-2 sm:py-4 overflow-hidden px-2" style={{ maxHeight: 40 }}>
-                <span className={`font-black text-[#FF6B00] tracking-tight leading-none whitespace-nowrap ${
-                  badge.length > 6 ? 'text-base sm:text-lg' : 'text-xl sm:text-2xl'
-                }`}>
-                  {badge}
+          {/* Ligne 1 : timer + bons + partage */}
+          <div className="flex items-center justify-between gap-1 min-w-0">
+            <Link href={`/offre/${offre.id}`} className="flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
+              {programmee ? (
+                <>
+                  <span className="text-[10px] shrink-0">📅</span>
+                  <span className="text-[11px] font-bold text-[#FF6B00] truncate">
+                    Début le {formatDebut(offre.date_debut)}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-[10px] shrink-0">⏱</span>
+                  {timeLeft ? (
+                    <span className={`text-[11px] font-black tabular-nums whitespace-nowrap ${urgent && !fini ? 'text-red-500' : 'text-[#0A0A0A]'}`}>
+                      {String(timeLeft.h).padStart(2, '0')}h{' '}
+                      {String(timeLeft.m).padStart(2, '0')}m{' '}
+                      {String(timeLeft.s).padStart(2, '0')}s
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-black text-[#3D3D3D]/60">Trop tard !</span>
+                  )}
+                </>
+              )}
+            </Link>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Link href={`/offre/${offre.id}`}>
+                <span className={`text-[11px] font-bold ${nbPulse ? 'text-red-500 animate-pulse' : 'text-[#3D3D3D]'}`}>
+                  {nbBons === null || nbBons === 9999 ? '∞' : `🎟 ${nbBons}`}
                 </span>
-              </div>
-            )
-          })()}
-
-          {/* Titre */}
-          <p className="text-sm font-bold text-[#0A0A0A] text-center leading-snug line-clamp-2">
-            {getFullOffreTitle(offre)}
-          </p>
-
-          {/* Commerce + catégorie + favori */}
-          <div className="flex flex-col gap-0.5 min-w-0">
-            {commerce?.categorie && (
-              <span className="text-[11px] font-semibold text-[#FF6B00] uppercase tracking-wider text-center truncate">
-                {getCategorieFiltre(commerce.categorie) || commerce.categorie}
-              </span>
-            )}
-            <div className="flex items-center justify-center gap-1 min-w-0">
-              <span className="text-xs font-semibold text-[#1A1A1A] truncate min-w-0">{commerce?.nom}</span>
-              {commerce?.note_google && (
-                <span className="text-[10px] font-bold text-yellow-400 shrink-0">⭐ {commerce.note_google}</span>
-              )}
-              {commerce?.id && (
-                <span className="shrink-0"><FavoriButton commerceId={commerce.id} commerceNom={commerce.nom || ''} className="!min-h-[28px] !min-w-[28px]" /></span>
-              )}
+              </Link>
+              <ShareButton offre={offre} commerce={commerce} />
             </div>
           </div>
 
-          {/* Ville */}
+          {/* Ligne 2 : badge + titre */}
+          <Link href={`/offre/${offre.id}`} className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+            <span className="shrink-0 bg-[#FFF0E0] text-[#FF6B00] font-black text-[11px] px-2 py-0.5 rounded-lg whitespace-nowrap">
+              {formatBadge(offre)}
+            </span>
+            <span className="text-[13px] font-bold text-[#0A0A0A] truncate">
+              {getFullOffreTitle(offre)}
+            </span>
+          </Link>
+
+          {/* Ligne 3 : catégorie · nom commerce ⭐ ❤️ */}
+          <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+            {commerce?.categorie && (
+              <>
+                <span className="text-[11px] font-semibold text-[#FF6B00] shrink-0 uppercase tracking-wide">
+                  {getCategorieFiltre(commerce.categorie) || commerce.categorie}
+                </span>
+                <span className="text-[10px] text-[#3D3D3D]/40 shrink-0">·</span>
+              </>
+            )}
+            <span className="text-[12px] font-semibold text-[#1A1A1A] truncate flex-1 min-w-0">{commerce?.nom}</span>
+            {commerce?.note_google && (
+              <span className="text-[10px] font-bold text-yellow-500 shrink-0 ml-1">⭐ {commerce.note_google}</span>
+            )}
+            {commerce?.id && (
+              <span className="shrink-0 ml-0.5">
+                <FavoriButton commerceId={commerce.id} commerceNom={commerce.nom || ''} className="!min-h-[28px] !min-w-[28px]" />
+              </span>
+            )}
+          </div>
+
+          {/* Ligne 4 : ville */}
           {commerce?.ville && (
-            <p className="text-[10px] text-[#3D3D3D]/50 text-center">📍 {commerce.ville}</p>
+            <p className="text-[11px] text-[#3D3D3D]/50">📍 {commerce.ville}</p>
           )}
 
-        </Link>
-
-        </div>{/* fin Zone 1 */}
-
-        {/* Zone 2 : CTA toujours actif — non affecté par grayscale/opacity */}
-        <div className="relative z-10 px-3 pb-3 pointer-events-auto">
-          {fini ? (
-            <button
-              onClick={handleAbonnerComm}
-              disabled={abonneCommLoading}
-              className={`w-full text-white font-bold text-[10px] leading-tight py-2.5 rounded-full transition-all duration-200 min-h-[40px] flex items-center justify-center text-center gap-1 ${
-                abonneComm
-                  ? 'bg-green-500'
-                  : 'bg-[#F08040] hover:bg-[#D06830] active:scale-[0.97]'
-              }`}
-            >
-              {abonneCommLoading
-                ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                : abonneComm
-                ? '✅ Abonné à ce commerçant'
-                : 'Trop tard ! Abonne-toi à ce commerçant ❤️'}
-            </button>
-          ) : (
-            <>
-              <style>{`
-                @keyframes bm-btn-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
-                @keyframes bm-pop       { 0%{transform:scale(0);opacity:0} 100%{transform:scale(1);opacity:1} }
-              `}</style>
+          {/* Ligne 5 : CTA */}
+          <div className="mt-auto pt-0.5">
+            {fini ? (
               <button
-               
-                onClick={handleReserver}
-                disabled={status === 'loading'}
-                style={{ transform: pressing ? 'scale(0.95)' : 'scale(1)', transition: 'transform 0.15s ease' }}
-                className={`w-full text-white font-bold text-sm py-2 rounded-full min-h-[40px] flex items-center justify-center gap-1.5 ${btnColor} ${isPulsing ? 'bm-btn-pulse-cls' : ''}`}
+                onClick={handleAbonnerComm}
+                disabled={abonneCommLoading}
+                className={`w-full text-white font-bold text-[11px] leading-tight h-9 rounded-full transition-all duration-200 flex items-center justify-center text-center gap-1 ${
+                  abonneComm
+                    ? 'bg-green-500'
+                    : 'bg-[#F08040] hover:bg-[#D06830] active:scale-[0.97]'
+                }`}
               >
-                {status === 'loading' ? (
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <span key={status} style={(status === 'success' || status === 'error') ? { animation: 'bm-pop 0.3s cubic-bezier(0.175,0.885,0.32,1.275) forwards' } : {}}>
-                    {btnLabel}
-                  </span>
-                )}
+                {abonneCommLoading
+                  ? <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  : abonneComm
+                  ? '✅ Abonné à ce commerçant'
+                  : 'Trop tard ! Abonne-toi à ce commerçant ❤️'}
               </button>
-              {isPulsing && <style>{`.bm-btn-pulse-cls{animation:bm-btn-pulse 2s ease-in-out infinite}`}</style>}
-            </>
-          )}
+            ) : (
+              <>
+                <style>{`
+                  @keyframes bm-btn-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
+                  @keyframes bm-pop       { 0%{transform:scale(0);opacity:0} 100%{transform:scale(1);opacity:1} }
+                `}</style>
+                <button
+                  onClick={handleReserver}
+                  disabled={status === 'loading'}
+                  style={{ transform: pressing ? 'scale(0.95)' : 'scale(1)', transition: 'transform 0.15s ease' }}
+                  className={`w-full text-white font-bold text-[13px] h-9 rounded-full flex items-center justify-center gap-1.5 ${btnColor} ${isPulsing ? 'bm-btn-pulse-cls' : ''}`}
+                >
+                  {status === 'loading' ? (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <span key={status} style={(status === 'success' || status === 'error') ? { animation: 'bm-pop 0.3s cubic-bezier(0.175,0.885,0.32,1.275) forwards' } : {}}>
+                      {btnLabel}
+                    </span>
+                  )}
+                </button>
+                {isPulsing && <style>{`.bm-btn-pulse-cls{animation:bm-btn-pulse 2s ease-in-out infinite}`}</style>}
+              </>
+            )}
 
-          {/* Erreur */}
-          {status === 'error' && (
-            <p className="text-[10px] text-red-500 text-center mt-1 font-semibold">Réessaie dans quelques secondes.</p>
-          )}
+            {/* Erreur */}
+            {status === 'error' && (
+              <p className="text-[10px] text-red-500 text-center mt-1 font-semibold">Réessaie dans quelques secondes.</p>
+            )}
+          </div>
+
         </div>
-
       </div>
 
       {/* ── Bottom sheet auth ── */}

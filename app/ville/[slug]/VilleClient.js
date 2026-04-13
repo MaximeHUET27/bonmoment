@@ -234,7 +234,7 @@ export default function VilleClient({
   if (isLoading) {
     return (
       <div className="px-3 sm:px-4 py-4">
-        <div className="grid grid-cols-1 min-[360px]:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
+        <div className="flex flex-col gap-3 w-full max-w-[700px] mx-auto">
           {[...Array(4)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
       </div>
@@ -404,7 +404,7 @@ export default function VilleClient({
                 Pas de {[...FILTERS_CATEGORIE, ...FILTERS_TYPE].find(f => f.id === filtre)?.label.replace(/^\S+\s/, '')} en ce moment — tes commerçants préparent des surprises !
               </p>
             )}
-            <div className="grid grid-cols-1 min-[360px]:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
+            <div className="flex flex-col gap-3 w-full max-w-[700px] mx-auto">
               {offresAffichees.map(o => (
                 <OffreCard
                   key={o.id}

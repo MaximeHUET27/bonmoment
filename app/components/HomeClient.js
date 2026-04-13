@@ -142,11 +142,11 @@ export default function HomeClient({ villes, offres }) {
       {/* ── Grille des offres (toutes villes actives) ── */}
       <div className="px-4 pb-8">
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="flex flex-col gap-3 w-full max-w-[700px] mx-auto">
             {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : offresTriees.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="flex flex-col gap-3 w-full max-w-[700px] mx-auto">
             {offresTriees.map(o => (
               <OffreCard
                 key={o.id}
