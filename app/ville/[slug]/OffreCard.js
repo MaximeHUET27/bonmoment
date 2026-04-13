@@ -295,10 +295,14 @@ export default function OffreCard({ offre, userReservation }) {
                   nbBons !== 9999 &&
                   nbBons <= 5
 
+  /* ── Font-size adaptatif (titre + commerce) ── */
+  const titreFontSize    = getFullOffreTitle(offre).length > 30 ? '11px' : '13px'
+  const commerceFontSize = (commerce?.nom || '').length > 25    ? '10px' : '12px'
+
   return (
     <>
       <div
-        className={`bg-white rounded-[12px] shadow-sm overflow-hidden flex flex-row${fini ? ' opacity-60' : ''}`}
+        className={`bg-white rounded-[12px] shadow-sm overflow-hidden flex flex-row h-[155px] sm:h-[165px]${fini ? ' opacity-60' : ''}`}
         style={{
           border: '1px solid #F0F0F0',
           ...(urgent && !fini ? { borderLeft: '3px solid #ef4444' } : {}),
@@ -307,8 +311,7 @@ export default function OffreCard({ offre, userReservation }) {
 
         {/* ── Photo commerce (côté gauche) ── */}
         <div
-          className="relative w-[90px] sm:w-[140px] shrink-0 self-stretch"
-          style={{ minHeight: 120 }}
+          className="relative w-[100px] sm:w-[130px] shrink-0 self-stretch"
         >
           {commerce?.photo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -325,15 +328,15 @@ export default function OffreCard({ offre, userReservation }) {
         </div>
 
         {/* ── Infos (côté droit) ── */}
-        <div className="flex-1 flex flex-col gap-1.5 px-[10px] py-2 sm:px-3 sm:py-2.5 min-w-0">
+        <div className="flex-1 flex flex-col gap-[2px] px-[8px] py-[6px] sm:px-[10px] min-w-0">
 
           {/* Ligne 1 : timer + bons + partage — barre orange */}
-          <div className="flex items-center justify-between gap-1 min-w-0 bg-[#FFF0E0] rounded-[8px] px-2 py-1">
+          <div className="flex items-center justify-between gap-1 min-w-0 bg-[#FFF0E0] rounded-[8px] px-[6px] py-[3px]">
             <Link href={`/offre/${offre.id}`} className="flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
               {programmee ? (
                 <>
                   <span className="text-[10px] shrink-0">📅</span>
-                  <span className="text-[11px] font-semibold text-[#FF6B00] truncate">
+                  <span className="text-[10px] font-semibold text-[#FF6B00] truncate">
                     Début le {formatDebut(offre.date_debut)}
                   </span>
                 </>
@@ -341,20 +344,20 @@ export default function OffreCard({ offre, userReservation }) {
                 <>
                   <span className="text-[10px] shrink-0 text-[#FF6B00]">⏱</span>
                   {timeLeft ? (
-                    <span className={`text-[11px] tabular-nums whitespace-nowrap font-semibold ${urgent && !fini ? 'text-red-500' : 'text-[#FF6B00]'}`}>
+                    <span className={`text-[10px] tabular-nums whitespace-nowrap font-semibold ${urgent && !fini ? 'text-red-500' : 'text-[#FF6B00]'}`}>
                       {String(timeLeft.h).padStart(2, '0')}h{' '}
                       {String(timeLeft.m).padStart(2, '0')}m{' '}
                       {String(timeLeft.s).padStart(2, '0')}s
                     </span>
                   ) : (
-                    <span className="text-[11px] font-semibold text-[#FF6B00]/60">Trop tard !</span>
+                    <span className="text-[10px] font-semibold text-[#FF6B00]/60">Trop tard !</span>
                   )}
                 </>
               )}
             </Link>
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1 shrink-0">
               <Link href={`/offre/${offre.id}`}>
-                <span className={`text-[11px] font-bold text-[#FF6B00] ${nbPulse ? 'animate-pulse' : ''}`}>
+                <span className={`text-[10px] font-bold text-[#FF6B00] ${nbPulse ? 'animate-pulse' : ''}`}>
                   {nbBons === null || nbBons === 9999 ? '∞' : `🎟 ${nbBons}`}
                 </span>
               </Link>
@@ -367,7 +370,7 @@ export default function OffreCard({ offre, userReservation }) {
             <span className="shrink-0 bg-[#FF6B00] text-white font-bold text-[11px] px-2 py-0.5 rounded-[8px] whitespace-nowrap">
               {formatBadge(offre)}
             </span>
-            <span className="text-[13px] font-bold text-[#0A0A0A] line-clamp-2 leading-snug">
+            <span className="font-bold text-[#0A0A0A] leading-snug" style={{ fontSize: titreFontSize }}>
               {getFullOffreTitle(offre)}
             </span>
           </Link>
@@ -382,7 +385,7 @@ export default function OffreCard({ offre, userReservation }) {
                 <span className="text-[10px] text-[#3D3D3D]/40 shrink-0">·</span>
               </>
             )}
-            <span className="text-[12px] font-semibold text-[#1A1A1A] flex-1 min-w-0 break-words">{commerce?.nom}</span>
+            <span className="font-semibold text-[#1A1A1A] flex-1 min-w-0" style={{ fontSize: commerceFontSize }}>{commerce?.nom}</span>
             {commerce?.note_google && (
               <span className="text-[10px] font-bold text-yellow-500 shrink-0 ml-1">⭐ {commerce.note_google}</span>
             )}
@@ -395,16 +398,16 @@ export default function OffreCard({ offre, userReservation }) {
 
           {/* Ligne 4 : ville */}
           {commerce?.ville && (
-            <p className="text-[11px] text-[#3D3D3D]/50">📍 {commerce.ville}</p>
+            <p className="text-[10px] text-[#3D3D3D]/50">📍 {commerce.ville}</p>
           )}
 
           {/* Ligne 5 : CTA */}
-          <div className="mt-auto pt-0.5">
+          <div className="mt-auto">
             {fini ? (
               <button
                 onClick={handleAbonnerComm}
                 disabled={abonneCommLoading}
-                className={`w-full text-white font-bold text-[11px] leading-tight h-[38px] rounded-full transition-all duration-200 flex items-center justify-center text-center gap-1 ${
+                className={`w-full text-white font-bold text-[11px] leading-tight h-[30px] rounded-full transition-all duration-200 flex items-center justify-center text-center gap-1 ${
                   abonneComm
                     ? 'bg-green-500'
                     : 'bg-[#F08040] hover:bg-[#D06830] active:scale-[0.97]'
@@ -426,7 +429,7 @@ export default function OffreCard({ offre, userReservation }) {
                   onClick={handleReserver}
                   disabled={status === 'loading'}
                   style={{ transform: pressing ? 'scale(0.95)' : 'scale(1)', transition: 'transform 0.15s ease' }}
-                  className={`w-full text-white font-bold text-[13px] h-[38px] rounded-full flex items-center justify-center gap-1.5 ${btnColor} ${isPulsing ? 'bm-btn-pulse-cls' : ''}`}
+                  className={`w-full text-white font-bold text-[11px] h-[30px] rounded-full flex items-center justify-center gap-1.5 ${btnColor} ${isPulsing ? 'bm-btn-pulse-cls' : ''}`}
                 >
                   {status === 'loading' ? (
                     <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
