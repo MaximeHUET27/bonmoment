@@ -34,11 +34,11 @@ export default function AbonnementPage() {
   const { user, loading, supabase } = useAuth()
   const router = useRouter()
 
-  const [commerce,     setCommerce]     = useState(null)
-  const [fetching,     setFetching]     = useState(true)
-  const [cgv,          setCgv]          = useState(false)
-  const [choosing,     setChoosing]     = useState(null)   // clé du palier en cours de traitement
-  const [error,        setError]        = useState(null)
+  const [commerce,      setCommerce]      = useState(null)
+  const [fetching,      setFetching]      = useState(true)
+  const [cgvAccepted,   setCgvAccepted]   = useState(false)
+  const [choosing,      setChoosing]      = useState(null)   // clé du palier en cours de traitement
+  const [error,         setError]         = useState(null)
 
   useEffect(() => {
     if (!loading && !user) router.replace('/')
@@ -55,7 +55,7 @@ export default function AbonnementPage() {
   }, [user, supabase])
 
   async function handleChoix(palier) {
-    if (!cgv || !commerce?.id || choosing) return
+    if (!cgvAccepted || !commerce?.id || choosing) return
     setChoosing(palier)
     setError(null)
 
@@ -102,89 +102,13 @@ export default function AbonnementPage() {
 
       <section className="flex-1 px-4 py-8 max-w-2xl mx-auto w-full flex flex-col gap-5">
 
-        {/* ── Cartes paliers ── */}
-        <div className="flex flex-col gap-4">
-          {PLANS.map(plan => (
-            <div
-              key={plan.key}
-              className={`relative bg-white rounded-3xl px-6 py-6 flex flex-col gap-3 border-2 transition-all ${
-                plan.populaire
-                  ? 'border-[#FF6B00] shadow-lg shadow-orange-100'
-                  : 'border-[#F0F0F0]'
-              }`}
-            >
-              {/* Badge populaire */}
-              {plan.populaire && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#FF6B00] text-white text-[10px] font-black px-3 py-1 rounded-full whitespace-nowrap">
-                  ⭐ Populaire
-                </div>
-              )}
-
-              {/* En-tête */}
-              <div>
-                <p className={`text-lg font-black ${plan.populaire ? 'text-[#FF6B00]' : 'text-[#0A0A0A]'}`}>
-                  {plan.nom}
-                </p>
-                <p className="text-2xl font-black text-[#0A0A0A] mt-0.5 leading-none">
-                  {plan.prix}€
-                  <span className="text-sm font-semibold text-[#3D3D3D]/60">/mois</span>
-                </p>
-              </div>
-
-              {/* Caractéristiques */}
-              <ul className="flex flex-col gap-1.5 text-sm text-[#3D3D3D]">
-                <li className="flex items-center gap-2">
-                  <span className="text-[#FF6B00] font-bold">✓</span>
-                  {plan.offres} offres/mois
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-[#FF6B00] font-bold">✓</span>
-                  Bons illimités
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-[#FF6B00] font-bold">✓</span>
-                  1<sup>er</sup> mois offert
-                </li>
-              </ul>
-
-              {/* Bouton */}
-              <button
-                onClick={() => handleChoix(plan.key)}
-                disabled={!cgv || choosing !== null || !commerce}
-                className={`w-full font-black text-sm py-3.5 rounded-2xl transition-colors min-h-[48px] flex items-center justify-center gap-2 ${
-                  plan.populaire
-                    ? 'bg-[#FF6B00] hover:bg-[#CC5500] text-white disabled:bg-[#D0D0D0] disabled:text-white disabled:cursor-not-allowed'
-                    : 'border-2 border-[#FF6B00] text-[#FF6B00] hover:bg-[#FFF0E0] disabled:border-[#D0D0D0] disabled:text-[#D0D0D0] disabled:cursor-not-allowed bg-transparent'
-                }`}
-              >
-                {choosing === plan.key
-                  ? <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  : 'Choisir ce palier'
-                }
-              </button>
-            </div>
-          ))}
-
-          {/* Message si CGV non cochées */}
-          {!cgv && (
-            <p className="text-center text-xs text-[#3D3D3D]/50">
-              Accepte les CGV pour continuer
-            </p>
-          )}
-        </div>
-
-        {/* ── Mention TVA ── */}
-        <p className="text-center text-[11px] text-[#3D3D3D]/40">
-          TVA non applicable, article 293 B du CGI.
-        </p>
-
-        {/* ── CGV obligatoires ── */}
-        <div className="bg-[#F5F5F5] rounded-2xl px-4 py-4">
+        {/* ── CGV + TVA — EN HAUT, avant les cartes ── */}
+        <div className="bg-[#F5F5F5] rounded-2xl px-4 py-4 flex flex-col gap-2">
           <label className="flex items-start gap-3 cursor-pointer">
             <input
               type="checkbox"
-              checked={cgv}
-              onChange={e => setCgv(e.target.checked)}
+              checked={cgvAccepted}
+              onChange={() => setCgvAccepted(!cgvAccepted)}
               className="mt-0.5 w-4 h-4 accent-[#FF6B00] flex-shrink-0 cursor-pointer"
             />
             <p className="text-xs text-[#3D3D3D] leading-relaxed select-none">
@@ -195,6 +119,84 @@ export default function AbonnementPage() {
               {' '}de BONMOMENT.
             </p>
           </label>
+          <p className="text-[11px] text-[#3D3D3D]/40 ml-7">
+            TVA non applicable, article 293 B du CGI.
+          </p>
+        </div>
+
+        {/* ── Cartes paliers ── */}
+        <div className="flex flex-col gap-4">
+          {PLANS.map(plan => {
+            const isDisabled = !cgvAccepted || choosing !== null || !commerce
+            return (
+              <div
+                key={plan.key}
+                className={`relative bg-white rounded-3xl px-6 py-6 flex flex-col gap-3 border-2 transition-all ${
+                  plan.populaire
+                    ? 'border-[#FF6B00] shadow-lg shadow-orange-100'
+                    : 'border-[#F0F0F0]'
+                }`}
+              >
+                {/* Badge populaire */}
+                {plan.populaire && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#FF6B00] text-white text-[10px] font-black px-3 py-1 rounded-full whitespace-nowrap">
+                    ⭐ Populaire
+                  </div>
+                )}
+
+                {/* En-tête */}
+                <div>
+                  <p className={`text-lg font-black ${plan.populaire ? 'text-[#FF6B00]' : 'text-[#0A0A0A]'}`}>
+                    {plan.nom}
+                  </p>
+                  <p className="text-2xl font-black text-[#0A0A0A] mt-0.5 leading-none">
+                    {plan.prix}€
+                    <span className="text-sm font-semibold text-[#3D3D3D]/60">/mois</span>
+                  </p>
+                </div>
+
+                {/* Caractéristiques */}
+                <ul className="flex flex-col gap-1.5 text-sm text-[#3D3D3D]">
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#FF6B00] font-bold">✓</span>
+                    {plan.offres} offres/mois
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#FF6B00] font-bold">✓</span>
+                    Bons illimités
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#FF6B00] font-bold">✓</span>
+                    1<sup>er</sup> mois offert
+                  </li>
+                </ul>
+
+                {/* Bouton — style piloté par React, pas par CSS :disabled */}
+                <button
+                  onClick={() => handleChoix(plan.key)}
+                  disabled={isDisabled}
+                  className={`w-full font-black text-sm py-3.5 rounded-2xl transition-colors min-h-[48px] flex items-center justify-center gap-2 ${
+                    isDisabled
+                      ? 'bg-[#D0D0D0] text-white cursor-not-allowed opacity-60'
+                      : plan.populaire
+                        ? 'bg-[#FF6B00] hover:bg-[#CC5500] text-white cursor-pointer'
+                        : 'border-2 border-[#FF6B00] text-[#FF6B00] hover:bg-[#FFF0E0] bg-transparent cursor-pointer'
+                  }`}
+                >
+                  {choosing === plan.key
+                    ? <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    : 'Choisir ce palier'
+                  }
+                </button>
+              </div>
+            )
+          })}
+
+          {!cgvAccepted && (
+            <p className="text-center text-xs text-[#3D3D3D]/50">
+              Accepte les CGV pour continuer
+            </p>
+          )}
         </div>
 
         {/* ── Erreur ── */}
