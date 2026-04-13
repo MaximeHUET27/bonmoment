@@ -38,7 +38,7 @@ export default function DashboardPage() {
       // Sélection complète avec les nouvelles colonnes
       let { data, error } = await supabase
         .from('commerces')
-        .select('id, nom, categorie, ville, adresse, note_google, palier, photo_url, telephone, horaires, maps_url')
+        .select('id, nom, categorie, ville, adresse, note_google, palier, photo_url, telephone, horaires, maps_url, stripe_subscription_id, stripe_customer_id, abonnement_actif')
         .eq('owner_id', user.id)
 
       // Fallback si les colonnes maps_url/palier n'existent pas encore en BDD
@@ -325,11 +325,15 @@ function KpiCard({ emoji, label, value, sub, valueColor }) {
 
 function AbonnementSection({ commerce, offres }) {
   const PALIERS = {
-    1: { nom: 'Découverte', quota: 4,  prix: '29€/mois' },
-    2: { nom: 'Essentiel',  quota: 8,  prix: '49€/mois' },
-    3: { nom: 'Pro',        quota: 16, prix: '79€/mois' },
+    decouverte: { nom: 'Découverte', quota: 4,  prix: '29€/mois' },
+    essentiel:  { nom: 'Essentiel',  quota: 8,  prix: '49€/mois' },
+    pro:        { nom: 'Pro',        quota: 16, prix: '79€/mois' },
+    // Compatibilité clés numériques héritées
+    1:          { nom: 'Découverte', quota: 4,  prix: '29€/mois' },
+    2:          { nom: 'Essentiel',  quota: 8,  prix: '49€/mois' },
+    3:          { nom: 'Pro',        quota: 16, prix: '79€/mois' },
   }
-  const palier = PALIERS[commerce.palier] || PALIERS[1]
+  const palier = PALIERS[commerce.palier] || PALIERS['decouverte']
   const now = new Date()
   const debutMois = new Date(now.getFullYear(), now.getMonth(), 1)
   const publieesMois = offres.filter(o => new Date(o.created_at || o.date_debut) >= debutMois).length
@@ -337,6 +341,25 @@ function AbonnementSection({ commerce, offres }) {
   const progPct = Math.min(100, Math.round((publieesMois / palier.quota) * 100))
   const nextRenewal = new Date(now.getFullYear(), now.getMonth() + 1, 1)
   const nextRenewalStr = nextRenewal.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+
+  // Pas encore d'abonnement Stripe actif
+  if (!commerce.stripe_subscription_id) {
+    return (
+      <div className="bg-[#FFF0E0] border-2 border-[#FF6B00] rounded-3xl px-6 py-5 flex flex-col gap-3">
+        <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">Ton abonnement</h2>
+        <p className="text-sm text-[#3D3D3D]/80 leading-relaxed">
+          Tu n&apos;as pas encore activé ton abonnement BONMOMENT. Choisis un palier pour publier tes offres.
+        </p>
+        <p className="text-xs text-[#3D3D3D]/50">Premier mois offert · Sans engagement</p>
+        <Link
+          href="/commercant/abonnement"
+          className="self-start bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-sm px-5 py-3 rounded-2xl transition-colors"
+        >
+          Activer mon abonnement →
+        </Link>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
@@ -346,12 +369,20 @@ function AbonnementSection({ commerce, offres }) {
           <p className="text-xl font-black text-[#FF6B00]">📦 {palier.nom}</p>
           <p className="text-xs text-[#3D3D3D]/60 mt-0.5">{palier.quota} offres/mois · {palier.prix}</p>
         </div>
-        <Link
-          href="/commercant/abonnement"
-          className="text-xs font-bold text-[#FF6B00] border border-[#FF6B00] px-3 py-1.5 rounded-full hover:bg-[#FFF0E0] transition-colors min-h-[36px] flex items-center"
-        >
-          Changer
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/commercant/abonnement"
+            className="text-xs font-bold text-[#FF6B00] border border-[#FF6B00] px-3 py-1.5 rounded-full hover:bg-[#FFF0E0] transition-colors min-h-[36px] flex items-center"
+          >
+            Changer
+          </Link>
+          <Link
+            href="/commercant/resiliation"
+            className="text-xs font-bold text-[#3D3D3D]/60 border border-[#E0E0E0] px-3 py-1.5 rounded-full hover:border-[#FF6B00] hover:text-[#FF6B00] transition-colors min-h-[36px] flex items-center"
+          >
+            Gérer
+          </Link>
+        </div>
       </div>
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
