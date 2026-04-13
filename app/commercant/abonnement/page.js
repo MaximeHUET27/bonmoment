@@ -35,6 +35,8 @@ function AbonnementContent() {
   const router       = useRouter()
   const searchParams = useSearchParams()
 
+  const isAdmin = user?.email === 'bonmomentapp@gmail.com'
+
   const [commerce,      setCommerce]      = useState(null)
   const [fetching,      setFetching]      = useState(true)
   const [cgvAccepted,   setCgvAccepted]   = useState(false)
@@ -77,6 +79,29 @@ function AbonnementContent() {
     setChoosing(palier)
     setError(null)
 
+    /* ── Bypass Stripe pour l'admin ── */
+    if (isAdmin) {
+      try {
+        const res  = await fetch('/api/admin/activer-abonnement', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ commerce_id: commerce.id, palier }),
+        })
+        const data = await res.json()
+        if (data.ok) {
+          router.replace(`/commercant/dashboard?commerce=${commerce.id}&admin_activated=1`)
+        } else {
+          setError(data.error || 'Erreur activation admin')
+          setChoosing(null)
+        }
+      } catch (e) {
+        setError(e.message)
+        setChoosing(null)
+      }
+      return
+    }
+
+    /* ── Flow Stripe normal ── */
     try {
       const res  = await fetch('/api/stripe/checkout', {
         method:  'POST',
@@ -116,6 +141,11 @@ function AbonnementContent() {
         <p className="text-xs text-[#3D3D3D]/60 mt-1">
           Premier mois offert · Sans engagement · Résiliable à tout moment
         </p>
+        {isAdmin && (
+          <p className="inline-block mt-2 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">
+            🔑 Mode admin — activation sans paiement
+          </p>
+        )}
       </header>
 
       <section className="flex-1 px-4 py-8 max-w-4xl mx-auto w-full flex flex-col gap-5">
