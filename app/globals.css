@@ -31,16 +31,27 @@ body {
   animation: marquee linear infinite;
 }
 
-/* Bandeau villes scrollable */
-.villes-scroll {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+/* Bandeau villes défilant */
+.villes-banner {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;       /* Firefox */
+  -ms-overflow-style: none;    /* IE/Edge */
+  cursor: grab;
 }
-.villes-scroll::-webkit-scrollbar {
-  display: none;
+.villes-banner:active {
+  cursor: grabbing;
 }
+.villes-banner::-webkit-scrollbar {
+  display: none;               /* Chrome/Safari */
+}
+
 .villes-track {
-  animation: marquee 20s linear infinite;
+  display: flex;
+  gap: 16px;
+  white-space: nowrap;
+  width: max-content;
+  /* Pas d'animation CSS — le scroll est géré par requestAnimationFrame (JS) */
 }
 
 @keyframes pulse-orange {
