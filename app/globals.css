@@ -34,24 +34,33 @@ body {
 /* Bandeau villes défilant */
 .villes-banner {
   width: 100%;
-  overflow-x: auto;
-  scrollbar-width: none;       /* Firefox */
-  -ms-overflow-style: none;    /* IE/Edge */
-  cursor: grab;
+  overflow: hidden;
 }
-.villes-banner:active {
-  cursor: grabbing;
-}
-.villes-banner::-webkit-scrollbar {
-  display: none;               /* Chrome/Safari */
+
+@keyframes scroll-banner {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 .villes-track {
   display: flex;
   gap: 16px;
-  white-space: nowrap;
   width: max-content;
-  /* Pas d'animation CSS — le scroll est géré par requestAnimationFrame (JS) */
+  animation: scroll-banner 20s linear infinite;
+  will-change: transform;
+}
+
+.villes-track:hover,
+.villes-track.paused {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .villes-track {
+    animation: scroll-banner 20s linear infinite !important;
+    animation-iteration-count: infinite !important;
+    animation-duration: 20s !important;
+  }
 }
 
 @keyframes pulse-orange {

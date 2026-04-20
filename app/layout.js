@@ -29,8 +29,11 @@ export const metadata = {
     statusBarStyle: "default",
   },
   icons: {
-    icon: "/favicon.ico",
-    apple: "/apple-touch-icon.png",
+    icon: [
+      { url: '/icons/icon-192.png', type: 'image/png', sizes: '192x192' },
+      { url: '/favicon.ico' },
+    ],
+    apple: '/icons/icon-192.png',
   },
 };
 

@@ -25,12 +25,8 @@ export default function HomeClient({ villes, offres }) {
   const [showOverlay,    setShowOverlay]    = useState(false)
   const [isLoading,      setIsLoading]      = useState(true)
   const [userResaMap,    setUserResaMap]    = useState(null)
-  const bannerRef     = useRef(null)
-  const rafRef        = useRef(null)
+  const [bannerPaused, setBannerPaused] = useState(false)
   const pauseTimerRef = useRef(null)
-  const isDragging    = useRef(false)
-  const dragStartX    = useRef(0)
-  const dragScrollL   = useRef(0)
 
   useEffect(() => { setIsLoading(false) }, [])
 
@@ -62,57 +58,13 @@ export default function HomeClient({ villes, offres }) {
     router.push(`/ville/${toSlug(nomVille)}`)
   }
 
-  // ── Marquee JS (scrollLeft) ───────────────────────────────────────────────
-  function startMarquee() {
-    cancelAnimationFrame(rafRef.current)
-    function tick() {
-      const el = bannerRef.current
-      if (!el) return
-      el.scrollLeft += 0.5
-      // Boucle seamless : reset quand on a parcouru exactement le set A
-      if (el.scrollLeft >= el.scrollWidth / 2) {
-        el.scrollLeft -= el.scrollWidth / 2
-      }
-      rafRef.current = requestAnimationFrame(tick)
-    }
-    rafRef.current = requestAnimationFrame(tick)
-  }
-
-  function stopMarquee() {
-    cancelAnimationFrame(rafRef.current)
-  }
-
-  useEffect(() => {
-    startMarquee()
-    return () => stopMarquee()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // ── Drag-to-scroll (desktop) ──────────────────────────────────────────────
-  function handleBannerMouseDown(e) {
-    isDragging.current  = true
-    dragStartX.current  = e.clientX
-    dragScrollL.current = bannerRef.current?.scrollLeft ?? 0
-    e.preventDefault()
-  }
-
-  function handleBannerMouseMove(e) {
-    if (!isDragging.current || !bannerRef.current) return
-    const dx = e.clientX - dragStartX.current
-    bannerRef.current.scrollLeft = dragScrollL.current - dx
-  }
-
-  function handleBannerMouseUp() {
-    isDragging.current = false
-  }
-
-  // ── Touch (mobile) ────────────────────────────────────────────────────────
+  // ── Touch (mobile) : pause CSS au toucher, reprise après 2s ──────────────
   function handleVillesTouchStart() {
     clearTimeout(pauseTimerRef.current)
-    stopMarquee()
+    setBannerPaused(true)
   }
   function handleVillesTouchEnd() {
-    pauseTimerRef.current = setTimeout(startMarquee, 3000)
+    pauseTimerRef.current = setTimeout(() => setBannerPaused(false), 2000)
   }
 
   /* Tri : actives urgentes → actives → expirées */
@@ -184,35 +136,22 @@ export default function HomeClient({ villes, offres }) {
         {/* Chips des villes actives */}
         {villes.length > 0 && (
           /* Bleed full-width hors du px-6 parent */
-          <div style={{ width: '100vw', position: 'relative', left: '50%', transform: 'translateX(-50%)', marginTop: '24px' }}>
+          <div style={{ width: '100vw', marginLeft: 'calc(-50vw + 50%)', marginTop: '24px' }}>
 
             {/* Label fixe centré au-dessus de la bannière */}
             <p style={{ fontSize: '11px', color: 'rgba(61,61,61,0.5)', textAlign: 'center', marginBottom: '8px' }}>
               Villes disponibles :
             </p>
 
-            {/*
-              Bannière défilante.
-              La piste contient 2 moitiés identiques (set A + set B, 8 répétitions chacune).
-              translateX(-50%) déplace exactement le set A hors de l'écran → le set B
-              prend sa place → boucle seamless.
-              Le hover pause via CSS (.villes-banner:hover .villes-track).
-              Le touch pause via animationPlayState inline (mobile).
-            */}
+            {/* Bannière défilante CSS pure — fonctionne sur tous les navigateurs et mobile */}
             <div
-              ref={bannerRef}
               className="villes-banner"
-              onMouseEnter={stopMarquee}
-              onMouseLeave={() => { isDragging.current = false; startMarquee() }}
-              onMouseDown={handleBannerMouseDown}
-              onMouseMove={handleBannerMouseMove}
-              onMouseUp={handleBannerMouseUp}
               onTouchStart={handleVillesTouchStart}
               onTouchEnd={handleVillesTouchEnd}
             >
-              <div className="villes-track">
-                {/* Set A — 8 répétitions */}
-                {Array.from({ length: 8 }, (_, rep) =>
+              <div className={`villes-track${bannerPaused ? ' paused' : ''}`}>
+                {/* Set A (6 répétitions) */}
+                {Array.from({ length: 6 }, (_, rep) =>
                   villes.map(v => (
                     <button
                       key={`a-${rep}-${v.id}`}
@@ -223,8 +162,8 @@ export default function HomeClient({ villes, offres }) {
                     </button>
                   ))
                 )}
-                {/* Set B — identique, pour la boucle seamless */}
-                {Array.from({ length: 8 }, (_, rep) =>
+                {/* Set B — copie exacte pour boucle seamless (-50%) */}
+                {Array.from({ length: 6 }, (_, rep) =>
                   villes.map(v => (
                     <button
                       key={`b-${rep}-${v.id}`}
