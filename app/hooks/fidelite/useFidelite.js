@@ -62,12 +62,12 @@ export function useFidelite() {
     setError(null)
     try {
       return await callApi('/api/fidelite/enregistrer-passage', {
-        commerce_id:          p.commerceId,
-        mode_identification:  p.mode,
-        identifier_value:     p.identifierValue,
-        prenom_optionnel:     p.prenomOptionnel  ?? null,
-        mode_consultation:    p.modeConsultation ?? false,
-        nb_tampons:           p.nbTampons        ?? 1,
+        commerceId:        p.commerceId,
+        mode:              p.mode,
+        identifierValue:   p.identifierValue,
+        prenomOptionnel:   p.prenomOptionnel  ?? null,
+        modeConsultation:  p.modeConsultation ?? false,
+        nbTampons:         p.nbTampons        ?? 1,
       })
     } catch (e) {
       setError(e.message)
@@ -88,7 +88,7 @@ export function useFidelite() {
     setError(null)
     try {
       return await callApi('/api/fidelite/annuler-passage', {
-        passage_group_id: passageGroupId,
+        passageGroupId,
       })
     } catch (e) {
       setError(e.message)
@@ -109,7 +109,7 @@ export function useFidelite() {
     setError(null)
     try {
       return await callApi('/api/fidelite/confirmer-recompense', {
-        carte_id: carteId,
+        carteId,
       })
     } catch (e) {
       setError(e.message)
@@ -133,8 +133,8 @@ export function useFidelite() {
     setError(null)
     try {
       return await callApi('/api/fidelite/ajuster-tampons', {
-        carte_id:    carteId,
-        nb_tampons:  nbTampons,
+        carteId,
+        nbTampons,
         commentaire,
       })
     } catch (e) {
@@ -175,7 +175,7 @@ export function useFidelite() {
     setError(null)
     try {
       return await callApi('/api/fidelite/modifier-telephone', {
-        nouveau_telephone: nouveauTelephone,
+        nouveauTelephone,
       })
     } catch (e) {
       setError(e.message)
@@ -224,11 +224,11 @@ export function useFidelite() {
     setError(null)
     try {
       return await callApi('/api/fidelite/programme', {
-        commerce_id:           commerceId,
-        seuil_passages:        seuilPassages,
-        description_recompense: descriptionRecompense,
+        commerceId,
+        seuilPassages,
+        descriptionRecompense,
         actif,
-        regle_tampons:         regleTampons,
+        regleTampons,
       })
     } catch (e) {
       setError(e.message)
