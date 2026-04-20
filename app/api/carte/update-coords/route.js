@@ -1,3 +1,4 @@
+import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
@@ -7,9 +8,31 @@ const admin = createClient(
 )
 
 export async function POST(request) {
-  const { id, latitude, longitude } = await request.json()
+  /* Auth */
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Non connecté' }, { status: 401 })
+
+  const body = await request.json().catch(() => ({}))
+  const { id, latitude, longitude } = body
+
   if (!id || latitude == null || longitude == null)
     return NextResponse.json({ error: 'Paramètres manquants' }, { status: 400 })
+
+  /* Validation coordonnées */
+  if (typeof latitude !== 'number' || latitude < -90 || latitude > 90 ||
+      typeof longitude !== 'number' || longitude < -180 || longitude > 180)
+    return NextResponse.json({ error: 'Coordonnées invalides' }, { status: 400 })
+
+  /* Vérification ownership */
+  const { data: commerce } = await admin
+    .from('commerces')
+    .select('id')
+    .eq('id', id)
+    .eq('owner_id', user.id)
+    .maybeSingle()
+
+  if (!commerce) return NextResponse.json({ error: 'Commerce introuvable' }, { status: 403 })
 
   const { error } = await admin
     .from('commerces')

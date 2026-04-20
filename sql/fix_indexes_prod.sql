@@ -50,6 +50,19 @@ CREATE INDEX IF NOT EXISTS idx_avis_google_commerce
 CREATE INDEX IF NOT EXISTS idx_feedbacks_commerce
   ON feedbacks_commerce(commerce_id);
 
+-- Push subscriptions : lookup par user (routes push)
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user_id
+  ON push_subscriptions(user_id);
+
+-- Réservations : filtre badge habitant (utilise_at + user_id)
+CREATE INDEX IF NOT EXISTS idx_reservations_utilise_at
+  ON reservations(user_id, utilise_at)
+  WHERE statut = 'utilisee';
+
+-- Offres : filtre par date de création (rapport mensuel)
+CREATE INDEX IF NOT EXISTS idx_offres_created_at
+  ON offres(commerce_id, created_at);
+
 -- ============================================================
 -- Index déjà présents (créés dans fix_indexes_audit.sql) :
 -- idx_villes_active, idx_users_notif_email,

@@ -17,82 +17,42 @@ const MOIS_FR = [
 
 const JOURS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
 
-async function calculerKpis(commerceId, debut, fin, debutMoisAvant, finMoisAvant) {
-  /* Toutes les offres du commerce */
-  const { data: offres } = await supabase
-    .from('offres')
-    .select('id, titre, valeur, type_remise, created_at')
-    .eq('commerce_id', commerceId)
+/* Calcul KPIs en mémoire pour un commerce donné, à partir de données pré-chargées */
+function calculerKpisMemoire(offres, resMois, resAvant, resMoisAvant, avis, feedbacks, debut, fin) {
+  const offreIds = new Set(offres.map(o => o.id))
+  const offreMap = Object.fromEntries(offres.map(o => [o.id, o]))
 
-  const offreIds = (offres || []).map(o => o.id)
-  const offreMap = Object.fromEntries((offres || []).map(o => [o.id, o]))
-
-  /* Offres publiées ce mois */
-  const offresPubliees = (offres || []).filter(o => {
+  const offresPubliees = offres.filter(o => {
     const d = new Date(o.created_at)
     return d >= debut && d <= fin
   }).length
 
-  if (offreIds.length === 0) {
+  if (offreIds.size === 0) {
     return {
-      bonsReserves: 0,
-      bonsUtilises: 0,
-      tauxConversion: 0,
-      nouveauxClients: 0,
-      clientsRecurrents: 0,
-      offresPubliees,
-      meilleureOffre: null,
-      jourLePlusActif: null,
-      caEstime: 0,
-      evolutionPct: null,
+      bonsReserves: 0, bonsUtilises: 0, tauxConversion: 0,
+      nouveauxClients: 0, clientsRecurrents: 0, offresPubliees,
+      meilleureOffre: null, jourLePlusActif: null, caEstime: 0,
+      evolutionPct: null, avisGoogleClics: avis.length, nbFeedbacks: 0, noteMoyenne: null,
     }
   }
 
-  /* Réservations du mois précédent */
-  const { data: reservationsMois } = await supabase
-    .from('reservations')
-    .select('id, user_id, offre_id, statut, utilise_at, created_at')
-    .in('offre_id', offreIds)
-    .gte('created_at', debut.toISOString())
-    .lte('created_at', fin.toISOString())
-
-  const reservations = reservationsMois || []
-  const utilisees = reservations.filter(r => r.statut === 'utilisee')
-
-  const bonsReserves = reservations.length
-  const bonsUtilises = utilisees.length
+  const utilisees = resMois.filter(r => r.statut === 'utilisee')
+  const bonsReserves   = resMois.length
+  const bonsUtilises   = utilisees.length
   const tauxConversion = bonsReserves > 0 ? Math.round(bonsUtilises / bonsReserves * 100) : 0
 
   /* Nouveaux vs récurrents */
-  const userIdsMois = [...new Set(reservations.map(r => r.user_id))]
-  let nouveauxClients = 0
-  let clientsRecurrents = 0
-
-  if (userIdsMois.length > 0) {
-    const { data: avant } = await supabase
-      .from('reservations')
-      .select('user_id')
-      .in('offre_id', offreIds)
-      .lt('created_at', debut.toISOString())
-      .in('user_id', userIdsMois)
-
-    const userIdsAvant = new Set((avant || []).map(r => r.user_id))
-    nouveauxClients = userIdsMois.filter(id => !userIdsAvant.has(id)).length
-    clientsRecurrents = userIdsMois.filter(id => userIdsAvant.has(id)).length
-  }
+  const userIdsMois  = [...new Set(resMois.map(r => r.user_id))]
+  const userIdsAvant = new Set(resAvant.map(r => r.user_id))
+  const nouveauxClients   = userIdsMois.filter(id => !userIdsAvant.has(id)).length
+  const clientsRecurrents = userIdsMois.filter(id =>  userIdsAvant.has(id)).length
 
   /* Meilleure offre */
   const countByOffre = {}
-  for (const r of utilisees) {
-    countByOffre[r.offre_id] = (countByOffre[r.offre_id] || 0) + 1
-  }
-  let meilleureOffre = null
-  let maxCount = 0
+  for (const r of utilisees) countByOffre[r.offre_id] = (countByOffre[r.offre_id] || 0) + 1
+  let meilleureOffre = null, maxCount = 0
   for (const [offreId, count] of Object.entries(countByOffre)) {
-    if (count > maxCount) {
-      maxCount = count
-      meilleureOffre = offreMap[offreId]?.titre || null
-    }
+    if (count > maxCount) { maxCount = count; meilleureOffre = offreMap[offreId]?.titre || null }
   }
 
   /* Jour le plus actif */
@@ -102,32 +62,17 @@ async function calculerKpis(commerceId, debut, fin, debutMoisAvant, finMoisAvant
     const jour = new Date(r.utilise_at).getDay()
     countByJour[jour] = (countByJour[jour] || 0) + 1
   }
-  let jourLePlusActif = null
-  let maxJour = 0
+  let jourLePlusActif = null, maxJour = 0
   for (const [jour, count] of Object.entries(countByJour)) {
-    if (count > maxJour) {
-      maxJour = count
-      jourLePlusActif = JOURS_FR[parseInt(jour)]
-    }
+    if (count > maxJour) { maxJour = count; jourLePlusActif = JOURS_FR[parseInt(jour)] }
   }
 
   /* CA estimé */
   let caEstime = 0
-  for (const r of utilisees) {
-    const offre = offreMap[r.offre_id]
-    if (offre?.valeur) caEstime += offre.valeur
-  }
+  for (const r of utilisees) { const o = offreMap[r.offre_id]; if (o?.valeur) caEstime += o.valeur }
 
   /* Évolution vs M-2 */
-  const { data: reservationsMoisAvant } = await supabase
-    .from('reservations')
-    .select('id')
-    .in('offre_id', offreIds)
-    .gte('created_at', debutMoisAvant.toISOString())
-    .lte('created_at', finMoisAvant.toISOString())
-    .eq('statut', 'utilisee')
-
-  const bonsUtilisesMoisAvant = (reservationsMoisAvant || []).length
+  const bonsUtilisesMoisAvant = resMoisAvant.length
   let evolutionPct = null
   if (bonsUtilisesMoisAvant > 0) {
     evolutionPct = Math.round((bonsUtilises - bonsUtilisesMoisAvant) / bonsUtilisesMoisAvant * 100)
@@ -135,41 +80,17 @@ async function calculerKpis(commerceId, debut, fin, debutMoisAvant, finMoisAvant
     evolutionPct = 100
   }
 
-  /* Avis Google cliqués ce mois */
-  const { count: avisGoogleClics } = await supabase
-    .from('avis_google_clics')
-    .select('id', { count: 'exact', head: true })
-    .eq('commerce_id', commerceId)
-    .gte('created_at', debut.toISOString())
-    .lte('created_at', fin.toISOString())
-
-  /* Feedbacks privés reçus ce mois */
-  const { data: feedbacksMois } = await supabase
-    .from('feedbacks_commerce')
-    .select('note')
-    .eq('commerce_id', commerceId)
-    .gte('created_at', debut.toISOString())
-    .lte('created_at', fin.toISOString())
-
-  const nbFeedbacks = (feedbacksMois || []).length
+  /* Feedbacks */
+  const nbFeedbacks = feedbacks.length
   const noteMoyenne = nbFeedbacks > 0
-    ? Math.round((feedbacksMois.reduce((s, f) => s + f.note, 0) / nbFeedbacks) * 10) / 10
+    ? Math.round((feedbacks.reduce((s, f) => s + f.note, 0) / nbFeedbacks) * 10) / 10
     : null
 
   return {
-    bonsReserves,
-    bonsUtilises,
-    tauxConversion,
-    nouveauxClients,
-    clientsRecurrents,
-    offresPubliees,
-    meilleureOffre,
-    jourLePlusActif,
-    caEstime,
-    evolutionPct,
-    avisGoogleClics: avisGoogleClics ?? 0,
-    nbFeedbacks,
-    noteMoyenne,
+    bonsReserves, bonsUtilises, tauxConversion,
+    nouveauxClients, clientsRecurrents, offresPubliees,
+    meilleureOffre, jourLePlusActif, caEstime, evolutionPct,
+    avisGoogleClics: avis.length, nbFeedbacks, noteMoyenne,
   }
 }
 
@@ -360,34 +281,94 @@ export async function GET(request) {
     return Response.json({ message: 'Aucun commerce éligible' })
   }
 
+  const commerceIds = commerces.map(c => c.id)
+  const ownerIds    = [...new Set(commerces.map(c => c.owner_id))]
+
+  /* ── Batch 1 : owners ──────────────────────────────────────────────────── */
+  const { data: owners } = await supabase
+    .from('users')
+    .select('id, email, nom')
+    .in('id', ownerIds)
+  const ownerMap = Object.fromEntries((owners || []).map(u => [u.id, u]))
+
+  /* ── Batch 2 : toutes les offres des commerces éligibles ───────────────── */
+  const { data: toutesOffres } = await supabase
+    .from('offres')
+    .select('id, titre, valeur, type_remise, created_at, commerce_id')
+    .in('commerce_id', commerceIds)
+
+  const offresByCommerce = {}
+  for (const o of toutesOffres || []) {
+    offresByCommerce[o.commerce_id] = offresByCommerce[o.commerce_id] || []
+    offresByCommerce[o.commerce_id].push(o)
+  }
+  const tousOffreIds = (toutesOffres || []).map(o => o.id)
+
+  /* ── Batchs 3-7 : réservations + avis + feedbacks ─────────────────────── */
+  /* Évite les .in([]) vides qui échouent */
+  const [resMoisData, resAvantData, resMoisAvantData, tousAvisData, tousFeedbacksData] =
+    tousOffreIds.length > 0
+      ? await Promise.all([
+          supabase.from('reservations')
+            .select('id, user_id, offre_id, statut, utilise_at, created_at')
+            .in('offre_id', tousOffreIds)
+            .gte('created_at', debutMois.toISOString())
+            .lte('created_at', finMois.toISOString()),
+          supabase.from('reservations')
+            .select('user_id, offre_id')
+            .in('offre_id', tousOffreIds)
+            .lt('created_at', debutMois.toISOString()),
+          supabase.from('reservations')
+            .select('id, offre_id')
+            .in('offre_id', tousOffreIds)
+            .gte('created_at', debutMoisAvant.toISOString())
+            .lte('created_at', finMoisAvant.toISOString())
+            .eq('statut', 'utilisee'),
+          supabase.from('avis_google_clics')
+            .select('commerce_id')
+            .in('commerce_id', commerceIds)
+            .gte('created_at', debutMois.toISOString())
+            .lte('created_at', finMois.toISOString()),
+          supabase.from('feedbacks_commerce')
+            .select('commerce_id, note')
+            .in('commerce_id', commerceIds)
+            .gte('created_at', debutMois.toISOString())
+            .lte('created_at', finMois.toISOString()),
+        ])
+      : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }]
+
+  const resMois      = resMoisData.data      || []
+  const resAvant     = resAvantData.data     || []
+  const resMoisAvant = resMoisAvantData.data || []
+  const tousAvis     = tousAvisData.data     || []
+  const tousFeedbacks = tousFeedbacksData.data || []
+
+  /* ── Envoi des emails ─────────────────────────────────────────────────── */
   let envoyes = 0
   let erreurs  = 0
 
   for (const commerce of commerces) {
     try {
-      /* Email du propriétaire */
-      const { data: owner } = await supabase
-        .from('users')
-        .select('email, nom')
-        .eq('id', commerce.owner_id)
-        .single()
-
+      const owner = ownerMap[commerce.owner_id]
       if (!owner?.email) continue
 
-      /* KPIs */
-      const kpis = await calculerKpis(
-        commerce.id,
-        debutMois,
-        finMois,
-        debutMoisAvant,
-        finMoisAvant,
+      /* Filtrage en mémoire pour ce commerce */
+      const offres          = offresByCommerce[commerce.id] || []
+      const offreIds        = new Set(offres.map(o => o.id))
+      const resMoisC        = resMois.filter(r => offreIds.has(r.offre_id))
+      const resAvantC       = resAvant.filter(r => offreIds.has(r.offre_id))
+      const resMoisAvantC   = resMoisAvant.filter(r => offreIds.has(r.offre_id))
+      const avisC           = tousAvis.filter(a => a.commerce_id === commerce.id)
+      const feedbacksC      = tousFeedbacks.filter(f => f.commerce_id === commerce.id)
+
+      const kpis = calculerKpisMemoire(
+        offres, resMoisC, resAvantC, resMoisAvantC, avisC, feedbacksC, debutMois, finMois,
       )
 
-      /* Token désinscription (valide 60 jours) */
       const token = jwt.sign({ commerce_id: commerce.id }, JWT_SECRET, { expiresIn: '60d' })
       const unsubscribeUrl = `${APP_URL}/api/rapport-mensuel/unsubscribe?token=${token}`
 
-      const html = buildEmailHtml({ commerce, kpis, moisLabel, anneeLabel, unsubscribeUrl })
+      const html  = buildEmailHtml({ commerce, kpis, moisLabel, anneeLabel, unsubscribeUrl })
       const sujet = `📊 Ton bilan BONMOMENT — ${moisLabel} ${anneeLabel}`
 
       const ok = await envoyerEmail(owner.email, sujet, html)

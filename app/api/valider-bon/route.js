@@ -119,6 +119,70 @@ export async function POST(request) {
     prenom = u?.nom?.split(' ')[0] ?? null
   }
 
+  /* ── Mise à jour badge habitant ──────────────────────────────────────── */
+  if (res.user_id) {
+    try {
+      const { data: userData } = await admin
+        .from('users')
+        .select('badge_niveau')
+        .eq('id', res.user_id)
+        .maybeSingle()
+
+      const currentBadge = userData?.badge_niveau ?? 'habitant'
+
+      if (currentBadge !== 'habitant_exemplaire') {
+        /* Bons utilisés sur les 7 derniers jours (inclut le bon courant) */
+        const il7j = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+
+        const { count: bonsRecents } = await admin
+          .from('reservations')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', res.user_id)
+          .eq('statut', 'utilisee')
+          .gte('utilise_at', il7j.toISOString())
+
+        if ((bonsRecents ?? 0) >= 3) {
+          let nouveauBadge = 'bon_habitant'
+
+          /* Vérifier 4 semaines consécutives → habitant_exemplaire */
+          if (currentBadge === 'bon_habitant') {
+            const il28j = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000)
+
+            const { data: bonsHistory } = await admin
+              .from('reservations')
+              .select('utilise_at')
+              .eq('user_id', res.user_id)
+              .eq('statut', 'utilisee')
+              .gte('utilise_at', il28j.toISOString())
+
+            /* Semaines 0 (la plus récente) → 3 (il y a 3-4 semaines) */
+            const toutesLes4 = [0, 1, 2, 3].every(w => {
+              const debut = new Date(now.getTime() - (w + 1) * 7 * 24 * 60 * 60 * 1000)
+              const fin   = new Date(now.getTime() -  w      * 7 * 24 * 60 * 60 * 1000)
+              const n = (bonsHistory || []).filter(r => {
+                const d = new Date(r.utilise_at)
+                return d >= debut && d <= fin
+              }).length
+              return n >= 3
+            })
+
+            if (toutesLes4) nouveauBadge = 'habitant_exemplaire'
+          }
+
+          if (nouveauBadge !== currentBadge) {
+            await admin
+              .from('users')
+              .update({ badge_niveau: nouveauBadge })
+              .eq('id', res.user_id)
+          }
+        }
+      }
+    } catch (badgeErr) {
+      console.error('[valider-bon] badge update error:', badgeErr.message)
+      /* Non-bloquant — ne pas faire échouer la validation */
+    }
+  }
+
   return NextResponse.json({
     success: true,
     offre:  { titre: offre.titre, type_remise: offre.type_remise, valeur: offre.valeur },
