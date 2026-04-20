@@ -89,6 +89,56 @@ export async function POST(request) {
         break
       }
 
+      /* ── Premier paiement filleul → récompense le parrain ── */
+      case 'invoice.paid': {
+        const invoice = event.data.object
+        // On ne traite que les factures d'abonnement (pas les one-time)
+        if (!invoice.subscription) break
+
+        // Cherche le commerce filleul via son stripe_subscription_id
+        const { data: filleul } = await supabaseAdmin
+          .from('commerces')
+          .select('id, parrain_id, parrainage_parrain_recompense, palier')
+          .eq('stripe_subscription_id', invoice.subscription)
+          .maybeSingle()
+
+        // Ignore si pas de parrainage ou déjà traité (idempotent)
+        if (!filleul?.parrain_id || filleul.parrainage_parrain_recompense) break
+
+        // Récupère l'abonnement Stripe du parrain
+        const { data: parrain } = await supabaseAdmin
+          .from('commerces')
+          .select('id, stripe_subscription_id')
+          .eq('id', filleul.parrain_id)
+          .maybeSingle()
+
+        if (parrain?.stripe_subscription_id) {
+          const discountAmountsCents = { decouverte: 1000, essentiel: 1500, pro: 2000 }
+          const amountOff = discountAmountsCents[filleul.palier] ?? 1000
+          try {
+            const coupon = await stripe.coupons.create({
+              amount_off: amountOff,
+              currency:   'eur',
+              duration:   'once',
+              name:       `Parrainage parrain — filleul ${filleul.palier}`,
+            })
+            await stripe.subscriptions.update(parrain.stripe_subscription_id, {
+              discounts: [{ coupon: coupon.id }],
+            })
+          } catch (err) {
+            console.error('Coupon parrain:', err.message)
+            // On marque quand même pour éviter les doubles tentatives
+          }
+        }
+
+        // Marque le parrainage parrain comme traité
+        await supabaseAdmin
+          .from('commerces')
+          .update({ parrainage_parrain_recompense: true })
+          .eq('id', filleul.id)
+        break
+      }
+
       /* ── Échec de paiement ── */
       case 'invoice.payment_failed': {
         const invoice = event.data.object

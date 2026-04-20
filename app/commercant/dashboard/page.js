@@ -11,7 +11,14 @@ import ShareButton from '@/app/components/ShareButton'
 import AuthButton from '@/app/components/AuthButton'
 import DeleteCommerceButton from '@/app/commercant/[id]/DeleteCommerceButton'
 import { getFullOffreTitle } from '@/lib/offreTitle'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import dynamic from 'next/dynamic'
+const BarChart         = dynamic(() => import('recharts').then(m => m.BarChart),         { ssr: false })
+const Bar              = dynamic(() => import('recharts').then(m => m.Bar),              { ssr: false })
+const XAxis            = dynamic(() => import('recharts').then(m => m.XAxis),            { ssr: false })
+const YAxis            = dynamic(() => import('recharts').then(m => m.YAxis),            { ssr: false })
+const Tooltip          = dynamic(() => import('recharts').then(m => m.Tooltip),          { ssr: false })
+const ResponsiveContainer = dynamic(() => import('recharts').then(m => m.ResponsiveContainer), { ssr: false })
+const Cell             = dynamic(() => import('recharts').then(m => m.Cell),             { ssr: false })
 
 export default function DashboardPage() {
   const { user, loading, supabase } = useAuth()
@@ -832,9 +839,10 @@ function StatsSection({ commerce, supabase }) {
 
 const PARRAIN_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 
-function genCode8() {
-  let c = ''
-  for (let i = 0; i < 8; i++) c += PARRAIN_CHARS[Math.floor(Math.random() * PARRAIN_CHARS.length)]
+// Format BMxxxxxx : préfixe BM + 6 caractères sans ambiguïté
+function genCodeBM() {
+  let c = 'BM'
+  for (let i = 0; i < 6; i++) c += PARRAIN_CHARS[Math.floor(Math.random() * PARRAIN_CHARS.length)]
   return c
 }
 
@@ -846,12 +854,26 @@ function ParrainageSection({ commerce, supabase }) {
   const [limitMsg,   setLimitMsg]   = useState(null)
 
   async function loadCodes() {
-    const { data } = await supabase
+    const { data: rawCodes } = await supabase
       .from('codes_parrainage')
       .select('id, code, created_at, expire_at, statut, utilise_par')
       .eq('commerce_id', commerce.id)
       .order('created_at', { ascending: false })
-    setCodes(data || [])
+
+    const codes = rawCodes || []
+
+    // Récupère les noms des filleuls pour les codes utilisés
+    const usedIds = codes.filter(c => c.statut === 'utilise' && c.utilise_par).map(c => c.utilise_par)
+    let filleulMap = {}
+    if (usedIds.length > 0) {
+      const { data: filleuls } = await supabase
+        .from('commerces')
+        .select('id, nom')
+        .in('id', usedIds)
+      if (filleuls) filleulMap = Object.fromEntries(filleuls.map(f => [f.id, f.nom]))
+    }
+
+    setCodes(codes.map(c => ({ ...c, filleul_nom: filleulMap[c.utilise_par] || null })))
     setLoaded(true)
   }
 
@@ -877,11 +899,11 @@ function ParrainageSection({ commerce, supabase }) {
       return
     }
 
-    let code = genCode8()
+    let code = genCodeBM()
     for (let i = 0; i < 5; i++) {
       const { data: ex } = await supabase.from('codes_parrainage').select('id').eq('code', code).maybeSingle()
       if (!ex) break
-      code = genCode8()
+      code = genCodeBM()
     }
 
     const expireAt = new Date(); expireAt.setMonth(expireAt.getMonth() + 3)
@@ -977,9 +999,9 @@ function ParrainageSection({ commerce, supabase }) {
                   Expire le {new Date(c.expire_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: '2-digit' })}
                 </span>
               </div>
-              <span className="text-xs font-bold shrink-0">
+              <span className="text-xs font-bold shrink-0 text-right">
                 {c.statut === 'actif'   ? '🟢 Actif'
-               : c.statut === 'utilise' ? '🟠 Utilisé'
+               : c.statut === 'utilise' ? `🟠 ${c.filleul_nom ? `Utilisé par ${c.filleul_nom}` : 'Utilisé'}`
                :                         '🔴 Expiré'}
               </span>
             </div>
