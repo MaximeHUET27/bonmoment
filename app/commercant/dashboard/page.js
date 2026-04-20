@@ -10,6 +10,7 @@ import TirageAuSort from '@/app/commercant/components/TirageAuSort'
 import ShareButton from '@/app/components/ShareButton'
 import AuthButton from '@/app/components/AuthButton'
 import DeleteCommerceButton from '@/app/commercant/[id]/DeleteCommerceButton'
+import DashboardFideliteSection from '@/app/components/fidelite/DashboardFideliteSection'
 import { getFullOffreTitle } from '@/lib/offreTitle'
 import dynamic from 'next/dynamic'
 const BarChart         = dynamic(() => import('recharts').then(m => m.BarChart),         { ssr: false })
@@ -323,7 +324,12 @@ export default function DashboardPage() {
           <ParrainageSection commerce={commerce} supabase={supabase} />
         )}
 
-        {/* 7. QR CODE ─────────────────────────────────────────────────────── */}
+        {/* 7. FIDÉLITÉ ────────────────────────────────────────────────────── */}
+        {commerce && (
+          <DashboardFideliteSection commerceId={commerce.id} commerce={commerce} />
+        )}
+
+        {/* 8. QR CODE ─────────────────────────────────────────────────────── */}
         {commerce && (
           <QRVitrine commerce={commerce} />
         )}
