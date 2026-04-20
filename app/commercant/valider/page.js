@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import dynamic from 'next/dynamic'
 import { useAuth } from '@/app/context/AuthContext'
+import WrapperValidationAvecFidelite from '@/app/components/fidelite/WrapperValidationAvecFidelite'
 
 /* ── QR scanner (browser-only) ───────────────────────────────────────────── */
 const QrScanner = dynamic(() => import('./QrScanner'), {
@@ -187,95 +188,119 @@ export default function ValiderPage() {
       </header>
 
       <div className="flex-1 w-full max-w-lg mx-auto px-4 py-5 flex flex-col gap-5">
-
-        {/* ── Onglets ─────────────────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl p-1.5 flex gap-1 shadow-sm">
-          <button
-            onClick={() => setMode('scanner')}
-            className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all min-h-[44px] ${
-              mode === 'scanner'
-                ? 'bg-[#FF6B00] text-white shadow-md shadow-orange-200'
-                : 'text-[#3D3D3D]/60 hover:text-[#FF6B00]'
-            }`}
-          >
-            📸 Scanner QR
-          </button>
-          <button
-            onClick={switchToManual}
-            className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all min-h-[44px] ${
-              mode === 'manual'
-                ? 'bg-[#FF6B00] text-white shadow-md shadow-orange-200'
-                : 'text-[#3D3D3D]/60 hover:text-[#FF6B00]'
-            }`}
-          >
-            🔢 Code manuel
-          </button>
-        </div>
-
-        {/* ── Onglet Scanner ──────────────────────────────────────────────── */}
-        {mode === 'scanner' && (
-          <div className="flex flex-col gap-4">
-            <p className="text-center text-sm font-semibold text-[#3D3D3D]">
-              Scanne le QR code du client
-            </p>
-
-            {verifying ? (
-              <div className="flex flex-col items-center justify-center h-[300px] bg-black rounded-2xl gap-4">
-                <span className="w-10 h-10 border-[3px] border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
-                <p className="text-white font-semibold text-sm">Vérification…</p>
-              </div>
-            ) : (
-              <QrScanner
-                key={scannerKey}
-                onDetect={handleQrDetected}
-                active={mode === 'scanner' && !result && !verifying}
-              />
-            )}
-
-          </div>
-        )}
-
-        {/* ── Onglet Code manuel ──────────────────────────────────────────── */}
-        {mode === 'manual' && (
-          <div className="flex flex-col gap-6">
-            <p className="text-center text-sm font-semibold text-[#3D3D3D]">
-              Entre le code à 6 chiffres du client
-            </p>
-
-            {/* Champs 6 chiffres */}
-            <div className="flex gap-2 justify-center">
-              {digits.map((d, i) => (
-                <input
-                  key={i}
-                  ref={el => { inputRefs.current[i] = el }}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={d}
-                  onChange={e => handleDigitChange(i, e.target.value)}
-                  onKeyDown={e => handleDigitKeyDown(i, e)}
-                  onFocus={e => e.target.select()}
-                  disabled={verifying}
-                  className={`w-12 h-14 text-center text-[32px] font-bold border-2 rounded-2xl transition-colors outline-none select-all
-                    ${d ? 'border-[#FF6B00] bg-[#FFF0E0]' : 'border-[#E0E0E0] bg-white'}
-                    focus:border-[#FF6B00]
-                    disabled:opacity-50 disabled:cursor-not-allowed`}
-                  style={{ fontFamily: 'Courier New, monospace' }}
-                />
-              ))}
-            </div>
-
-            {verifying && (
-              <div className="flex flex-col items-center gap-2">
-                <span className="w-6 h-6 border-[3px] border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
-                <p className="text-sm text-[#3D3D3D]/60 font-semibold">Vérification…</p>
-              </div>
-            )}
-          </div>
-        )}
-
+        <WrapperValidationAvecFidelite
+          ComposantOriginal={PanneauQRCode}
+          mode={mode}
+          digits={digits}
+          verifying={verifying}
+          scannerKey={scannerKey}
+          result={result}
+          onModeChange={setMode}
+          onDigitChange={handleDigitChange}
+          onDigitKeyDown={handleDigitKeyDown}
+          onQrDetected={handleQrDetected}
+          inputRefs={inputRefs}
+          switchToManual={switchToManual}
+        />
       </div>
     </main>
+  )
+}
+
+/* ── Panneau QR + Code manuel (extrait pour WrapperValidationAvecFidelite) ──── */
+
+function PanneauQRCode({
+  mode, digits, verifying, scannerKey, result,
+  onModeChange, onDigitChange, onDigitKeyDown, onQrDetected,
+  inputRefs, switchToManual,
+}) {
+  return (
+    <>
+      {/* ── Onglets ─────────────────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl p-1.5 flex gap-1 shadow-sm">
+        <button
+          onClick={() => onModeChange('scanner')}
+          className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all min-h-[44px] ${
+            mode === 'scanner'
+              ? 'bg-[#FF6B00] text-white shadow-md shadow-orange-200'
+              : 'text-[#3D3D3D]/60 hover:text-[#FF6B00]'
+          }`}
+        >
+          📸 Scanner QR
+        </button>
+        <button
+          onClick={switchToManual}
+          className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all min-h-[44px] ${
+            mode === 'manual'
+              ? 'bg-[#FF6B00] text-white shadow-md shadow-orange-200'
+              : 'text-[#3D3D3D]/60 hover:text-[#FF6B00]'
+          }`}
+        >
+          🔢 Code manuel
+        </button>
+      </div>
+
+      {/* ── Onglet Scanner ──────────────────────────────────────────────── */}
+      {mode === 'scanner' && (
+        <div className="flex flex-col gap-4">
+          <p className="text-center text-sm font-semibold text-[#3D3D3D]">
+            Scanne le QR code du client
+          </p>
+
+          {verifying ? (
+            <div className="flex flex-col items-center justify-center h-[300px] bg-black rounded-2xl gap-4">
+              <span className="w-10 h-10 border-[3px] border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
+              <p className="text-white font-semibold text-sm">Vérification…</p>
+            </div>
+          ) : (
+            <QrScanner
+              key={scannerKey}
+              onDetect={onQrDetected}
+              active={mode === 'scanner' && !result && !verifying}
+            />
+          )}
+        </div>
+      )}
+
+      {/* ── Onglet Code manuel ──────────────────────────────────────────── */}
+      {mode === 'manual' && (
+        <div className="flex flex-col gap-6">
+          <p className="text-center text-sm font-semibold text-[#3D3D3D]">
+            Entre le code à 6 chiffres du client
+          </p>
+
+          {/* Champs 6 chiffres */}
+          <div className="flex gap-2 justify-center">
+            {digits.map((d, i) => (
+              <input
+                key={i}
+                ref={el => { inputRefs.current[i] = el }}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={d}
+                onChange={e => onDigitChange(i, e.target.value)}
+                onKeyDown={e => onDigitKeyDown(i, e)}
+                onFocus={e => e.target.select()}
+                disabled={verifying}
+                className={`w-12 h-14 text-center text-[32px] font-bold border-2 rounded-2xl transition-colors outline-none select-all
+                  ${d ? 'border-[#FF6B00] bg-[#FFF0E0]' : 'border-[#E0E0E0] bg-white'}
+                  focus:border-[#FF6B00]
+                  disabled:opacity-50 disabled:cursor-not-allowed`}
+                style={{ fontFamily: 'Courier New, monospace' }}
+              />
+            ))}
+          </div>
+
+          {verifying && (
+            <div className="flex flex-col items-center gap-2">
+              <span className="w-6 h-6 border-[3px] border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm text-[#3D3D3D]/60 font-semibold">Vérification…</p>
+            </div>
+          )}
+        </div>
+      )}
+    </>
   )
 }
 
