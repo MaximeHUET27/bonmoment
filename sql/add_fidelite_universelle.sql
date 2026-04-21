@@ -301,10 +301,10 @@ BEGIN
   END IF;
 
   -- Garde-fou 3 : programme actif
-  SELECT seuil_passages, description_recompense, actif
+  SELECT pf.seuil_passages, pf.description_recompense, pf.actif
     INTO v_seuil, v_description, v_programme_actif
-    FROM programmes_fidelite
-   WHERE commerce_id = p_commerce_id;
+    FROM programmes_fidelite pf
+   WHERE pf.commerce_id = p_commerce_id;
 
   IF NOT FOUND OR v_programme_actif = FALSE THEN
     RETURN QUERY SELECT FALSE, 'Programme fidélité non configuré ou inactif'::TEXT,
@@ -451,9 +451,9 @@ BEGIN
 
   -- ── Mode consultation : lecture pure, aucune écriture ────────────────────
   IF p_mode_consultation THEN
-    SELECT nb_passages_total, nb_passages_depuis_derniere_recompense, recompense_en_attente
+    SELECT cf.nb_passages_total, cf.nb_passages_depuis_derniere_recompense, cf.recompense_en_attente
       INTO v_nb_passages, v_nb_depuis_recompense, v_recompense_en_attente
-      FROM cartes_fidelite WHERE id = v_carte_id;
+      FROM cartes_fidelite cf WHERE cf.id = v_carte_id;
 
     RETURN QUERY SELECT TRUE, 'Consultation'::TEXT,
       v_carte_id, v_client_prenom, v_client_type, FALSE, NULL::TEXT,
@@ -524,8 +524,8 @@ BEGIN
     v_recompense_debloquee  := TRUE;
     v_recompense_en_attente := TRUE;
   ELSE
-    SELECT recompense_en_attente INTO v_recompense_en_attente
-      FROM cartes_fidelite WHERE id = v_carte_id;
+    SELECT cf.recompense_en_attente INTO v_recompense_en_attente
+      FROM cartes_fidelite cf WHERE cf.id = v_carte_id;
   END IF;
 
   -- ── Insertion des lignes passages_fidelite (N lignes = N tampons) ─────────
