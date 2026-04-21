@@ -4,14 +4,16 @@ import { useState } from 'react'
 import { useFidelite } from '@/app/hooks/fidelite/useFidelite'
 import JaugeRecompense from './JaugeRecompense'
 
-// Confettis CSS — simple animation sans lib externe
-function Confettis() {
-  const pieces = Array.from({ length: 18 }, (_, i) => ({
+// Confettis CSS — legers=true pour scénarios 1 & 2, false pour scénario 3
+function Confettis({ legers = false }) {
+  const count = legers ? 10 : 18
+  const duree = legers ? '0.9s' : '1.4s'
+  const pieces = Array.from({ length: count }, (_, i) => ({
     id: i,
     color: ['#FF6B00', '#FFD700', '#FF4FD8', '#4FD8FF', '#7CFF4F'][i % 5],
-    left:  `${5 + i * 5}%`,
-    delay: `${(i * 0.12).toFixed(2)}s`,
-    size:  8 + (i % 3) * 4,
+    left:  `${5 + i * (legers ? 9 : 5)}%`,
+    delay: `${(i * 0.10).toFixed(2)}s`,
+    size:  legers ? 6 + (i % 3) * 3 : 8 + (i % 3) * 4,
   }))
 
   return (
@@ -34,7 +36,7 @@ function Confettis() {
               height:          p.size,
               borderRadius:    p.id % 2 === 0 ? '50%' : '2px',
               backgroundColor: p.color,
-              animation:       `confetti-fall 1.4s ease-in ${p.delay} forwards`,
+              animation:       `confetti-fall ${duree} ease-in ${p.delay} forwards`,
             }}
           />
         ))}
@@ -43,7 +45,7 @@ function Confettis() {
   )
 }
 
-export default function EcranResultatValidation({ resultat, onClose, onConfirmerRecompense, onAnnuler }) {
+export default function EcranResultatValidation({ resultat, nbTampons = 1, onClose, onConfirmerRecompense, onAnnuler }) {
   const { annulerPassage, confirmerRecompenseRemise } = useFidelite()
   const [busy, setBusy] = useState(false)
 
@@ -126,18 +128,15 @@ export default function EcranResultatValidation({ resultat, onClose, onConfirmer
 
   // ── Scénario 2 : bon validé (+ tampon) ───────────────────────────────────
   // ── Scénario 1 : tampon simple ────────────────────────────────────────────
-  const nbTamponsAjoutes = resultat?.nb_passages_depuis_recompense !== undefined
-    ? resultat.nb_passages_depuis_recompense - (resultat.nb_passages_depuis_recompense - (resultat.passage_id ? 1 : 1))
-    : 1
-
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60">
       <div className="relative w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden">
+        <Confettis legers />
         <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-4 sm:hidden" />
-        <div className="px-6 pt-4 pb-8 flex flex-col gap-4">
+        <div className="relative px-6 pt-4 pb-8 flex flex-col gap-4">
           {/* En-tête */}
           <div className="text-center">
-            <p className="text-4xl font-black text-orange-500">⭐ TAMPON +1</p>
+            <p className="text-4xl font-black text-orange-500">⭐ TAMPON +{nbTampons}</p>
             {prenom && (
               <p className="text-lg font-bold text-gray-700 mt-1">{prenom}</p>
             )}

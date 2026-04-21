@@ -8,7 +8,10 @@ export default function JaugeRecompense({ nbPassages, seuil, description, animat
   const [width, setWidth] = useState(animated ? 0 : cible)
 
   useEffect(() => {
-    if (!animated) return
+    if (!animated) {
+      setWidth(cible)
+      return
+    }
     const t = setTimeout(() => setWidth(cible), 50)
     return () => clearTimeout(t)
   }, [animated, cible])

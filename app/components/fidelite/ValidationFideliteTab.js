@@ -24,8 +24,9 @@ export default function ValidationFideliteTab({
   const [consentement, setConsentement] = useState(false)
   const [erreurSaisie, setErreurSaisie] = useState(null)
   const [loading, setLoading]           = useState(false)
-  const [consultResult, setConsultResult] = useState(null)
-  const [resultat, setResultat]           = useState(null)
+  const [consultResult, setConsultResult]           = useState(null)
+  const [resultat, setResultat]                     = useState(null)
+  const [nbTamponsConfirmes, setNbTamponsConfirmes] = useState(1)
 
   const telNorm = normaliserTelephone(telephone)
 
@@ -90,6 +91,7 @@ export default function ValidationFideliteTab({
       modeConsultation: false,
       nbTampons,
     })
+    setNbTamponsConfirmes(nbTampons)
     setResultat(res)
     setEtape('resultat')
     onSuccess?.(res)
@@ -190,6 +192,7 @@ export default function ValidationFideliteTab({
     return (
       <EcranResultatValidation
         resultat={resultat}
+        nbTampons={nbTamponsConfirmes}
         onClose={reset}
         onConfirmerRecompense={() => {}}
         onAnnuler={reset}
