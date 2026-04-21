@@ -6,11 +6,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import dynamic from 'next/dynamic'
 import { useAuth } from '@/app/context/AuthContext'
-import { useFidelite } from '@/app/hooks/fidelite/useFidelite'
 import WrapperValidationAvecFidelite from '@/app/components/fidelite/WrapperValidationAvecFidelite'
 import ValidationFideliteTab from '@/app/components/fidelite/ValidationFideliteTab'
-import ConfirmationTamponModal from '@/app/components/fidelite/ConfirmationTamponModal'
-import EcranResultatValidation from '@/app/components/fidelite/EcranResultatValidation'
+import EcranProposerFidelite from '@/app/components/fidelite/EcranProposerFidelite'
 
 /* ── QR scanner (browser-only) ───────────────────────────────────────────── */
 const QrScanner = dynamic(() => import('./QrScanner'), {
@@ -56,12 +54,13 @@ export default function ValiderPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
 
-  const [mode,         setMode]         = useState('scanner') // 'scanner' | 'manual'
-  const [verifying,    setVerifying]    = useState(false)
-  const [result,       setResult]       = useState(null)      // voir structure ci-dessous
-  const [digits,       setDigits]       = useState(['','','','','',''])
-  const [scannerKey,   setScannerKey]   = useState(0)         // force re-mount du scanner
-  const [fideliteData, setFideliteData] = useState(null)
+  const [mode,           setMode]           = useState('scanner') // 'scanner' | 'manual'
+  const [verifying,      setVerifying]      = useState(false)
+  const [result,         setResult]         = useState(null)
+  const [digits,         setDigits]         = useState(['','','','','',''])
+  const [scannerKey,     setScannerKey]     = useState(0)
+  const [fideliteData,   setFideliteData]   = useState(null)
+  const [ecranFidelite,  setEcranFidelite]  = useState(null)  // client data après bon validé
 
   const inputRefs = useRef([])
 
@@ -146,9 +145,21 @@ export default function ValiderPage() {
   /* ── Reset pour client suivant ──────────────────────────────────────────── */
   function reset() {
     setResult(null)
+    setEcranFidelite(null)
     setDigits(['','','','','',''])
     setScannerKey(k => k + 1)
     setMode('scanner')
+  }
+
+  /* ── Transition ResultScreen → EcranProposerFidelite (Pro uniquement) ─── */
+  function handleResultBack() {
+    const clientData = result?.data?.client
+    if (fideliteData?.fideliteActive && result?.type === 'success' && clientData) {
+      setEcranFidelite(clientData)
+      setResult(null)
+    } else {
+      reset()
+    }
   }
 
   /* ── Switch de mode ─────────────────────────────────────────────────────── */
@@ -167,9 +178,21 @@ export default function ValiderPage() {
   }
   if (!user) return null
 
-  /* ── Écran de résultat plein écran ─────────────────────────────────────── */
+  /* ── Écran fidélité persistant (après auto-close du ResultScreen) ──────── */
+  if (ecranFidelite) {
+    return (
+      <EcranProposerFidelite
+        commerceId={fideliteData.commerceId}
+        client={ecranFidelite}
+        programme={fideliteData.programme}
+        onClose={reset}
+      />
+    )
+  }
+
+  /* ── Écran de résultat plein écran (auto-close 3s) ─────────────────────── */
   if (result) {
-    return <ResultScreen result={result} onBack={reset} fideliteData={fideliteData} />
+    return <ResultScreen result={result} onBack={handleResultBack} />
   }
 
   return (
@@ -325,15 +348,10 @@ function PanneauQRCode({
 
 /* ── Écran de résultat plein écran ─────────────────────────────────────────── */
 
-function ResultScreen({ result, onBack, fideliteData }) {
-  const { enregistrerPassage } = useFidelite()
+function ResultScreen({ result, onBack }) {
   const timerRef = useRef(null)
 
-  const [etapeTampon,        setEtapeTampon]        = useState(null)  // null | 'confirmation' | 'validation_tab' | 'resultat'
-  const [resultatTampon,     setResultatTampon]     = useState(null)
-  const [nbTamponsConfirmes, setNbTamponsConfirmes] = useState(1)
-
-  /* Auto-retour après 3s pour succès et not_yet (annulé si flow tampon démarre) */
+  /* Auto-retour après 3s pour succès et not_yet */
   useEffect(() => {
     if (result.type === 'success' || result.type === 'not_yet') {
       timerRef.current = setTimeout(onBack, 3000)
@@ -341,37 +359,16 @@ function ResultScreen({ result, onBack, fideliteData }) {
     return () => clearTimeout(timerRef.current)
   }, [result.type, onBack])
 
-  function handleOpenTampon() {
-    clearTimeout(timerRef.current)
-    const tel = result.data?.client?.telephone ?? null
-    setEtapeTampon(tel ? 'confirmation' : 'validation_tab')
-  }
-
-  async function handleConfirmTampon({ commerceId, mode, identifierValue, prenomOptionnel, nbTampons }) {
-    const res = await enregistrerPassage({
-      commerceId,
-      mode,
-      identifierValue,
-      prenomOptionnel: prenomOptionnel || undefined,
-      modeConsultation: false,
-      nbTampons,
-    })
-    setNbTamponsConfirmes(nbTampons)
-    setResultatTampon(res)
-    setEtapeTampon('resultat')
-  }
-
   const config = {
-    success:       { bg: '#22C55E', icon: '✓',  title: 'Bon validé !',                           iconAnim: 'popIn' },
-    already_used:  { bg: '#FF6B00', icon: '⚠',  title: 'Ce bon a déjà été utilisé',              iconAnim: 'shake' },
-    invalid:       { bg: '#EF4444', icon: '✕',  title: 'Code invalide',                           iconAnim: 'popIn' },
-    wrong_commerce:{ bg: '#EF4444', icon: '✕',  title: 'Ce bon appartient à un autre commerce',  iconAnim: 'popIn' },
-    expired:       { bg: '#6B7280', icon: '⌛', title: result.msg ?? 'Ce bon est périmé',         iconAnim: 'popIn' },
-    not_yet:       { bg: '#FF6B00', icon: '📅', title: 'Ce bon n\'est pas encore valable',        iconAnim: 'popIn' },
+    success:       { bg: '#22C55E', icon: '✓',  title: 'Bon validé !',                          iconAnim: 'popIn' },
+    already_used:  { bg: '#FF6B00', icon: '⚠',  title: 'Ce bon a déjà été utilisé',             iconAnim: 'shake' },
+    invalid:       { bg: '#EF4444', icon: '✕',  title: 'Code invalide',                          iconAnim: 'popIn' },
+    wrong_commerce:{ bg: '#EF4444', icon: '✕',  title: 'Ce bon appartient à un autre commerce', iconAnim: 'popIn' },
+    expired:       { bg: '#6B7280', icon: '⌛', title: result.msg ?? 'Ce bon est périmé',        iconAnim: 'popIn' },
+    not_yet:       { bg: '#FF6B00', icon: '📅', title: "Ce bon n'est pas encore valable",        iconAnim: 'popIn' },
   }[result.type] ?? { bg: '#EF4444', icon: '✕', title: 'Erreur', iconAnim: 'popIn' }
 
   return (
-    <>
     <div
       className="fixed inset-0 z-50 flex flex-col items-center justify-center px-8 gap-6"
       style={{ backgroundColor: config.bg }}
@@ -389,7 +386,7 @@ function ResultScreen({ result, onBack, fideliteData }) {
           60%     { transform: translateX(-10px); }
           80%     { transform: translateX(10px); }
         }
-        .anim-pop  { animation: popIn 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .anim-pop   { animation: popIn 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         .anim-shake { animation: shake 0.5s ease-in-out forwards; }
       `}</style>
 
@@ -424,16 +421,6 @@ function ResultScreen({ result, onBack, fideliteData }) {
         </div>
       )}
 
-      {/* ── Bouton ajout tampon fidélité (Pro uniquement, après bon validé) ── */}
-      {result.type === 'success' && fideliteData?.fideliteActive && etapeTampon === null && (
-        <button
-          onClick={handleOpenTampon}
-          className="bg-white/25 hover:bg-white/35 text-white font-bold text-base px-6 py-3 rounded-2xl transition-colors min-h-[52px]"
-        >
-          {result.data?.client?.telephone ? '🎯 Ajouter un tampon fidélité' : '🎯 Proposer la carte fidélité'}
-        </button>
-      )}
-
       {result.type === 'already_used' && result.utilise_at && (
         <p className="text-white/90 text-base font-semibold text-center">
           Validé le {formatDateTime(result.utilise_at)}
@@ -465,54 +452,6 @@ function ResultScreen({ result, onBack, fideliteData }) {
         {result.type === 'success' ? '← Client suivant' : '← Réessayer'}
       </button>
     </div>
-
-    {/* ── Overlay : ConfirmationTamponModal (cas A — client avec téléphone) ── */}
-    {etapeTampon === 'confirmation' && (
-      <ConfirmationTamponModal
-        commerceId={fideliteData.commerceId}
-        mode="telephone"
-        identifierValue={result.data.client.telephone}
-        prenomOptionnel={result.data.client.prenom ?? null}
-        seuilFallback={fideliteData.programme?.seuil_passages ?? 10}
-        descriptionFallback={fideliteData.programme?.description_recompense ?? 'Récompense'}
-        regleTampons={fideliteData.programme?.regle_tampons ?? null}
-        onConfirm={handleConfirmTampon}
-        onCancel={() => setEtapeTampon(null)}
-      />
-    )}
-
-    {/* ── Overlay : ValidationFideliteTab (cas B — client sans téléphone) ── */}
-    {etapeTampon === 'validation_tab' && (
-      <div className="fixed inset-0 z-[60] bg-white flex flex-col">
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-          <button
-            onClick={() => setEtapeTampon(null)}
-            className="text-gray-500 font-semibold text-sm min-h-[44px] flex items-center"
-          >
-            ← Retour
-          </button>
-          <p className="text-sm font-bold text-gray-900">🎯 Proposer la carte fidélité</p>
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          <ValidationFideliteTab
-            commerceId={fideliteData.commerceId}
-            programme={fideliteData.programme}
-          />
-        </div>
-      </div>
-    )}
-
-    {/* ── Overlay : EcranResultatValidation (après confirmation cas A) ── */}
-    {etapeTampon === 'resultat' && (
-      <EcranResultatValidation
-        resultat={resultatTampon}
-        nbTampons={nbTamponsConfirmes}
-        onClose={onBack}
-        onConfirmerRecompense={() => {}}
-        onAnnuler={onBack}
-      />
-    )}
-    </>
   )
 }
 
