@@ -48,7 +48,7 @@ CREATE POLICY "users_light_no_direct_access"
 CREATE TABLE IF NOT EXISTS programmes_fidelite (
   commerce_id            UUID PRIMARY KEY REFERENCES commerces(id) ON DELETE CASCADE,
   seuil_passages         INTEGER NOT NULL DEFAULT 10
-                           CHECK (seuil_passages BETWEEN 3 AND 50),
+                           CHECK (seuil_passages BETWEEN 1 AND 1000),
   description_recompense TEXT NOT NULL DEFAULT 'Récompense à définir',
   regle_tampons          TEXT NULL, -- ex: "1 tampon par tranche de 50€" — purement informatif
   actif                  BOOLEAN NOT NULL DEFAULT FALSE,
@@ -952,8 +952,8 @@ BEGIN
     RETURN QUERY SELECT FALSE, 'Non autorisé'::TEXT, 0; RETURN;
   END IF;
 
-  IF p_seuil_passages < 3 OR p_seuil_passages > 50 THEN
-    RETURN QUERY SELECT FALSE, 'Seuil invalide — entre 3 et 50 passages requis'::TEXT, 0; RETURN;
+  IF p_seuil_passages < 1 OR p_seuil_passages > 1000 THEN
+    RETURN QUERY SELECT FALSE, 'Seuil invalide — entre 1 et 1000 passages requis'::TEXT, 0; RETURN;
   END IF;
 
   SELECT seuil_passages INTO v_ancien_seuil

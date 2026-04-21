@@ -57,7 +57,7 @@ export default function ConfigProgramme({ commerceId, onSaved }) {
     regleTampons          !== sauvegarde.regleTampons
   )
 
-  const formValide = !actif || (descriptionRecompense.trim().length > 0 && seuilPassages >= 2 && seuilPassages <= 50)
+  const formValide = !actif || (descriptionRecompense.trim().length > 0 && seuilPassages >= 1 && seuilPassages <= 1000)
 
   // Détecte si l'utilisateur baisse le seuil par rapport à la valeur sauvegardée
   const baisseSeuil = sauvegarde !== null
@@ -145,13 +145,13 @@ export default function ConfigProgramme({ commerceId, onSaved }) {
               <div className="flex items-center gap-3">
                 <input
                   type="number"
-                  min={2}
-                  max={50}
+                  min={1}
+                  max={1000}
                   value={seuilPassages}
-                  onChange={e => setSeuilPassages(Math.min(50, Math.max(2, parseInt(e.target.value) || 2)))}
+                  onChange={e => setSeuilPassages(Math.min(1000, Math.max(1, parseInt(e.target.value) || 1)))}
                   className="w-24 text-center text-xl font-black border-2 border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-orange-400"
                 />
-                <span className="text-sm text-gray-500">passages (entre 2 et 50)</span>
+                <span className="text-sm text-gray-500">passages (entre 1 et 1000)</span>
               </div>
               {baisseSeuil && (
                 <p className="text-xs text-orange-600 font-medium mt-0.5">
