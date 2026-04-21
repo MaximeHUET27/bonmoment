@@ -1,56 +1,16 @@
 'use client'
 
 import { useState } from 'react'
+import { triggerConfetti, triggerConfettiLegers } from '@/lib/confetti'
 import { useFidelite } from '@/app/hooks/fidelite/useFidelite'
 import JaugeRecompense from './JaugeRecompense'
 import ToastFidelite from './ToastFidelite'
 
-// Confettis uniquement au clic — jamais au montage
-function Confettis({ legers = false }) {
-  const count = legers ? 10 : 18
-  const duree = legers ? '0.9s' : '1.4s'
-  const pieces = Array.from({ length: count }, (_, i) => ({
-    id:    i,
-    color: ['#FF6B00', '#FFD700', '#FF4FD8', '#4FD8FF', '#7CFF4F'][i % 5],
-    left:  `${5 + i * (legers ? 9 : 5)}%`,
-    delay: `${(i * 0.10).toFixed(2)}s`,
-    size:  legers ? 6 + (i % 3) * 3 : 8 + (i % 3) * 4,
-  }))
-  return (
-    <>
-      <style>{`
-        @keyframes confetti-fall {
-          0%   { transform: translateY(-40px) rotate(0deg);   opacity: 1; }
-          100% { transform: translateY(240px)  rotate(720deg); opacity: 0; }
-        }
-      `}</style>
-      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        {pieces.map(p => (
-          <div
-            key={p.id}
-            style={{
-              position:        'absolute',
-              left:            p.left,
-              top:             0,
-              width:           p.size,
-              height:          p.size,
-              borderRadius:    p.id % 2 === 0 ? '50%' : '2px',
-              backgroundColor: p.color,
-              animation:       `confetti-fall ${duree} ease-in ${p.delay} forwards`,
-            }}
-          />
-        ))}
-      </div>
-    </>
-  )
-}
-
 export default function EcranResultatValidation({ resultat, nbTampons = 1, onClose, onConfirmerRecompense, onAnnuler }) {
   const { annulerPassage, confirmerRecompenseRemise } = useFidelite()
 
-  const [busy,            setBusy]            = useState(false)
-  const [activeConfettis, setActiveConfettis] = useState(null)   // null | 'legers' | 'intenses'
-  const [toast,           setToast]           = useState(null)   // { type, message } | null
+  const [busy,  setBusy]  = useState(false)
+  const [toast, setToast] = useState(null)   // { type, message } | null
 
   const nbPassages  = resultat?.nb_passages_depuis_recompense ?? 0
   const seuil       = resultat?.seuil_passages ?? 10
@@ -63,7 +23,7 @@ export default function EcranResultatValidation({ resultat, nbTampons = 1, onClo
   async function handleConfirmer() {
     if (busy) return
     setBusy(true)
-    setActiveConfettis('legers')
+    triggerConfettiLegers()
     setToast({ type: 'success', message: '✅ Tampon enregistré' })
     await new Promise(r => setTimeout(r, 1500))
     onClose()
@@ -75,7 +35,7 @@ export default function EcranResultatValidation({ resultat, nbTampons = 1, onClo
     setBusy(true)
     try {
       if (resultat?.carte_id) await confirmerRecompenseRemise(resultat.carte_id)
-      setActiveConfettis('intenses')
+      triggerConfetti()
       setToast({ type: 'success', message: `🎉 Récompense remise${prenom ? ` à ${prenom}` : ''} !` })
       onConfirmerRecompense?.()
       await new Promise(r => setTimeout(r, 1500))
@@ -115,7 +75,6 @@ export default function EcranResultatValidation({ resultat, nbTampons = 1, onClo
     return (
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60">
         <div className="relative w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden">
-          {activeConfettis === 'intenses' && <Confettis />}
           <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-4 sm:hidden" />
           <div className="relative px-6 pt-4 pb-8 flex flex-col gap-4 items-center text-center">
             <p className="text-6xl mt-2">🎉</p>
@@ -129,7 +88,7 @@ export default function EcranResultatValidation({ resultat, nbTampons = 1, onClo
                 disabled={busy}
                 className="w-full py-4 rounded-2xl bg-orange-500 text-white font-bold text-base disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {busy && activeConfettis === null
+                {busy
                   ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   : '✓ Récompense remise'}
               </button>
@@ -159,7 +118,6 @@ export default function EcranResultatValidation({ resultat, nbTampons = 1, onClo
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60">
       <div className="relative w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden">
-        {activeConfettis === 'legers' && <Confettis legers />}
         <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-4 sm:hidden" />
         <div className="relative px-6 pt-4 pb-8 flex flex-col gap-4">
           <div className="text-center">
