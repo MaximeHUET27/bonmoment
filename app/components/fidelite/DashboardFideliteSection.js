@@ -43,10 +43,8 @@ function SectionInterne({ commerceId }) {
   }
 
   return (
-    <section className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <h2 className="text-lg font-black text-gray-900">🎯 Ma carte fidélité</h2>
-      </div>
+    <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
+      <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">🎯 Ma carte fidélité</h2>
 
       <div className="flex border-b border-gray-200">
         {ONGLETS.map(o => (
@@ -105,7 +103,7 @@ function SectionInterne({ commerceId }) {
           onSuccess={handleSuccesAjustement}
         />
       )}
-    </section>
+    </div>
   )
 }
 
