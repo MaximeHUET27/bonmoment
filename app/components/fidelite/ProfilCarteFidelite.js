@@ -156,8 +156,7 @@ function ProfilFideliteInterne({ userId }) {
           <p className="text-sm text-red-500 py-4">{erreur}</p>
         ) : cartes.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-6 leading-relaxed">
-            Tu n&apos;as pas encore de carte fidélité.{' '}
-            Scanne un QR code chez un commerçant BONMOMENT Pro !
+            Commence à utiliser ta carte chez un commerçant BONMOMENT et tu verras ta progression ici !
           </p>
         ) : (
           <div className="flex flex-col gap-2">
