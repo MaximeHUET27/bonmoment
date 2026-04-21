@@ -7,6 +7,7 @@ import Image from 'next/image'
 import dynamic from 'next/dynamic'
 import { useAuth } from '@/app/context/AuthContext'
 import WrapperValidationAvecFidelite from '@/app/components/fidelite/WrapperValidationAvecFidelite'
+import ValidationFideliteTab from '@/app/components/fidelite/ValidationFideliteTab'
 
 /* ── QR scanner (browser-only) ───────────────────────────────────────────── */
 const QrScanner = dynamic(() => import('./QrScanner'), {
@@ -213,31 +214,39 @@ function PanneauQRCode({
   mode, digits, verifying, scannerKey, result,
   onModeChange, onDigitChange, onDigitKeyDown, onQrDetected,
   inputRefs, switchToManual,
+  fideliteActive = false, commerceId, programme,
 }) {
+  const btnClass = (actif) =>
+    `flex-1 py-2.5 rounded-xl font-bold transition-all min-h-[44px] ${fideliteActive ? 'text-xs' : 'text-sm'} ${
+      actif
+        ? 'bg-[#FF6B00] text-white shadow-md shadow-orange-200'
+        : 'text-[#3D3D3D]/60 hover:text-[#FF6B00]'
+    }`
+
   return (
     <>
-      {/* ── Onglets ─────────────────────────────────────────────────────── */}
+      {/* ── Barre de modes ──────────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl p-1.5 flex gap-1 shadow-sm">
         <button
           onClick={() => onModeChange('scanner')}
-          className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all min-h-[44px] ${
-            mode === 'scanner'
-              ? 'bg-[#FF6B00] text-white shadow-md shadow-orange-200'
-              : 'text-[#3D3D3D]/60 hover:text-[#FF6B00]'
-          }`}
+          className={btnClass(mode === 'scanner')}
         >
           📸 Scanner QR
         </button>
         <button
           onClick={switchToManual}
-          className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all min-h-[44px] ${
-            mode === 'manual'
-              ? 'bg-[#FF6B00] text-white shadow-md shadow-orange-200'
-              : 'text-[#3D3D3D]/60 hover:text-[#FF6B00]'
-          }`}
+          className={btnClass(mode === 'manual')}
         >
           🔢 Code manuel
         </button>
+        {fideliteActive && (
+          <button
+            onClick={() => onModeChange('telephone')}
+            className={btnClass(mode === 'telephone')}
+          >
+            📱 Téléphone
+          </button>
+        )}
       </div>
 
       {/* ── Onglet Scanner ──────────────────────────────────────────────── */}
@@ -299,6 +308,11 @@ function PanneauQRCode({
             </div>
           )}
         </div>
+      )}
+
+      {/* ── Onglet Téléphone (fidélité) ──────────────────────────────────── */}
+      {mode === 'telephone' && fideliteActive && (
+        <ValidationFideliteTab commerceId={commerceId} programme={programme} />
       )}
     </>
   )
