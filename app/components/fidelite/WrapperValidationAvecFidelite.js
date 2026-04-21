@@ -8,15 +8,15 @@ import { useFidelite } from '@/app/hooks/fidelite/useFidelite'
 
 const supabase = createClient()
 
-export default function WrapperValidationAvecFidelite({ ComposantOriginal, ...props }) {
+export default function WrapperValidationAvecFidelite({ ComposantOriginal, onFideliteReady, ...props }) {
   if (!FIDELITE_ENABLED) {
     return <ComposantOriginal {...props} fideliteActive={false} />
   }
 
-  return <WrapperInterne ComposantOriginal={ComposantOriginal} {...props} />
+  return <WrapperInterne ComposantOriginal={ComposantOriginal} onFideliteReady={onFideliteReady} {...props} />
 }
 
-function WrapperInterne({ ComposantOriginal, ...props }) {
+function WrapperInterne({ ComposantOriginal, onFideliteReady, ...props }) {
   const { user } = useAuth()
   const { getProgramme } = useFidelite()
 
@@ -40,16 +40,22 @@ function WrapperInterne({ ComposantOriginal, ...props }) {
       if (cancelled) return
       setCommerce(com ?? null)
 
+      let prog = null
       if (com && commercePeutUtiliserFidelite(com)) {
         try {
-          const prog = await getProgramme(com.id)
+          prog = await getProgramme(com.id)
           if (!cancelled) setProgramme(prog ?? null)
         } catch {
           if (!cancelled) setProgramme(null)
+          prog = null
         }
       }
 
-      if (!cancelled) setPret(true)
+      if (!cancelled) {
+        setPret(true)
+        const fa = !!(com && commercePeutUtiliserFidelite(com) && prog?.actif)
+        onFideliteReady?.({ fideliteActive: fa, commerceId: com?.id, programme: prog })
+      }
     }
 
     charger()
