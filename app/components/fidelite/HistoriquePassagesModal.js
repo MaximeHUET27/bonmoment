@@ -6,10 +6,11 @@ import { formatDate } from '@/app/lib/fidelite/helpers'
 import JaugeRecompense from './JaugeRecompense'
 
 const MODE_LABEL = {
-  qr:        '📸 QR code',
-  code_6:    '🔢 Code 6 chiffres',
-  telephone: '📱 Téléphone',
-  manuel:    '✏️ Ajustement manuel',
+  qr:               '📸 QR code',
+  code_6:           '🔢 Code 6 chiffres',
+  telephone:        '📱 Téléphone',
+  manuel:           '✏️ Ajustement manuel',
+  recompense_remise: '🎁 Récompense remise',
 }
 
 // Regroupe les lignes passages par passage_group_id (N tampons = N lignes)
@@ -75,7 +76,7 @@ export default function HistoriquePassagesModal({ carteId, client, onClose }) {
             </div>
           )}
           <p className="text-xs text-gray-400 mt-1">
-            {passages.length} tampon{passages.length > 1 ? 's' : ''} actif{passages.length > 1 ? 's' : ''}
+            {passages.filter(p => p.mode_identification !== 'recompense_remise').length} tampon{passages.filter(p => p.mode_identification !== 'recompense_remise').length > 1 ? 's' : ''} actif{passages.filter(p => p.mode_identification !== 'recompense_remise').length > 1 ? 's' : ''}
           </p>
         </div>
 
@@ -111,9 +112,13 @@ export default function HistoriquePassagesModal({ carteId, client, onClose }) {
                   <p className="text-xs text-gray-500 italic mt-0.5">{g.commentaire}</p>
                 )}
               </div>
-              <span className="text-sm font-black text-orange-500 shrink-0 ml-3">
-                +{g.nbTampons} ⭐
-              </span>
+              {g.mode_identification === 'recompense_remise' ? (
+                <span className="text-sm font-black text-green-600 shrink-0 ml-3">🎁</span>
+              ) : (
+                <span className="text-sm font-black text-orange-500 shrink-0 ml-3">
+                  +{g.nbTampons} ⭐
+                </span>
+              )}
             </div>
           ))}
         </div>

@@ -133,7 +133,7 @@ CREATE TABLE IF NOT EXISTS passages_fidelite (
   carte_fidelite_id   UUID NOT NULL REFERENCES cartes_fidelite(id) ON DELETE CASCADE,
   bon_valide_id       UUID NULL REFERENCES reservations(id) ON DELETE SET NULL,
   mode_identification VARCHAR(20) NOT NULL
-                        CHECK (mode_identification IN ('qr', 'code_6', 'telephone', 'manuel')),
+                        CHECK (mode_identification IN ('qr', 'code_6', 'telephone', 'manuel', 'recompense_remise')),
   -- Toutes les lignes d'un même acte multi-tampons partagent ce group_id
   passage_group_id    UUID NOT NULL DEFAULT uuid_generate_v4(),
   annule              BOOLEAN NOT NULL DEFAULT FALSE,
@@ -727,6 +727,21 @@ BEGIN
    WHERE id = p_carte_id
      AND commerce_id IN (SELECT id FROM commerces WHERE owner_id = auth.uid())
      AND recompense_en_attente = TRUE;
+
+  IF FOUND THEN
+    INSERT INTO passages_fidelite (
+      carte_fidelite_id,
+      mode_identification,
+      passage_group_id,
+      annule
+    ) VALUES (
+      p_carte_id,
+      'recompense_remise',
+      uuid_generate_v4(),
+      FALSE
+    );
+  END IF;
+
   RETURN FOUND;
 END;
 $$;
