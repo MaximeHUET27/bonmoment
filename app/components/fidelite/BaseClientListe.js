@@ -153,10 +153,9 @@ export default function BaseClientListe({ commerceId }) {
               <div className="flex items-start justify-between gap-2">
                 <div className="flex flex-col gap-0.5">
                   <span className="font-bold text-gray-900 text-sm leading-tight">
-                    {client.prenom_affiche ?? '—'}
-                  </span>
-                  <span className="text-xs text-gray-400 font-mono">
-                    {client.telephone_masque ?? '—'}
+                    {client.prenom_affiche
+                      ? `${client.prenom_affiche} — ${client.telephone_masque ?? ''}`
+                      : (client.telephone_masque ?? '—')}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1 justify-end">

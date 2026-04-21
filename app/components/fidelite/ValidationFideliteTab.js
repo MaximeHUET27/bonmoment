@@ -22,6 +22,7 @@ export default function ValidationFideliteTab({
   const [etape, setEtape]               = useState('saisie')
   const [telephone, setTelephone]       = useState('')
   const [consentement, setConsentement] = useState(false)
+  const [prenomNouveauClient, setPrenomNouveauClient] = useState('')
   const [erreurSaisie, setErreurSaisie] = useState(null)
   const [loading, setLoading]           = useState(false)
   const [consultResult, setConsultResult]           = useState(null)
@@ -101,6 +102,7 @@ export default function ValidationFideliteTab({
     setEtape('saisie')
     setTelephone('')
     setConsentement(false)
+    setPrenomNouveauClient('')
     setConsultResult(null)
     setResultat(null)
     setErreurSaisie(null)
@@ -150,7 +152,12 @@ export default function ValidationFideliteTab({
           </p>
           <p className="text-xs text-orange-600 text-center mt-1">{telNorm}</p>
         </div>
-        <ConsentementRGPD checked={consentement} onChange={setConsentement} />
+        <ConsentementRGPD
+          checked={consentement}
+          onChange={setConsentement}
+          prenom={prenomNouveauClient}
+          onPrenomChange={setPrenomNouveauClient}
+        />
         <div className="flex gap-3">
           <button
             onClick={reset}
@@ -177,7 +184,7 @@ export default function ValidationFideliteTab({
         commerceId={commerceId}
         mode="telephone"
         identifierValue={telNorm}
-        prenomOptionnel={consultResult?.client_prenom ?? null}
+        prenomOptionnel={consultResult?.client_prenom || prenomNouveauClient.trim() || null}
         seuilFallback={programme?.seuil_passages ?? 10}
         descriptionFallback={programme?.description_recompense ?? 'Récompense'}
         regleTampons={programme?.regle_tampons ?? null}
