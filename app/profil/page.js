@@ -11,6 +11,7 @@ import { useToast } from '@/app/components/Toast'
 import { triggerConfetti } from '@/lib/confetti'
 import AddToHomeScreen from '@/app/components/AddToHomeScreen'
 import IOSInstallPrompt, { isIOSNonStandalone } from '@/app/components/IOSInstallPrompt'
+import ProfilCarteFidelite from '@/app/components/fidelite/ProfilCarteFidelite'
 
 /* ── Helpers badges ────────────────────────────────────────────────────────── */
 
@@ -479,6 +480,9 @@ export default function ProfilPage() {
           </div>
           <span className="text-[#FF6B00] font-bold text-lg">→</span>
         </Link>
+
+        {/* ── Carte fidélité ── */}
+        <ProfilCarteFidelite user={user} />
 
         {/* ── Ajouter à l'écran d'accueil ── */}
         <div><AddToHomeScreen /></div>

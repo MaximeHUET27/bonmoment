@@ -19,17 +19,19 @@ export async function POST(request) {
   if (!user) return NextResponse.json({ error: 'Non connecté' }, { status: 401 })
 
   const body = await request.json().catch(() => ({}))
-  const { reservation_id, commerce_id, note } = body
+  const { reservation_id, commerce_id, note, source = 'bon' } = body
 
   if (!commerce_id || !note) {
     return NextResponse.json({ error: 'Paramètres manquants' }, { status: 400 })
   }
 
-  if (!reservation_id) return NextResponse.json({ success: true })
+  if (source === 'bon' && !reservation_id) {
+    return NextResponse.json({ error: 'reservation_id requis pour source=bon' }, { status: 400 })
+  }
 
   const { error } = await admin
     .from('avis_google_clics')
-    .insert({ reservation_id, commerce_id, user_id: user.id, note })
+    .insert({ reservation_id: reservation_id || null, commerce_id, user_id: user.id, note, source })
 
   if (error) {
     console.error('[avis-google] insert error:', error.message)

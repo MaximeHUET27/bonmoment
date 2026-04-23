@@ -36,6 +36,7 @@ export const NODES = {
     options: [
       { label: '🔍 Découvrir BONMOMENT',          nodeId: 'h-decouvrir' },
       { label: '🎟️ Réserver et utiliser un bon',  nodeId: 'h-reserver' },
+      { label: '🎯 Carte de fidélité',             nodeId: 'h-fidelite' },
       { label: '📍 Villes et abonnements',         nodeId: 'h-villes' },
       { label: '⚙️ Mon compte',                    nodeId: 'h-compte' },
       { label: '🔧 Un problème ?',                 nodeId: 'h-probleme' },
@@ -142,6 +143,59 @@ export const NODES = {
     type: 'answer',
     question: "Comment laisser un avis sur un commerce ?",
     response: `Pour laisser un avis sur un commerce :\n\n1. Ouvre la **fiche du commerce** sur BONMOMENT\n2. Appuie sur le bouton **⭐ Laisser un avis**\n3. Note ton expérience de 1 à 5 étoiles\n4. Pour les super expériences, tu peux aussi partager ton retour en ligne 🌟\n\nTon avis aide le commerce à se développer et la communauté à faire de bons choix.`,
+  },
+
+  /* ── Carte de fidélité (habitant) ── */
+
+  'h-fidelite': {
+    type: 'menu',
+    message: "Ta question sur la carte fidélité ?",
+    options: [
+      { label: "C'est quoi la carte fidélité BONMOMENT ?",               nodeId: 'h-fidel-1' },
+      { label: "Comment j'active ma carte ?",                            nodeId: 'h-fidel-2' },
+      { label: "Que fait le commerçant avec mon numéro ?",               nodeId: 'h-fidel-3' },
+      { label: "Puis-je changer mon numéro si je change de téléphone ?", nodeId: 'h-fidel-4' },
+      { label: "Comment je désactive ma carte ?",                        nodeId: 'h-fidel-5' },
+    ],
+  },
+
+  'h-fidel-1': {
+    type: 'answer',
+    question: "C'est quoi la carte fidélité BONMOMENT ?",
+    response: `C'est une carte fidélité universelle, gratuite, qui fonctionne chez tous les commerçants BONMOMENT avec un programme actif. 🎯\n\nÀ chaque passage en caisse, tu gagnes des tampons. Quand tu atteins le seuil fixé par le commerçant, tu débloques une récompense (café offert, -10%, cadeau...).\n\nPas d'appli à télécharger, pas de carte physique à perdre.`,
+  },
+
+  'h-fidel-2': {
+    type: 'answer',
+    question: "Comment j'active ma carte ?",
+    response: `Va dans ton **profil** et clique sur "Activer ma carte fidélité". 📱\n\nTu saisis ton numéro de téléphone (06 ou 07), et c'est fini.\n\nCe numéro sera utilisé pour retrouver ta carte chez chaque commerçant.`,
+    actions: [
+      { label: '👤 Mon profil', type: 'redirect', path: '/profil' },
+    ],
+  },
+
+  'h-fidel-3': {
+    type: 'answer',
+    question: "Que fait le commerçant avec mon numéro ?",
+    response: `Il l'utilise uniquement pour retrouver ta carte dans la caisse quand tu passes. 🔒\n\nIl ne peut pas te contacter ni t'envoyer de SMS.\n\nTes données sont protégées par le RGPD et tu peux désactiver ta carte à tout moment.`,
+  },
+
+  'h-fidel-4': {
+    type: 'answer',
+    question: "Puis-je changer mon numéro si je change de téléphone ?",
+    response: `Oui ! Depuis ton **profil**, clique sur "Modifier" à côté de ton numéro lié. ✏️\n\nSi tu avais déjà utilisé ton nouveau numéro chez un commerçant, tes tampons seront fusionnés automatiquement.`,
+    actions: [
+      { label: '👤 Mon profil', type: 'redirect', path: '/profil' },
+    ],
+  },
+
+  'h-fidel-5': {
+    type: 'answer',
+    question: "Comment je désactive ma carte ?",
+    response: `Dans ton profil, en bas de la section carte fidélité, clique sur "Désactiver ma carte fidélité".\n\nToutes tes cartes et tampons seront supprimés.\n\nTu peux toujours réactiver plus tard avec le même numéro ou un nouveau. 🔄`,
+    actions: [
+      { label: '👤 Mon profil', type: 'redirect', path: '/profil' },
+    ],
   },
 
   /* ── Villes et abonnements ── */
@@ -336,6 +390,7 @@ export const NODES = {
     options: [
       { label: '📝 Créer et gérer mes offres',        nodeId: 'c-offres' },
       { label: '✅ Valider un bon en caisse',          nodeId: 'c-valider' },
+      { label: '🎯 Carte de fidélité',                nodeId: 'c-fidelite' },
       { label: '📊 Mes statistiques',                  nodeId: 'c-stats' },
       { label: '🏪 Mon commerce',                      nodeId: 'c-commerce' },
       { label: '💰 Abonnement et parrainage',          nodeId: 'c-abo' },
@@ -447,6 +502,62 @@ export const NODES = {
     type: 'answer',
     question: "Un code est refusé, pourquoi ?",
     response: `Un bon peut être refusé pour plusieurs raisons :\n\n❌ **Bon expiré** — la date de fin est dépassée\n❌ **Déjà utilisé** — le bon a déjà été validé\n❌ **Mauvais commerce** — le bon appartient à un autre établissement\n❌ **Code invalide** — le client a peut-être saisi un mauvais chiffre\n\nDemande au client d'ouvrir son bon dans l'app pour vérifier son statut.`,
+  },
+
+  /* ── Carte de fidélité (commerçant) ── */
+
+  'c-fidelite': {
+    type: 'menu',
+    message: "Ta question sur la carte de fidélité ?",
+    options: [
+      { label: "La carte fidélité est-elle incluse dans mon abonnement ?", nodeId: 'c-fidel-1' },
+      { label: "Comment je configure mon programme fidélité ?",            nodeId: 'c-fidel-2' },
+      { label: "Comment j'ajoute un tampon à un client ?",                 nodeId: 'c-fidel-3' },
+      { label: "Puis-je ajouter un client sans compte BONMOMENT ?",        nodeId: 'c-fidel-4' },
+      { label: "Combien de tampons en un seul passage ?",                  nodeId: 'c-fidel-5' },
+    ],
+  },
+
+  'c-fidel-1': {
+    type: 'answer',
+    question: "La carte fidélité est-elle incluse dans mon abonnement ?",
+    response: `Elle est incluse dans le **palier Pro** uniquement (79€/mois). 🚀\n\nLes paliers Découverte et Essentiel te donnent accès aux offres mais pas au système de fidélité.\n\nTu peux passer au Pro à tout moment depuis ton dashboard.`,
+    actions: [
+      { label: '📊 Mon abonnement', type: 'redirect', path: '/commercant/dashboard' },
+    ],
+  },
+
+  'c-fidel-2': {
+    type: 'answer',
+    question: "Comment je configure mon programme fidélité ?",
+    response: `Dans ton dashboard, section "🎯 Ma carte fidélité", onglet **Configuration**.\n\nTu choisis :\n• Le seuil (entre 1 et 1000 passages)\n• La récompense (ex : "1 café offert")\n• Tu actives le programme\n\nTes clients peuvent dès lors accumuler des tampons.`,
+    actions: [
+      { label: '⚙️ Configurer ma fidélité', type: 'redirect', path: '/commercant/dashboard' },
+    ],
+  },
+
+  'c-fidel-3': {
+    type: 'answer',
+    question: "Comment j'ajoute un tampon à un client ?",
+    response: `Sur la page validation, tu as 3 moyens :\n\n📷 **Scanner le QR d'un bon** — le bon est validé, puis l'écran te propose d'ajouter un tampon fidélité\n\n🔢 **Saisir le code 6 chiffres** — même comportement que le scan QR\n\n📱 **Saisir le numéro de téléphone** — ajout direct d'un tampon, sans toucher aux bons en cours du client\n\nTu peux choisir le nombre de tampons à ajouter (entre 1 et 10).`,
+    actions: [
+      { label: '✅ Page validation', type: 'redirect', path: '/commercant/valider' },
+    ],
+  },
+
+  'c-fidel-4': {
+    type: 'answer',
+    question: "Puis-je ajouter un client sans compte BONMOMENT ?",
+    response: `Oui ! Tu saisis son numéro de téléphone en caisse, il te confirme verbalement son consentement, et une carte légère est créée pour lui. ✅\n\nS'il décide plus tard de créer un compte BONMOMENT avec le même numéro, ses tampons seront fusionnés automatiquement avec son nouveau compte.`,
+  },
+
+  'c-fidel-5': {
+    type: 'answer',
+    question: "Combien de tampons en un seul passage ?",
+    response: `Entre **1 et 10 tampons** par passage. 🎯\n\nPratique pour les achats importants (ex : "1 tampon par tranche de 50€").\n\nTu peux aussi ajuster manuellement les tampons d'un client depuis ta base client si besoin.`,
+    actions: [
+      { label: '✅ Page validation', type: 'redirect', path: '/commercant/valider' },
+    ],
   },
 
   /* ── Mes statistiques ── */

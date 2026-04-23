@@ -70,6 +70,18 @@ function ResiliationContent() {
         const { count: nbFeedbacks } = await supabase
           .from('feedbacks_commerce').select('id', { count: 'exact', head: true }).eq('commerce_id', com.id)
 
+        let nbClientsFideles = null
+        if (com.palier === 'pro') {
+          const { data: prog } = await supabase
+            .from('programmes_fidelite').select('actif').eq('commerce_id', com.id).maybeSingle()
+          if (prog?.actif === true) {
+            const { data: passagesData } = await supabase
+              .from('passages_fidelite').select('carte_fidelite_id')
+              .eq('annule', false).neq('mode_identification', 'recompense_remise')
+            nbClientsFideles = new Set((passagesData || []).map(p => p.carte_fidelite_id)).size
+          }
+        }
+
         const created = com.created_at ? new Date(com.created_at) : new Date()
         const mois    = Math.max(1, Math.round((new Date() - created) / (1000 * 60 * 60 * 24 * 30)))
 
@@ -81,6 +93,7 @@ function ResiliationContent() {
           nbClients,
           nbAvis:      nbAvis      ?? 0,
           nbFeedbacks: nbFeedbacks ?? 0,
+          nbClientsFideles,
           mois,
           palierLabel: PALIER_LABELS[com.palier] || '—',
         })
@@ -223,6 +236,13 @@ function ResiliationContent() {
               <p className="text-2xl font-black text-[#FF6B00]">{stats?.nbOffres ?? '—'}</p>
               <p className="text-[11px] text-[#3D3D3D]/60">✨ offres publiées</p>
             </div>
+            {stats?.nbClientsFideles !== null && stats?.nbClientsFideles !== undefined && (
+              <div className="bg-white rounded-2xl px-4 py-3 flex flex-col gap-0.5">
+                <p className="text-2xl font-black text-[#FF6B00]">{stats.nbClientsFideles}</p>
+                <p className="text-[11px] text-[#3D3D3D]/60">🎯 clients fidèles</p>
+                <p className="text-[10px] text-[#3D3D3D]/40">total</p>
+              </div>
+            )}
             <div className="bg-white rounded-2xl px-4 py-3 flex flex-col gap-0.5">
               <p className="text-2xl font-black text-[#FF6B00]">{stats?.nbBons ?? '—'}</p>
               <p className="text-[11px] text-[#3D3D3D]/60">🎟 bons utilisés</p>

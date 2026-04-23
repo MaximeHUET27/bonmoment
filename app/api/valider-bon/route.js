@@ -111,12 +111,14 @@ export async function POST(request) {
 
   if (updateErr) return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
 
-  /* ── Prénom du client ─────────────────────────────────────────────────── */
-  let prenom = null
+  /* ── Prénom + téléphone du client ─────────────────────────────────────── */
+  let prenom    = null
+  let telephone = null
   if (res.user_id) {
     const { data: u } = await admin
-      .from('users').select('nom').eq('id', res.user_id).maybeSingle()
-    prenom = u?.nom?.split(' ')[0] ?? null
+      .from('users').select('nom, telephone').eq('id', res.user_id).maybeSingle()
+    prenom    = u?.nom?.split(' ')[0] ?? null
+    telephone = u?.telephone ?? null
   }
 
   /* ── Mise à jour badge habitant ──────────────────────────────────────── */
@@ -186,6 +188,6 @@ export async function POST(request) {
   return NextResponse.json({
     success: true,
     offre:  { titre: offre.titre, type_remise: offre.type_remise, valeur: offre.valeur },
-    client: { prenom },
+    client: { prenom, telephone },
   })
 }

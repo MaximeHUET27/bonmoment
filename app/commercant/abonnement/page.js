@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, Fragment } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -27,7 +27,7 @@ const PLANS = [
     nom:      'Essentiel',
     prix:     49,
     offres:   8,
-    populaire: true,
+    populaire: false,
     features: ['8 offres/mois', ...FEATURES_COMMUNES],
   },
   {
@@ -35,8 +35,9 @@ const PLANS = [
     nom:      'Pro',
     prix:     79,
     offres:   16,
-    populaire: false,
+    populaire: true,
     features: ['16 offres/mois', ...FEATURES_COMMUNES],
+    fidelite: true,
   },
 ]
 
@@ -223,12 +224,27 @@ function AbonnementContent() {
 
                 {/* Caractéristiques */}
                 <ul className="flex flex-col gap-1.5 text-xs text-[#3D3D3D] flex-1">
-                  {plan.features.map(f => (
-                    <li key={f} className="flex items-center gap-2">
-                      <span className="text-[#FF6B00] font-bold shrink-0">✓</span>
-                      {f}
-                    </li>
-                  ))}
+                  {plan.features.map((f, i) => {
+                    if (i === 0 && plan.fidelite) {
+                      return (
+                        <Fragment key={f}>
+                          <li className="flex items-center gap-2">
+                            <span className="text-[#FF6B00] font-bold shrink-0">✓</span>
+                            {f}
+                          </li>
+                          <li className="bg-orange-50 px-2 py-1.5 rounded-md font-bold text-[#3D3D3D]">
+                            🎯 Carte de fidélité numérique universelle
+                          </li>
+                        </Fragment>
+                      )
+                    }
+                    return (
+                      <li key={f} className="flex items-center gap-2">
+                        <span className="text-[#FF6B00] font-bold shrink-0">✓</span>
+                        {f}
+                      </li>
+                    )
+                  })}
                   {!commerce?.stripe_customer_id && !commerce?.stripe_subscription_id && (
                     <li className="flex items-center gap-2">
                       <span className="text-[#FF6B00] font-bold shrink-0">✓</span>

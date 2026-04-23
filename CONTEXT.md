@@ -358,3 +358,112 @@ MIGRATIONS BASE DE DONNÉES
 Schéma principal : supabase/schema.sql (à exécuter dans l'éditeur SQL Supabase)
 Migrations supplémentaires : sql/migrations_abonnements_favoris.sql
 Données de test : supabase/seed-test.sql
+
+---
+
+FEATURE : CARTE FIDÉLITÉ UNIVERSELLE
+=====================================
+Branche Git : feat/carte-fidelite-universelle
+État        : Migration SQL créée, non exécutée en prod
+Feature flag: NEXT_PUBLIC_FIDELITE_ENABLED (false par défaut partout)
+Palier requis: commerces.palier = 'pro' ET abonnement_actif = TRUE
+
+PRINCIPE DE SÉCURITÉ
+--------------------
+Double garde-fou avant tout affichage ou exécution :
+  1. NEXT_PUBLIC_FIDELITE_ENABLED === 'true' (variable d'environnement)
+  2. commerce.palier === 'pro' + programme_fidelite.actif === true
+Si l'un est false → aucune UI visible, aucun endpoint actif.
+
+COLONNE AJOUTÉE SUR TABLE EXISTANTE
+------------------------------------
+users.telephone (VARCHAR(15), NULLABLE, index unique partiel)
+  → Zéro impact sur les lignes existantes (pas de DEFAULT, pas de NOT NULL)
+
+NOUVELLES TABLES (additif pur — rien de modifié dans l'existant)
+----------------------------------------------------------------
+1. users_light          — Clients caisse non-BONMOMENT (identifiés par 06/07)
+2. programmes_fidelite  — Programme par commerce (1 ligne/commerce, PK=commerce_id)
+3. cartes_fidelite      — Une carte par (client × commerce), seuil figé à la création
+4. passages_fidelite    — Un tampon = une ligne, N tampons/passage → même passage_group_id
+5. fidelite_flags_antifraude — Alertes anti-fraude (accès service_role uniquement)
++ Vue : vue_base_client_fidelite (téléphones masqués, RLS commerce)
+
+RÈGLE SEUIL : Option C — le seuil_passages est figé par carte à la création.
+Modifier le programme ne casse pas les clients existants.
+Baisser le seuil (Option A) débloque immédiatement les clients éligibles.
+
+RPC CRÉÉES (10 fonctions SECURITY DEFINER)
+------------------------------------------
+enregistrer_passage_fidelite(commerce_id, mode, identifier, prenom?, consultation?, nb_tampons?)
+  → Passage principal : résolution client, création carte si besoin, incrémentation,
+    validation bon si actif, gestion multi-tampons (1 à 10 par passage)
+
+annuler_passage_fidelite(passage_group_id)
+  → Annule TOUS les tampons du groupe, restaure le bon, recalcule les récompenses
+
+ajuster_tampons_manuel(carte_id, nb_tampons, commentaire)
+  → Ajustement commerçant ±50 tampons (traçabilité dans passages_fidelite)
+
+confirmer_recompense_remise(carte_id)
+  → Remet recompense_en_attente à FALSE après remise physique
+
+activer_carte_fidelite_client(telephone)
+  → Lie un 06/07 au compte client BONMOMENT + fusionne les cartes light existantes
+
+desactiver_fidelite_client()
+  → RGPD : supprime toutes les cartes + efface users.telephone
+
+modifier_telephone_client(nouveau_telephone)
+  → Changement de numéro + fusion des cartes light éventuelles
+
+mettre_a_jour_programme_fidelite(commerce_id, seuil, description, actif, regle?)
+  → Crée/met à jour le programme + débloche auto si baisse de seuil (Option A)
+
+peut_utiliser_fidelite(commerce_id) → BOOLEAN
+  → Vérifie palier = 'pro' ET abonnement_actif = TRUE
+  → CORRECTION CRITIQUE : colonne 'palier' (TEXT), PAS 'palier_abonnement'
+
+check_rate_limit_fidelite(commerce_id) → BOOLEAN
+  → Refuse si > 30 passages/minute pour ce commerce
+
+ARCHITECTURE API ROUTES (Commit 2+)
+------------------------------------
+Toutes les mutations passent par des API routes Next.js (pattern /api/valider-bon) :
+  app/api/fidelite/enregistrer-passage/route.js
+  app/api/fidelite/annuler-passage/route.js
+  app/api/fidelite/confirmer-recompense/route.js
+  app/api/fidelite/ajuster-tampons/route.js
+  app/api/fidelite/activer-carte/route.js
+  app/api/fidelite/desactiver/route.js
+  app/api/fidelite/modifier-telephone/route.js
+  app/api/fidelite/programme/route.js (GET + POST)
+Les lectures (SELECT) restent en direct via client Supabase (RLS suffisant).
+
+FICHIERS SQL
+------------
+sql/add_fidelite_universelle.sql     → Migration (à exécuter manuellement dans Supabase)
+sql/rollback_fidelite_universelle.sql → Rollback complet (< 10s, données perdues)
+sql/test_post_migration_fidelite.sql  → Tests à exécuter après migration
+
+PROCÉDURE DE ROLLBACK (3 niveaux)
+----------------------------------
+Niveau 0 — Désactiver le flag (INSTANTANÉ, 30s, données conservées) :
+  Vercel → Environment Variables → NEXT_PUBLIC_FIDELITE_ENABLED = false → redeploy
+
+Niveau 1 — Désactiver côté serveur (1s, données conservées) :
+  SQL : UPDATE programmes_fidelite SET actif = FALSE;
+
+Niveau 2 — Revert Git (code retiré, tables conservées) :
+  git revert <hash_commit_fidelite> && git push
+
+Niveau 3 — Rollback DB complet (données perdues, < 10s) :
+  Exécuter sql/rollback_fidelite_universelle.sql dans Supabase SQL Editor
+
+ACTIVATION PROGRESSIVE
+-----------------------
+1. Déployer tout le code avec NEXT_PUBLIC_FIDELITE_ENABLED=false (aucune UI visible)
+2. Tester en local avec NEXT_PUBLIC_FIDELITE_ENABLED=true dans .env.local
+3. Activer sur Preview Vercel → tester sur l'URL preview
+4. Activer sur Production uniquement après validation complète
+5. Passer un commerce pilote en palier 'pro' + configurer son programme
