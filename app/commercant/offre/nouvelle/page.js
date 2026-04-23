@@ -176,7 +176,7 @@ function NouvelleOffrePageInner() {
       if ((used ?? 0) >= limite) setQuotaAtteint(true)
 
       // Modal tutoriel si aucune offre publiée jusqu'ici et tutoriel pas encore complété
-      if ((total ?? 0) === 0 && !isTutoriel && !data.tutoriel_complete) { setShowFirstModal(true); triggerConfetti() }
+      if ((total ?? 0) === 0 && !isTutoriel && !data.tutoriel_complete) { setShowFirstModal(true) }
 
       setFetching(false)
     })()
