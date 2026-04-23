@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useToast } from './Toast'
 
-export default function ReviewOverlay({ reservationId, commerceId, commerceNom, placeId, onClose }) {
+export default function ReviewOverlay({ reservationId, commerceId, commerceNom, placeId, source = 'bon', onClose }) {
   const [step,        setStep]        = useState('stars')
   const [note,        setNote]        = useState(0)
   const [hover,       setHover]       = useState(0)
@@ -19,7 +19,7 @@ export default function ReviewOverlay({ reservationId, commerceId, commerceNom, 
       try {
         await fetch('/api/avis-google', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ reservation_id: reservationId, commerce_id: commerceId, note: n }),
+          body: JSON.stringify({ reservation_id: reservationId, commerce_id: commerceId, note: n, source }),
         })
       } catch {}
       window.open(`https://search.google.com/local/writereview?placeid=${placeId}`, '_blank', 'noopener')
@@ -35,7 +35,7 @@ export default function ReviewOverlay({ reservationId, commerceId, commerceNom, 
     try {
       await fetch('/api/feedback-commerce', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reservation_id: reservationId, commerce_id: commerceId, note, commentaire }),
+        body: JSON.stringify({ reservation_id: reservationId, commerce_id: commerceId, note, commentaire, source }),
       })
     } catch {}
     setSending(false)

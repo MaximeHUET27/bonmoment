@@ -10,6 +10,7 @@ import dynamic from 'next/dynamic'
 import { formatDebut } from '@/lib/offreStatus'
 import { getFullOffreTitle } from '@/lib/offreTitle'
 import CommerceInfoCard from '@/app/components/CommerceInfoCard'
+import { useAuth } from '@/app/context/AuthContext'
 
 const QRCodeSVG = dynamic(
   () => import('qrcode.react').then(m => m.QRCodeSVG),
@@ -81,7 +82,7 @@ function ReviewOverlay({ reservationId, commerceId, commerceNom, placeId, onClos
       await fetch('/api/avis-google', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ reservation_id: reservationId, commerce_id: commerceId, note }),
+        body:    JSON.stringify({ reservation_id: reservationId, commerce_id: commerceId, note, source: 'bon' }),
       })
     } catch {}
     window.open(`https://search.google.com/local/writereview?placeid=${placeId}`, '_blank', 'noopener')
@@ -94,7 +95,7 @@ function ReviewOverlay({ reservationId, commerceId, commerceNom, placeId, onClos
       await fetch('/api/feedback-commerce', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ reservation_id: reservationId, commerce_id: commerceId, note, commentaire }),
+        body:    JSON.stringify({ reservation_id: reservationId, commerce_id: commerceId, note, commentaire, source: 'bon' }),
       })
     } catch {}
     setSending(false)
@@ -233,6 +234,7 @@ function ReviewOverlay({ reservationId, commerceId, commerceNom, placeId, onClos
 /* ── Composant principal ─────────────────────────────────────────────────── */
 
 export default function BonDisplay({ reservation, offre, commerce, commerceId, placeId }) {
+  const { user, supabase } = useAuth()
   const timeLeft = useCountdown(offre?.date_fin)
   const wakeLock = useRef(null)
   const [entered,     setEntered]     = useState(false)
@@ -257,12 +259,11 @@ export default function BonDisplay({ reservation, offre, commerce, commerceId, p
 
   /* ── Polling pour détecter la validation ──────────────────────────────── */
   useEffect(() => {
-    // Conditions pour activer le polling
     const hasValidPlace = placeId && !placeId.startsWith('test_')
-    if (!hasValidPlace || !commerceId || !reservation?.id) return
+    if (!hasValidPlace || !commerceId || !reservation?.id || !user || !supabase) return
     if (reservation?.statut === 'utilisee') return // déjà validé au chargement
 
-    const sessionKey = `avis_demande_${reservation.id}`
+    const sessionKey = `avis_demande_${commerceId}`
     if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(sessionKey)) return
 
     let stopped = false
@@ -277,10 +278,16 @@ export default function BonDisplay({ reservation, offre, commerce, commerceId, p
           if (typeof sessionStorage !== 'undefined') {
             sessionStorage.setItem(sessionKey, '1')
           }
+          clearInterval(interval)
+          // Vérification dédup (user_id, commerce_id) avant d'afficher
+          const [{ data: avis }, { data: fb }] = await Promise.all([
+            supabase.from('avis_google_clics').select('id').eq('user_id', user.id).eq('commerce_id', commerceId).limit(1),
+            supabase.from('feedbacks_commerce').select('id').eq('user_id', user.id).eq('commerce_id', commerceId).limit(1),
+          ])
+          if ((avis?.length ?? 0) + (fb?.length ?? 0) > 0) return
           setTimeout(() => {
             if (!stopped) setShowReview(true)
           }, 2000)
-          clearInterval(interval)
         }
       } catch {}
     }
@@ -290,7 +297,7 @@ export default function BonDisplay({ reservation, offre, commerce, commerceId, p
       stopped = true
       clearInterval(interval)
     }
-  }, [reservation?.id, reservation?.statut, placeId, commerceId])
+  }, [reservation?.id, reservation?.statut, placeId, commerceId, user, supabase])
 
   const qrUrl      = reservation?.qr_code_data || `${typeof window !== 'undefined' ? window.location.href : ''}`
   const programmee = offre?.date_debut && new Date(offre.date_debut) > new Date()
