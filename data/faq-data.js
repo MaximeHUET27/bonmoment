@@ -104,6 +104,33 @@ const FAQ = [
     ],
   },
   {
+    id: 'fidelite-clients',
+    icon: '🎯',
+    titre: 'Carte fidélité — Pour les clients',
+    questions: [
+      {
+        q: "C'est quoi la carte fidélité BONMOMENT ?",
+        r: "C'est une carte fidélité universelle, gratuite, qui fonctionne chez tous les commerçants BONMOMENT avec un programme actif. À chaque passage en caisse, tu gagnes des tampons. Quand tu atteins le seuil fixé par le commerçant, tu débloques une récompense (café offert, -10%, cadeau...). Pas d'appli à télécharger, pas de carte physique à perdre.",
+      },
+      {
+        q: "Comment j'active ma carte ?",
+        r: "Va dans ton profil et clique sur \"Activer ma carte fidélité\". Tu saisis ton numéro de téléphone (06 ou 07), et c'est fini. Ce numéro sera utilisé pour retrouver ta carte chez chaque commerçant.",
+      },
+      {
+        q: "Que fait le commerçant avec mon numéro ?",
+        r: "Il l'utilise uniquement pour retrouver ta carte dans la caisse quand tu passes. Il ne peut pas te contacter ni t'envoyer de SMS. Tes données sont protégées par le RGPD et tu peux désactiver ta carte à tout moment.",
+      },
+      {
+        q: "Est-ce que je peux changer mon numéro si je change de téléphone ?",
+        r: "Oui, depuis ton profil, clique sur \"Modifier\" à côté de ton numéro lié. Si tu avais déjà utilisé ton nouveau numéro chez un commerçant, tes tampons seront fusionnés automatiquement.",
+      },
+      {
+        q: "Comment je désactive ma carte ?",
+        r: "Dans ton profil, en bas de la section carte fidélité, clique sur \"Désactiver ma carte fidélité\". Toutes tes cartes et tampons seront supprimés. Tu peux toujours réactiver plus tard avec le même numéro ou un nouveau.",
+      },
+    ],
+  },
+  {
     id: 'commercants',
     icon: '🏪',
     titre: 'Commerçants',
@@ -159,6 +186,33 @@ const FAQ = [
       {
         q: 'Comment imprimer mon QR code vitrine ?',
         r: "Dashboard → Mon QR code → Télécharger (format A4 haute résolution). Imprime-le et affiche-le en vitrine pour que tes clients scannent directement ta page BONMOMENT.",
+      },
+    ],
+  },
+  {
+    id: 'fidelite-commercants',
+    icon: '🎯',
+    titre: 'Carte fidélité — Pour les commerçants',
+    questions: [
+      {
+        q: "La carte fidélité est-elle incluse dans mon abonnement ?",
+        r: "Elle est incluse dans le palier Pro uniquement. Les paliers Découverte et Essentiel te donnent accès aux offres mais pas au système de fidélité. Tu peux passer au Pro à tout moment depuis ton dashboard.",
+      },
+      {
+        q: "Comment je configure mon programme fidélité ?",
+        r: "Dans ton dashboard, section \"🎯 Ma carte fidélité\", onglet \"Configuration\". Tu choisis le seuil (entre 1 et 1000 passages), la récompense (ex : \"1 café offert\") et tu actives le programme. Tes clients peuvent dès lors accumuler des tampons.",
+      },
+      {
+        q: "Comment j'ajoute un tampon à un client ?",
+        r: "Sur la page validation, tu as 3 moyens distincts :\n• Scanner le QR d'un bon actif : le bon est validé et l'écran te propose ensuite d'ajouter un tampon fidélité au client\n• Saisir le code 6 chiffres d'un bon : même comportement que le scan QR\n• Saisir le numéro de téléphone du client (existant ou nouveau) : ajout direct d'un tampon, sans toucher aux bons en cours du client\n\nTu peux choisir le nombre de tampons à ajouter (entre 1 et 10) selon le contexte (ex : \"+3\" si c'est un gros achat).",
+      },
+      {
+        q: "Puis-je ajouter un client qui n'a pas de compte BONMOMENT ?",
+        r: "Oui. Tu saisis son numéro de téléphone en caisse, il te confirme verbalement son consentement, et une carte légère est créée pour lui. S'il décide plus tard de créer un compte BONMOMENT avec le même numéro, ses tampons seront fusionnés automatiquement avec son nouveau compte.",
+      },
+      {
+        q: "Combien de tampons je peux ajouter en un seul passage ?",
+        r: "Entre 1 et 10. Pratique pour les achats importants (ex : \"1 tampon par tranche de 50€\"). Tu peux aussi ajuster manuellement les tampons d'un client depuis ta base client si besoin.",
       },
     ],
   },
