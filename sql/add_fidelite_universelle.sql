@@ -462,8 +462,10 @@ BEGIN
     RETURN;
   END IF;
 
-  -- ── Vérification bon actif (clients 'full' uniquement) ───────────────────
-  IF v_client_type = 'full' THEN
+  -- ── Vérification bon actif (clients 'full', modes QR et code_6 uniquement) ─
+  -- Le mode téléphone n'a jamais le droit de valider un bon, même si le client
+  -- en a un en statut reservee. L'ajout de tampon est indépendant de la caisse.
+  IF v_client_type = 'full' AND p_mode_identification IN ('qr', 'code_6') THEN
     SELECT r.id, r.code_validation
       INTO v_bon_reservation_id, v_bon_code
       FROM reservations r
