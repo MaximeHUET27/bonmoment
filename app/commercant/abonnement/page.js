@@ -27,7 +27,7 @@ const PLANS = [
     nom:      'Essentiel',
     prix:     49,
     offres:   8,
-    populaire: true,
+    populaire: false,
     features: ['8 offres/mois', ...FEATURES_COMMUNES],
   },
   {
@@ -35,8 +35,9 @@ const PLANS = [
     nom:      'Pro',
     prix:     79,
     offres:   16,
-    populaire: false,
+    populaire: true,
     features: ['16 offres/mois', ...FEATURES_COMMUNES],
+    fidelite: true,
   },
 ]
 
@@ -223,11 +224,19 @@ function AbonnementContent() {
 
                 {/* Caractéristiques */}
                 <ul className="flex flex-col gap-1.5 text-xs text-[#3D3D3D] flex-1">
-                  {plan.features.map(f => (
-                    <li key={f} className="flex items-center gap-2">
-                      <span className="text-[#FF6B00] font-bold shrink-0">✓</span>
-                      {f}
-                    </li>
+                  {plan.features.map((f, i) => (
+                    <>
+                      <li key={f} className="flex items-center gap-2">
+                        <span className="text-[#FF6B00] font-bold shrink-0">✓</span>
+                        {f}
+                      </li>
+                      {i === 0 && plan.fidelite && (
+                        <li key="fidelite" className="flex items-center gap-2 bg-orange-50 px-2 py-1.5 rounded-md">
+                          <span className="font-bold text-[#3D3D3D] flex-1">🎯 Carte de fidélité numérique universelle</span>
+                          <span className="bg-orange-500 text-white text-[10px] font-black tracking-wider rounded-full px-2 py-0.5 shrink-0">NOUVEAU</span>
+                        </li>
+                      )}
+                    </>
                   ))}
                   {!commerce?.stripe_customer_id && !commerce?.stripe_subscription_id && (
                     <li className="flex items-center gap-2">
