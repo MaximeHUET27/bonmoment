@@ -499,7 +499,7 @@ function StatsSection({ commerce, supabase }) {
         bonReservesMois: 0, bonUtilisesMois: 0,
         offresPubileesMois: 0, nbAbonnes: 0,
         heurePlusActive: null, bonReservesMoisDernier: 0,
-        nouveauxClients: 0, joursData: null, heuresData: null,
+        nouveauxClients: 0, nbClientsFideles: null, joursData: null, heuresData: null,
       })
       return
     }
@@ -571,6 +571,21 @@ function StatsSection({ commerce, supabase }) {
     // Nouveaux clients
     const nouveauxClients = new Set((data_nouveaux || []).map(r => r.user_id)).size
 
+    // Clients fidèles (Pro + programme actif uniquement)
+    let nbClientsFideles = null
+    if (commerce.palier === 'pro') {
+      try {
+        const { data: prog } = await supabase
+          .from('programmes_fidelite').select('actif').eq('commerce_id', commerce.id).maybeSingle()
+        if (prog?.actif === true) {
+          const { data: passagesData } = await supabase
+            .from('passages_fidelite').select('carte_fidelite_id')
+            .eq('annule', false).neq('mode_identification', 'recompense_remise')
+          nbClientsFideles = new Set((passagesData || []).map(p => p.carte_fidelite_id)).size
+        }
+      } catch (_) { /* ne bloque pas les autres KPIs */ }
+    }
+
     // Charts data: jours (utilise_at) et heures (created_at)
     const joursMap = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
     const heuresMap = {}
@@ -598,6 +613,7 @@ function StatsSection({ commerce, supabase }) {
       heurePlusActive,
       bonReservesMoisDernier: bonReservesMoisDernier ?? 0,
       nouveauxClients,
+      nbClientsFideles,
       joursData,
       heuresData,
     })
@@ -734,6 +750,18 @@ function StatsSection({ commerce, supabase }) {
               )}
             </div>
           </div>
+
+          {/* Clients fidèles (Pro + programme actif uniquement) */}
+          {stats.nbClientsFideles !== null && (
+            <div className="grid grid-cols-1 gap-3">
+              <KpiCard
+                emoji="🎯"
+                label="clients fidèles"
+                value={stats.nbClientsFideles}
+                sub="total"
+              />
+            </div>
+          )}
 
           {/* Avis Google + Retours clients */}
           <div className="grid grid-cols-2 gap-3">
