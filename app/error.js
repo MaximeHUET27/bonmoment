@@ -1,6 +1,14 @@
 'use client'
 
+import { useEffect } from 'react'
+
 export default function GlobalError({ error, reset }) {
+  useEffect(() => {
+    console.error('🚨 Erreur globale (app/error.js):', error)
+    console.error('Message:', error?.message)
+    console.error('Stack:', error?.stack)
+    console.error('Digest:', error?.digest)
+  }, [error])
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
       <p className="text-4xl mb-4">😕</p>
