@@ -13,6 +13,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'platform-lookaside.fbsbx.com' },
       { protocol: 'https', hostname: 'graph.microsoft.com' },
       { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
+      { protocol: 'https', hostname: '**' },
     ],
   },
   async headers() {
@@ -26,7 +27,7 @@ const nextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=(self)' },
           { key: 'X-XSS-Protection', value: '1; mode=block' },
           { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
-          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://*.supabase.co; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://maps.googleapis.com https://api.brevo.com https://api.stripe.com; frame-src https://js.stripe.com https://accounts.google.com; worker-src 'self' blob:" },
+          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://maps.googleapis.com https://api.brevo.com https://api.stripe.com; frame-src https://js.stripe.com https://accounts.google.com; worker-src 'self' blob:" },
         ],
       },
     ]
