@@ -16,7 +16,7 @@ export default function MentionsLegales() {
         </Link>
         <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00] mb-1">bonmoment.app</p>
         <h1 className="text-2xl sm:text-3xl font-black text-[#0A0A0A]">Mentions légales</h1>
-        <p className="text-xs text-[#3D3D3D]/60 mt-1">Version en vigueur : Mars 2026</p>
+        <p className="text-xs text-[#3D3D3D]/60 mt-1">Version en vigueur : Avril 2026</p>
         <p className="text-xs text-[#3D3D3D]/50 mt-3 max-w-xl mx-auto leading-relaxed">
           Ces mentions légales sont obligatoires en vertu de la Loi pour la Confiance dans l&apos;Économie Numérique (LCEN) du 21 juin 2004. Leur absence est passible d&apos;une amende pouvant aller jusqu&apos;à 75 000 €.
         </p>
@@ -92,7 +92,7 @@ export default function MentionsLegales() {
         <div>
           <SectionTitle num="6">Cookies</SectionTitle>
           <p className="mt-3">
-            Le site bonmoment.app utilise des cookies techniques nécessaires au fonctionnement de la plateforme (authentification, session utilisateur). Aucun cookie publicitaire ou de traçage tiers n&apos;est utilisé. En continuant à naviguer sur le site, vous acceptez l&apos;utilisation de ces cookies techniques.
+            Le site bonmoment.app utilise des cookies techniques nécessaires au fonctionnement de la plateforme (authentification, session utilisateur). Sur certaines pages (carte interactive de ville, inscription commerçant), l&apos;API Google Maps peut déposer des cookies de préférence Google. Aucun cookie publicitaire ou de traçage marketing n&apos;est utilisé.
           </p>
         </div>
 
@@ -137,7 +137,7 @@ export default function MentionsLegales() {
         </div>
 
         <p className="text-xs text-[#3D3D3D]/40 text-center pt-4 border-t border-[#F5F5F5]">
-          Document généré le Mars 2026 — bonmoment.app — Manon LISSE — 7 rue du Chesne, 27190 Nogent-le-Sec
+          Document généré le Avril 2026 — bonmoment.app — Manon LISSE — 7 rue du Chesne, 27190 Nogent-le-Sec
         </p>
 
       </section>

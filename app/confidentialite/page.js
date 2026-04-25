@@ -16,7 +16,7 @@ export default function Confidentialite() {
         </Link>
         <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00] mb-1">bonmoment.app</p>
         <h1 className="text-2xl sm:text-3xl font-black text-[#0A0A0A]">Politique de confidentialité</h1>
-        <p className="text-xs text-[#3D3D3D]/60 mt-1">Version en vigueur : Mars 2026</p>
+        <p className="text-xs text-[#3D3D3D]/60 mt-1">Version en vigueur : Avril 2026</p>
         <p className="text-xs text-[#3D3D3D]/50 mt-3 max-w-xl mx-auto leading-relaxed">
           Document établi conformément au Règlement Général sur la Protection des Données (RGPD — UE 2016/679) et à la loi Informatique et Libertés n°78-17 du 6 janvier 1978 modifiée par la loi n°2018-493 du 20 juin 2018.
         </p>
@@ -245,7 +245,7 @@ export default function Confidentialite() {
         {/* 8. Cookies */}
         <div>
           <SectionTitle num="8">Cookies et traceurs</SectionTitle>
-          <p className="mt-3">BONMOMENT utilise uniquement des cookies techniques strictement nécessaires au fonctionnement de la plateforme :</p>
+          <p className="mt-3">BONMOMENT utilise principalement des cookies techniques strictement nécessaires au fonctionnement de la plateforme :</p>
           <div className="mt-3 overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead>
@@ -259,15 +259,29 @@ export default function Confidentialite() {
                   <td className="px-4 py-2.5 font-semibold text-[#0A0A0A]">Cookie de session</td>
                   <td className="px-4 py-2.5">Maintien de la connexion de l&apos;utilisateur — Session (supprimé à la fermeture)</td>
                 </tr>
-                <tr>
+                <tr className="border-b border-[#F5F5F5]">
                   <td className="px-4 py-2.5 font-semibold text-[#0A0A0A]">Token d&apos;authentification</td>
                   <td className="px-4 py-2.5">Identification sécurisée — 30 jours</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2.5 font-semibold text-[#0A0A0A]">Cookies Stripe (__stripe_mid, __stripe_sid)</td>
+                  <td className="px-4 py-2.5">Prévention de la fraude lors du paiement — Page de checkout uniquement</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p className="mt-3">
-            Aucun cookie publicitaire, de traçage ou analytique tiers n&apos;est utilisé. Ces cookies techniques ne nécessitent pas de consentement préalable (Article 82 de la loi Informatique et Libertés modifiée).
+            Sur certaines pages spécifiques (carte interactive de votre ville, formulaire d&apos;inscription commerçant), nous utilisons l&apos;API Google Maps pour faciliter la géolocalisation. Le chargement de cette carte entraîne le dépôt de cookies par Google à ses propres fins (préférences utilisateur). Ces cookies sont déposés uniquement lors de l&apos;affichage effectif de la carte.
+          </p>
+          <p className="mt-3">
+            Aucun cookie publicitaire, de mesure d&apos;audience ou de traçage marketing n&apos;est utilisé sur la plateforme.
+          </p>
+          <p className="mt-3">
+            Pour vous opposer aux cookies Google Maps, vous pouvez configurer les paramètres de votre navigateur ou de votre compte Google directement sur{' '}
+            <a href="https://myaccount.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-[#FF6B00] hover:text-[#CC5500]">https://myaccount.google.com/privacy</a>.
+          </p>
+          <p className="mt-3">
+            Les cookies techniques ne nécessitent pas de consentement préalable (Article 82 de la loi Informatique et Libertés modifiée).
           </p>
         </div>
 
@@ -299,7 +313,7 @@ export default function Confidentialite() {
         <div>
           <SectionTitle num="11">Mise à jour de la politique</SectionTitle>
           <p className="mt-3">
-            La présente politique de confidentialité a été mise à jour le Mars 2026. Toute modification substantielle vous sera notifiée par email et/ou via un bandeau d&apos;information sur la plateforme.
+            La présente politique de confidentialité a été mise à jour le Avril 2026. Toute modification substantielle vous sera notifiée par email et/ou via un bandeau d&apos;information sur la plateforme.
           </p>
         </div>
 
@@ -313,7 +327,7 @@ export default function Confidentialite() {
         </div>
 
         <p className="text-xs text-[#3D3D3D]/40 text-center pt-4 border-t border-[#F5F5F5]">
-          Document établi le Mars 2026 — bonmoment.app — Manon LISSE — Conforme RGPD (UE 2016/679)
+          Document établi le Avril 2026 — bonmoment.app — Manon LISSE — Conforme RGPD (UE 2016/679)
         </p>
 
       </section>
