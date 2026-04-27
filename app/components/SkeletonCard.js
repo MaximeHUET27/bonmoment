@@ -33,11 +33,8 @@ export default function SkeletonCard() {
           {/* Titre */}
           <div className="h-4 bg-[#E0E0E0] rounded mx-auto w-3/4" />
 
-          {/* Catégorie + nom commerce */}
-          <div className="flex gap-2 justify-center">
-            <div className="h-4 w-16 bg-[#E0E0E0] rounded-full" />
-            <div className="h-4 w-20 bg-[#E0E0E0] rounded" />
-          </div>
+          {/* Nom commerce */}
+          <div className="h-4 w-28 bg-[#E0E0E0] rounded mx-auto" />
 
           {/* Ville */}
           <div className="h-3 w-20 bg-[#E0E0E0] rounded mx-auto" />

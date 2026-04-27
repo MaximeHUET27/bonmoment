@@ -375,16 +375,8 @@ export default function OffreCard({ offre, userReservation }) {
             </span>
           </Link>
 
-          {/* Ligne 3 : catégorie · nom commerce ⭐ ❤️ */}
+          {/* Ligne 3 : nom commerce ⭐ ❤️ */}
           <div className="flex items-center gap-1 min-w-0 overflow-hidden">
-            {commerce?.categorie && (
-              <>
-                <span className="text-[11px] font-semibold text-[#FF6B00] shrink-0 uppercase tracking-wide">
-                  {getCategorieFiltre(commerce.categorie) || commerce.categorie}
-                </span>
-                <span className="text-[10px] text-[#3D3D3D]/40 shrink-0">·</span>
-              </>
-            )}
             <span className="font-semibold text-[#1A1A1A] flex-1 min-w-0" style={{ fontSize: commerceFontSize }}>{commerce?.nom}</span>
             {commerce?.note_google && (
               <span className="text-[10px] font-bold text-yellow-500 shrink-0 ml-1">⭐ {commerce.note_google}</span>
