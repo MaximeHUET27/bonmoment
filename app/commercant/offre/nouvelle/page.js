@@ -653,7 +653,7 @@ function NouvelleOffrePageInner() {
           <p className="text-[11px] font-bold uppercase tracking-widest text-[#3D3D3D]/50 mb-3">
             Plage horaire
           </p>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-[2fr_1fr_1fr] gap-2">
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
                 📅 Date
