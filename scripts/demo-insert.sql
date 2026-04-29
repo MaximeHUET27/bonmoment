@@ -20,13 +20,12 @@ INSERT INTO auth.users (
   false
 ) ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO public.users (id, email, nom, villes_abonnees, notifications_actives)
+INSERT INTO public.users (id, email, nom, villes_abonnees)
 VALUES (
   '00000000-0000-0000-0000-000000000001',
   'demo_owner@fake.test',
   'DEMO Propriétaire',
-  '{}',
-  false
+  '{}'
 ) ON CONFLICT (id) DO NOTHING;
 
 
@@ -292,14 +291,13 @@ SELECT
 FROM generate_series(1, 435) AS s(i)
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO public.users (id, email, nom, villes_abonnees, badge_niveau, notifications_actives)
+INSERT INTO public.users (id, email, nom, villes_abonnees, badge_niveau)
 SELECT
   ('b0b00000-0000-0000-0000-' || lpad(i::text, 12, '0'))::uuid,
   'demo_' || lpad(i::text, 3, '0') || '@fake.test',
   'Habitant Demo',
   ARRAY['Le Neubourg'],
-  'habitant',
-  false
+  'habitant'
 FROM generate_series(1, 435) AS s(i)
 ON CONFLICT (id) DO NOTHING;
 
