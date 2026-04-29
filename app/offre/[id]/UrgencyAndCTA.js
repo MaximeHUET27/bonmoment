@@ -42,7 +42,6 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
   const { showToast } = useToast()
   const [showAuth,          setShowAuth]          = useState(false)
   const [showBon,           setShowBon]           = useState(false)
-  const [pressing,          setPressing]          = useState(false)
   const [abonneCommLoading, setAbonneCommLoading] = useState(false)
   const [nbBonsDelta,       setNbBonsDelta]       = useState(0)
 
@@ -150,8 +149,6 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
   async function handleReserver() {
     if (status === 'already_used' || status === 'already_expired') return
     if (status === 'already_reserved') { setShowBon(true); return }
-    setPressing(true)
-    setTimeout(() => setPressing(false), 150)
     if (!user) {
       sessionStorage.setItem(PENDING_KEY, offre.id)
       setShowAuth(true)
@@ -287,8 +284,7 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
           <button
             onClick={handleReserver}
             disabled={status === 'loading'}
-            style={{ transform: pressing ? 'scale(0.95)' : 'scale(1)', transition: 'transform 0.15s ease' }}
-            className={`${btnBase} ${btnColor} ${isPulsing ? 'bm-cta-pulse' : ''}`}
+            className={`${btnBase} ${btnColor} transition duration-150 ease-out hover:scale-[1.02] active:scale-[0.97] ${isPulsing ? 'bm-cta-pulse' : ''}`}
           >
             {status === 'loading' ? (
               <span className="w-6 h-6 border-[3px] border-white border-t-transparent rounded-full animate-spin" />

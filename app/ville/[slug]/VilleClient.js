@@ -369,7 +369,7 @@ export default function VilleClient({
           <button
             key={f.id}
             onClick={() => setFiltre(f.id)}
-            className={`shrink-0 text-xs font-bold px-4 py-2 rounded-full transition-colors whitespace-nowrap min-h-[36px] ${
+            className={`shrink-0 text-xs font-bold px-4 py-2 rounded-full transition-colors duration-150 whitespace-nowrap min-h-[36px] ${
               filtre === f.id
                 ? 'bg-[#FF6B00] text-white'
                 : 'bg-[#F5F5F5] text-[#3D3D3D] hover:bg-[#FFF0E0] hover:text-[#FF6B00]'
@@ -383,7 +383,7 @@ export default function VilleClient({
           <button
             key={f.id}
             onClick={() => setFiltre(f.id)}
-            className={`shrink-0 text-xs font-bold px-4 py-2 rounded-full transition-colors whitespace-nowrap min-h-[36px] ${
+            className={`shrink-0 text-xs font-bold px-4 py-2 rounded-full transition-colors duration-150 whitespace-nowrap min-h-[36px] ${
               filtre === f.id
                 ? 'bg-[#FF6B00] text-white'
                 : 'bg-[#F5F5F5] text-[#3D3D3D] hover:bg-[#FFF0E0] hover:text-[#FF6B00]'

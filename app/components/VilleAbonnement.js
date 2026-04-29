@@ -110,7 +110,7 @@ export default function VilleAbonnement({ villeNom, className = '' }) {
        
         onClick={handleClick}
         disabled={loading}
-        className={`text-xs font-bold px-3 py-1.5 rounded-full transition-colors min-h-[36px] flex items-center gap-1.5 ${
+        className={`text-xs font-bold px-3 py-1.5 rounded-full transition duration-150 ease-out hover:scale-[1.02] active:scale-[0.97] min-h-[36px] flex items-center gap-1.5 ${
           abonne
             ? 'bg-[#FF6B00] text-white'
             : 'border border-[#FF6B00] text-[#FF6B00] hover:bg-[#FFF0E0]'

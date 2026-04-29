@@ -197,7 +197,7 @@ export default function TirageAuSort({ offre, nbParticipants, gagnantUser }) {
           {errorMsg && <p className="text-xs text-red-500 font-semibold">⚠ {errorMsg}</p>}
           <button
             onClick={() => setPhase('confirming')}
-            className="w-full bg-[#0A0A0A] hover:bg-[#1A1A1A] text-white font-black text-sm py-3 rounded-xl transition-colors min-h-[48px] flex items-center justify-center gap-2"
+            className="w-full bg-[#0A0A0A] hover:bg-[#1A1A1A] text-white font-black text-sm py-3 rounded-xl transition duration-150 ease-out hover:scale-[1.02] active:scale-[0.97] min-h-[48px] flex items-center justify-center gap-2"
           >
             🎰 Tirer au sort
           </button>

@@ -1,49 +1,34 @@
 export default function SkeletonCard() {
   return (
-    <>
-      <style>{`
-        @keyframes bm-shimmer {
-          0%   { background-position: -200% 0 }
-          100% { background-position:  200% 0 }
-        }
-        .bm-shimmer::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.45) 50%, transparent 100%);
-          background-size: 200% 100%;
-          animation: bm-shimmer 1.5s infinite;
-          border-radius: inherit;
-          pointer-events: none;
-        }
-      `}</style>
+    <div
+      className="bg-white rounded-[12px] shadow-sm overflow-hidden animate-pulse flex flex-row h-[155px] sm:h-[165px]"
+      style={{ border: '1px solid #F0F0F0' }}
+    >
+      {/* Photo placeholder (côté gauche) */}
+      <div className="w-[100px] sm:w-[130px] shrink-0 bg-[#E8E8E8]" />
 
-      <div className="bg-white rounded-2xl border border-[#F0F0F0] shadow-sm overflow-hidden animate-pulse bm-shimmer relative">
+      {/* Infos (côté droit) */}
+      <div className="flex-1 flex flex-col gap-[4px] px-[8px] py-[6px] sm:px-[10px] min-w-0">
 
-        {/* Header : countdown + stock */}
-        <div className="flex items-center justify-between px-4 py-3 bg-[#F5F5F5]">
-          <div className="h-4 w-24 bg-[#E0E0E0] rounded" />
-          <div className="h-4 w-16 bg-[#E0E0E0] rounded" />
+        {/* Barre timer */}
+        <div className="h-[22px] bg-[#F0F0F0] rounded-[8px]" />
+
+        {/* Badge + titre */}
+        <div className="flex items-start gap-1.5 mt-[2px]">
+          <div className="w-10 h-5 bg-[#E0E0E0] rounded-[8px] shrink-0" />
+          <div className="h-5 bg-[#E0E0E0] rounded flex-1" />
         </div>
 
-        <div className="px-4 py-5 flex flex-col gap-3">
-          {/* Badge remise */}
-          <div className="bg-[#F5F5F5] rounded-2xl h-16" />
+        {/* Nom commerce */}
+        <div className="h-4 w-3/4 bg-[#E0E0E0] rounded" />
 
-          {/* Titre */}
-          <div className="h-4 bg-[#E0E0E0] rounded mx-auto w-3/4" />
+        {/* Ville */}
+        <div className="h-3 w-1/2 bg-[#E0E0E0] rounded" />
 
-          {/* Nom commerce */}
-          <div className="h-4 w-28 bg-[#E0E0E0] rounded mx-auto" />
-
-          {/* Ville */}
-          <div className="h-3 w-20 bg-[#E0E0E0] rounded mx-auto" />
-
-          {/* Bouton CTA */}
-          <div className="h-12 bg-[#E0E0E0] rounded-full mt-1" />
-        </div>
+        {/* CTA */}
+        <div className="mt-auto h-[30px] bg-[#E0E0E0] rounded-full" />
 
       </div>
-    </>
+    </div>
   )
 }

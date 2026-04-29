@@ -653,7 +653,8 @@ function NouvelleOffrePageInner() {
           <p className="text-[11px] font-bold uppercase tracking-widest text-[#3D3D3D]/50 mb-3">
             Plage horaire
           </p>
-          <div className="grid grid-cols-[2fr_1fr_1fr] gap-2">
+          {/* Mobile : DATE pleine largeur, puis DE + À côte à côte — Desktop : 3 colonnes */}
+          <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[2fr_1fr_1fr] sm:gap-2">
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
                 📅 Date
@@ -666,29 +667,31 @@ function NouvelleOffrePageInner() {
                 className={inputBase}
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
-                ⏰ De
-              </label>
-              <input
-                type="time"
-                value={heureDebut}
-                step="900"
-                onChange={e => setHeureDebut(e.target.value)}
-                className={inputBase}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
-                ⏰ À
-              </label>
-              <input
-                type="time"
-                value={heureFin}
-                step="900"
-                onChange={e => setHeureFin(e.target.value)}
-                className={inputBase}
-              />
+            <div className="flex gap-3 sm:contents">
+              <div className="flex-1 flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
+                  ⏰ De
+                </label>
+                <input
+                  type="time"
+                  value={heureDebut}
+                  step="900"
+                  onChange={e => setHeureDebut(e.target.value)}
+                  className={inputBase}
+                />
+              </div>
+              <div className="flex-1 flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
+                  ⏰ À
+                </label>
+                <input
+                  type="time"
+                  value={heureFin}
+                  step="900"
+                  onChange={e => setHeureFin(e.target.value)}
+                  className={inputBase}
+                />
+              </div>
             </div>
           </div>
 
@@ -783,7 +786,7 @@ function NouvelleOffrePageInner() {
           id="tut-publier"
           type="submit"
           disabled={submitting || quotaAtteint || !!erreurHoraire || !!erreurDateDebut || !!erreurDateFin}
-          className="w-full bg-[#FF6B00] hover:bg-[#CC5500] disabled:bg-[#D0D0D0] disabled:cursor-not-allowed text-white font-black text-base py-4 rounded-2xl transition-colors duration-200 shadow-lg shadow-orange-200/60 min-h-[56px] flex items-center justify-center gap-2"
+          className="w-full bg-[#FF6B00] hover:bg-[#CC5500] disabled:bg-[#D0D0D0] disabled:cursor-not-allowed text-white font-black text-base py-4 rounded-2xl transition duration-200 ease-out hover:scale-[1.02] active:scale-[0.97] shadow-lg shadow-orange-200/60 min-h-[56px] flex items-center justify-center gap-2"
         >
           {submitting ? (
             <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

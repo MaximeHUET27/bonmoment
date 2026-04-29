@@ -124,7 +124,6 @@ export default function OffreCard({ offre, userReservation }) {
   const pathname  = usePathname()
   const [showAuth,          setShowAuth]          = useState(false)
   const [showBon,           setShowBon]           = useState(false)
-  const [pressing,          setPressing]          = useState(false)
   const [abonneCommLoading, setAbonneCommLoading] = useState(false)
   const [nbBonsDelta,       setNbBonsDelta]       = useState(0)
 
@@ -255,9 +254,6 @@ export default function OffreCard({ offre, userReservation }) {
     if (fini) return
     if (status === 'already_used' || status === 'already_expired') return
     if (status === 'already_reserved') { setShowBon(true); return }
-    // Compression visuelle 150ms
-    setPressing(true)
-    setTimeout(() => setPressing(false), 150)
     if (!user) {
       sessionStorage.setItem(PENDING_KEY, offre.id)
       setShowAuth(true)
@@ -302,7 +298,7 @@ export default function OffreCard({ offre, userReservation }) {
   return (
     <>
       <div
-        className={`bg-white rounded-[12px] shadow-sm overflow-hidden flex flex-row h-[155px] sm:h-[165px]${fini ? ' opacity-60' : ''}`}
+        className={`bg-white rounded-[12px] shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden flex flex-row h-[155px] sm:h-[165px]${fini ? ' opacity-60' : ''}`}
         style={{
           border: '1px solid #F0F0F0',
           ...(urgent && !fini ? { borderLeft: '3px solid #ef4444' } : {}),
@@ -420,8 +416,7 @@ export default function OffreCard({ offre, userReservation }) {
                 <button
                   onClick={handleReserver}
                   disabled={status === 'loading'}
-                  style={{ transform: pressing ? 'scale(0.95)' : 'scale(1)', transition: 'transform 0.15s ease' }}
-                  className={`w-full text-white font-bold text-[11px] h-[30px] rounded-full flex items-center justify-center gap-1.5 ${btnColor} ${isPulsing ? 'bm-btn-pulse-cls' : ''}`}
+                  className={`w-full text-white font-bold text-[11px] h-[30px] rounded-full flex items-center justify-center gap-1.5 transition duration-150 ease-out hover:scale-[1.02] active:scale-[0.97] ${btnColor} ${isPulsing ? 'bm-btn-pulse-cls' : ''}`}
                 >
                   {status === 'loading' ? (
                     <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

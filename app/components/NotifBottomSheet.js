@@ -126,7 +126,7 @@ export default function NotifBottomSheet({ isOpen, onClose, villeNom }) {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="mt-5 w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-sm py-3.5 rounded-2xl transition-colors min-h-[48px] flex items-center justify-center"
+          className="mt-5 w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-sm py-3.5 rounded-2xl transition duration-150 ease-out hover:scale-[1.02] active:scale-[0.97] min-h-[48px] flex items-center justify-center"
         >
           {saving ? (
             <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

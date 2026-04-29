@@ -124,7 +124,7 @@ export default function FavoriButton({ commerceId, commerceNom, className = '', 
           onClick={handleClick}
           disabled={loading}
           aria-label={favori ? `Retirer ${commerceNom} des favoris` : `Ajouter ${commerceNom} aux favoris`}
-          className={`w-full flex items-center justify-center gap-2 font-bold text-sm py-3 rounded-2xl min-h-[44px] mt-1 transition-colors ${
+          className={`w-full flex items-center justify-center gap-2 font-bold text-sm py-3 rounded-2xl min-h-[44px] mt-1 transition duration-150 ease-out hover:scale-[1.02] active:scale-[0.97] ${
             favori
               ? 'bg-[#22C55E] text-white'
               : 'border-2 border-[#FF6B00] text-[#FF6B00] hover:bg-[#FFF0E0]'
@@ -140,10 +140,9 @@ export default function FavoriButton({ commerceId, commerceNom, className = '', 
           onClick={handleClick}
           disabled={loading}
           aria-label={favori ? `Retirer ${commerceNom} des favoris` : `Ajouter ${commerceNom} aux favoris`}
-          className={`flex items-center justify-center min-h-[44px] min-w-[44px] ${
-            pulse ? 'scale-[1.2]' : 'scale-100'
+          className={`flex items-center justify-center min-h-[44px] min-w-[44px] transition-transform duration-200 active:scale-[1.2] ${
+            pulse ? 'scale-[1.2]' : ''
           } ${className}`}
-          style={{ transition: 'transform 0.3s ease-in-out' }}
         >
           {favori ? (
             <svg viewBox="0 0 24 24" className="w-6 h-6 fill-[#FF6B00]" aria-hidden>
@@ -181,7 +180,7 @@ export default function FavoriButton({ commerceId, commerceNom, className = '', 
             <button
               onClick={handleActiverPush}
               disabled={pushLoading}
-              className="w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-sm py-3.5 rounded-2xl transition-colors min-h-[48px] flex items-center justify-center mb-3"
+              className="w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-sm py-3.5 rounded-2xl transition duration-150 ease-out hover:scale-[1.02] active:scale-[0.97] min-h-[48px] flex items-center justify-center mb-3"
             >
               {pushLoading
                 ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

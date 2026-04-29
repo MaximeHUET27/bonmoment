@@ -213,14 +213,14 @@ export default function DashboardPage() {
           <div className="flex gap-4 items-start">
             <Link
               href={`/commercant/valider?commerce=${commerce.id}`}
-              className="flex-1 h-[60px] bg-[#FF6B00] hover:bg-[#CC5500] text-white font-semibold text-lg rounded-xl transition-colors flex items-center justify-center text-center"
+              className="flex-1 h-[60px] bg-[#FF6B00] hover:bg-[#CC5500] text-white font-semibold text-lg rounded-xl transition duration-150 ease-out hover:scale-[1.02] active:scale-[0.97] flex items-center justify-center text-center"
             >
               ✅ Vérifier un bon
             </Link>
             {commerce.palier ? (
               <Link
                 href={`/commercant/offre/nouvelle?commerce=${commerce.id}`}
-                className="flex-1 h-[60px] border-2 border-[#FF6B00] text-[#FF6B00] bg-white hover:bg-[#FFF0E0] font-semibold text-lg rounded-xl transition-colors flex items-center justify-center text-center"
+                className="flex-1 h-[60px] border-2 border-[#FF6B00] text-[#FF6B00] bg-white hover:bg-[#FFF0E0] font-semibold text-lg rounded-xl transition duration-150 ease-out hover:scale-[1.02] active:scale-[0.97] flex items-center justify-center text-center"
               >
                 ✨ Créer une offre
               </Link>
