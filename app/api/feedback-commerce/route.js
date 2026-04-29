@@ -68,24 +68,59 @@ export async function POST(request) {
             subject: `💬 Nouveau retour client — ${note}/5 étoiles`,
             htmlContent: `<!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#F5F5F5;font-family:'Montserrat',Arial,sans-serif;">
-  <div style="max-width:600px;margin:0 auto;padding:24px 16px;">
-    <div style="background:#FF6B00;border-radius:16px 16px 0 0;padding:28px 24px;text-align:center;">
-      <p style="margin:0;color:white;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;">BONMOMENT</p>
-      <h1 style="margin:10px 0 4px;color:white;font-size:22px;font-weight:900;">💬 Nouveau retour client</h1>
-      <p style="margin:0;color:rgba(255,255,255,0.9);font-size:14px;">${commerce.nom}</p>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background:#F5F5F5;">
+
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">💬 Nouveau retour client — ${note}/5 étoiles — ${commerce.nom}</div>
+
+<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#F5F5F5" style="background:#F5F5F5;padding:20px 0;">
+<tr><td align="center" style="padding:20px 16px;">
+
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#FFFFFF;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+
+  <tr><td style="background:#FF6B00;padding:28px 24px;text-align:center;">
+    <span style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:900;color:#FFFFFF;letter-spacing:2px;">BONMOMENT</span>
+    <div style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.92);margin-top:8px;">💬 Nouveau retour client — ${commerce.nom}</div>
+  </td></tr>
+
+  <tr><td style="padding:32px 28px 8px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:15px;color:#3D3D3D;line-height:1.7;">
+
+    <p style="margin:0 0 16px;">Un client a laissé un retour sur ton commerce :</p>
+
+    <div style="background:#FFF7ED;border-left:4px solid #FF6B00;border-radius:8px;padding:16px 20px;margin-bottom:20px;">
+      <p style="margin:0;font-size:24px;">${etoiles}</p>
+      <p style="margin:6px 0 0;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;color:#FF6B00;">Note : ${note}/5</p>
+      ${commentaireHtml}
     </div>
-    <div style="background:white;padding:28px 24px;border-radius:0 0 16px 16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-      <p style="margin:0;font-size:15px;color:#0A0A0A;">Un client a laissé un retour sur ton commerce :</p>
-      <div style="margin:16px 0;padding:16px;background:#FFF7ED;border-left:4px solid #FF6B00;border-radius:8px;">
-        <p style="margin:0;font-size:22px;">${etoiles}</p>
-        <p style="margin:6px 0 0;font-size:14px;font-weight:700;color:#FF6B00;">Note : ${note}/5</p>
-        ${commentaireHtml}
-      </div>
-      <p style="margin:16px 0 0;font-size:12px;color:#9CA3AF;">Ce retour est privé — il ne sera pas publié publiquement.</p>
-    </div>
-  </div>
+
+    <p style="margin:0;font-size:12px;color:#9CA3AF;">Ce retour est privé — il ne sera pas publié publiquement.</p>
+
+  </td></tr>
+
+  <tr><td style="padding:20px 28px 32px;text-align:center;">
+    <a href="https://bonmoment.app/commercant/dashboard"
+       style="display:inline-block;background:#FF6B00;color:#FFFFFF;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;padding:14px 36px;border-radius:8px;text-decoration:none;box-shadow:0 2px 4px rgba(255,107,0,0.3);">
+      Voir mon tableau de bord →
+    </a>
+  </td></tr>
+
+  <tr><td style="padding:0 28px;">
+    <div style="border-top:1px solid #F0F0F0;"></div>
+  </td></tr>
+
+  <tr><td style="padding:20px 28px;text-align:center;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:12px;color:#999999;line-height:1.6;">
+    L'équipe BONMOMENT<br>
+    <a href="mailto:bonmomentapp@gmail.com" style="color:#999999;text-decoration:none;">bonmomentapp@gmail.com</a>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+
 </body>
 </html>`,
           }),

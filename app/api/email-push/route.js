@@ -104,27 +104,63 @@ export async function POST(req) {
           sender:      { name: 'BONMOMENT', email: 'bonmomentapp@gmail.com' },
           to:          [{ email: dest.email, name: prenom }],
           subject:     `🔥 ${commerce_nom} vient de publier une offre !`,
-          htmlContent: `
-<div style="font-family: Montserrat, Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; background: #ffffff;">
-  <div style="text-align: center; margin-bottom: 20px;">
-    <span style="font-weight: 900; font-size: 24px; color: #FF6B00; letter-spacing: -0.5px;">BONMOMENT</span>
-  </div>
-  <p style="font-size: 16px; color: #0A0A0A; margin: 0 0 12px;">Salut ${prenom} ! 👋</p>
-  <p style="font-size: 15px; color: #3D3D3D; margin: 0 0 16px;"><strong>${commerce_nom}</strong> vient de publier une offre à ${commerce_ville} :</p>
-  <div style="background: #FFF0E0; border-radius: 12px; padding: 20px; margin: 0 0 20px; text-align: center;">
-    <p style="font-size: 20px; font-weight: 800; color: #FF6B00; margin: 0 0 8px; line-height: 1.2;">${badge}</p>
-    ${dateFin ? `<p style="font-size: 13px; color: #666; margin: 0;">Disponible jusqu'au ${dateFin}</p>` : ''}
-  </div>
-  <div style="text-align: center; margin: 0 0 28px;">
-    <a href="https://bonmoment.app/ville/${villeSlug}" style="background: #FF6B00; color: #ffffff; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block;">Voir l'offre</a>
-  </div>
-  <hr style="border: none; border-top: 1px solid #eeeeee; margin: 0 0 20px;">
-  <p style="font-size: 11px; color: #999999; text-align: center; margin: 0; line-height: 1.6;">
-    Tu reçois cet email car tu suis <strong>${commerce_nom}</strong> ou la ville de <strong>${commerce_ville}</strong> sur BONMOMENT.<br>
-    <a href="https://bonmoment.app/profil" style="color: #FF6B00;">Gérer mes notifications</a>
-  </p>
-</div>
-          `.trim(),
+          htmlContent: `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background:#F5F5F5;">
+
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">🔥 ${commerce_nom} vient de publier une nouvelle offre à ${commerce_ville} !</div>
+
+<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#F5F5F5" style="background:#F5F5F5;padding:20px 0;">
+<tr><td align="center" style="padding:20px 16px;">
+
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#FFFFFF;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+
+  <tr><td style="background:#FF6B00;padding:28px 24px;text-align:center;">
+    <span style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:900;color:#FFFFFF;letter-spacing:2px;">BONMOMENT</span>
+    <div style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:15px;font-weight:600;color:rgba(255,255,255,0.92);margin-top:8px;">🔥 Nouvelle offre à ${commerce_ville}</div>
+  </td></tr>
+
+  <tr><td style="padding:32px 28px 8px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:16px;color:#3D3D3D;line-height:1.7;">
+    <p style="margin:0 0 12px;">Salut ${prenom} ! 👋</p>
+    <p style="margin:0 0 20px;font-size:15px;"><strong>${commerce_nom}</strong> vient de publier une offre à ${commerce_ville} :</p>
+
+    <div style="background:#FFF8F0;border-left:4px solid #FF6B00;border-radius:8px;padding:20px;margin-bottom:24px;text-align:center;">
+      <p style="margin:0;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:20px;font-weight:800;color:#FF6B00;line-height:1.2;">${badge}</p>
+      ${dateFin ? `<p style="margin:8px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#999999;">Disponible jusqu'au ${dateFin}</p>` : ''}
+    </div>
+  </td></tr>
+
+  <tr><td style="padding:0 28px 32px;text-align:center;">
+    <a href="https://bonmoment.app/ville/${villeSlug}"
+       style="display:inline-block;background:#FF6B00;color:#FFFFFF;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;padding:14px 36px;border-radius:8px;text-decoration:none;box-shadow:0 2px 4px rgba(255,107,0,0.3);">
+      Voir l'offre →
+    </a>
+  </td></tr>
+
+  <tr><td style="padding:0 28px;">
+    <div style="border-top:1px solid #F0F0F0;"></div>
+  </td></tr>
+
+  <tr><td style="padding:20px 28px;text-align:center;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:12px;color:#999999;line-height:1.6;">
+    L'équipe BONMOMENT<br>
+    <a href="mailto:bonmomentapp@gmail.com" style="color:#999999;text-decoration:none;">bonmomentapp@gmail.com</a><br><br>
+    <span style="font-size:11px;">Tu reçois cet email car tu suis <strong>${commerce_nom}</strong> ou la ville de <strong>${commerce_ville}</strong> sur BONMOMENT.</span><br><br>
+    <a href="https://bonmoment.app/profil" style="color:#999999;text-decoration:underline;font-size:11px;">Gérer mes notifications</a>
+    &nbsp;·&nbsp;
+    <a href="https://bonmoment.app/profil" style="color:#999999;text-decoration:underline;font-size:11px;">Se désinscrire</a>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+
+</body>
+</html>`,
         }),
       })
       sent++

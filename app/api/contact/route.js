@@ -33,39 +33,65 @@ export async function POST(req) {
     const safeEmail   = escapeHtml(email)
     const safeMessage = escapeHtml(message)
 
-    const emailHtml = `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-        <div style="background:#FF6B00;padding:24px;border-radius:12px 12px 0 0;">
-          <h1 style="color:#fff;margin:0;font-size:22px;">📧 Nouveau message via BON'Aide</h1>
-        </div>
-        <div style="background:#fff;padding:24px;border:1px solid #F0F0F0;">
-          <table style="width:100%;border-collapse:collapse;">
-            <tr>
-              <td style="padding:8px 0;width:120px;font-size:13px;font-weight:700;color:#9CA3AF;text-transform:uppercase;">Prénom</td>
-              <td style="padding:8px 0;font-size:14px;color:#0A0A0A;font-weight:600;">${safePrenom}</td>
-            </tr>
-            <tr>
-              <td style="padding:8px 0;font-size:13px;font-weight:700;color:#9CA3AF;text-transform:uppercase;">Email</td>
-              <td style="padding:8px 0;font-size:14px;color:#0A0A0A;font-weight:600;">
-                <a href="mailto:${safeEmail}" style="color:#FF6B00;">${safeEmail}</a>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:8px 0;font-size:13px;font-weight:700;color:#9CA3AF;text-transform:uppercase;">Profil</td>
-              <td style="padding:8px 0;font-size:14px;color:#0A0A0A;font-weight:600;">
-                ${profil === 'commercant' ? 'Commerçant 🏪' : 'Habitant 🏠'}
-              </td>
-            </tr>
-          </table>
-          <hr style="border:none;border-top:1px solid #F0F0F0;margin:16px 0;" />
-          <p style="font-size:13px;font-weight:700;color:#9CA3AF;text-transform:uppercase;margin:0 0 8px;">Message</p>
-          <p style="font-size:14px;color:#0A0A0A;line-height:1.6;white-space:pre-wrap;margin:0;">${safeMessage}</p>
-        </div>
-        <div style="background:#F5F5F5;padding:16px;border-radius:0 0 12px 12px;text-align:center;">
-          <p style="font-size:11px;color:#9CA3AF;margin:0;">BONMOMENT · bonmoment.app</p>
-        </div>
-      </div>
-    `
+    const emailHtml = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background:#F5F5F5;">
+
+<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#F5F5F5" style="background:#F5F5F5;padding:20px 0;">
+<tr><td align="center" style="padding:20px 16px;">
+
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#FFFFFF;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+
+  <tr><td style="background:#FF6B00;padding:28px 24px;text-align:center;">
+    <span style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:900;color:#FFFFFF;letter-spacing:2px;">BONMOMENT</span>
+    <div style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.92);margin-top:8px;">📧 Nouveau message via BON'Aide</div>
+  </td></tr>
+
+  <tr><td style="padding:32px 28px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:15px;color:#3D3D3D;line-height:1.7;">
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid #F0F0F0;margin-bottom:24px;">
+      <tr style="background:#FAFAFA;">
+        <td style="padding:10px 16px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;color:#9CA3AF;text-transform:uppercase;width:110px;">Prénom</td>
+        <td style="padding:10px 16px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:14px;font-weight:600;color:#0A0A0A;">${safePrenom}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 16px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;color:#9CA3AF;text-transform:uppercase;">Email</td>
+        <td style="padding:10px 16px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:14px;font-weight:600;color:#0A0A0A;">
+          <a href="mailto:${safeEmail}" style="color:#FF6B00;text-decoration:none;">${safeEmail}</a>
+        </td>
+      </tr>
+      <tr style="background:#FAFAFA;">
+        <td style="padding:10px 16px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;color:#9CA3AF;text-transform:uppercase;">Profil</td>
+        <td style="padding:10px 16px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:14px;font-weight:600;color:#0A0A0A;">
+          ${profil === 'commercant' ? 'Commerçant 🏪' : 'Habitant 🏠'}
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 8px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:1px;">Message</p>
+    <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0A0A0A;line-height:1.6;white-space:pre-wrap;background:#F9F9F9;border-radius:8px;padding:16px;">${safeMessage}</p>
+
+  </td></tr>
+
+  <tr><td style="padding:0 28px;">
+    <div style="border-top:1px solid #F0F0F0;"></div>
+  </td></tr>
+
+  <tr><td style="padding:20px 28px;text-align:center;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:12px;color:#999999;line-height:1.6;">
+    L'équipe BONMOMENT · bonmoment.app
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+
+</body>
+</html>`
 
     const res = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',

@@ -58,7 +58,7 @@ function buildEmailHtml(offres, villesAbonnees) {
   const offresHtml = offresMontrees.map(o => {
     const commerceNom = o.commerces?.nom || '—'
     const note        = o.commerces?.note_google
-      ? `<span style="font-size:12px;color:#6B7280;white-space:nowrap;">⭐ ${o.commerces.note_google}</span>`
+      ? `<span style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#6B7280;white-space:nowrap;">⭐ ${o.commerces.note_google}</span>`
       : ''
     const hDebut  = o.date_debut ? heureStr(o.date_debut) : null
     const hFin    = o.date_fin   ? heureStr(o.date_fin)   : null
@@ -68,34 +68,34 @@ function buildEmailHtml(offres, villesAbonnees) {
     const bons = (o.nb_bons_restants != null && o.nb_bons_restants !== 9999)
       ? `🎟 ${o.nb_bons_restants} bon${o.nb_bons_restants > 1 ? 's' : ''} disponible${o.nb_bons_restants > 1 ? 's' : ''}`
       : ''
-    const titreFull = `${prefixRemise(o.type_remise, o.valeur)}${o.titre}`
+    const badge = prefixRemise(o.type_remise, o.valeur).trim()
 
     return `
-<div style="background:#FAFAFA;border-radius:12px;padding:16px 18px;margin-bottom:14px;border-left:4px solid #FF6B00;">
+<div style="background:#FFF8F0;border-left:4px solid #FF6B00;border-radius:8px;padding:16px;margin-bottom:12px;">
   <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;"><tr>
     <td style="vertical-align:top;">
-      <p style="margin:0;font-size:14px;font-weight:800;color:#0A0A0A;font-family:'Montserrat',Arial,sans-serif;">${commerceNom}</p>
+      <span style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;color:#0A0A0A;">${commerceNom}</span>
     </td>
-    <td style="text-align:right;vertical-align:top;padding-left:8px;">${note}</td>
+    <td style="text-align:right;vertical-align:top;padding-left:8px;white-space:nowrap;">
+      ${note}${badge ? `<span style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#FF6B00;margin-left:6px;">${badge}</span>` : ''}
+    </td>
   </tr></table>
-  <p style="margin:6px 0 10px;font-size:15px;font-weight:700;color:#FF6B00;font-family:'Montserrat',Arial,sans-serif;line-height:1.3;">${titreFull}</p>
-  <p style="margin:0 0 14px;font-size:12px;color:#6B7280;font-family:Arial,sans-serif;">
-    ${horaire}${horaire && bons ? '&nbsp;&nbsp;·&nbsp;&nbsp;' : ''}${bons}
-  </p>
+  <p style="margin:6px 0 4px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:14px;color:#3D3D3D;">${o.titre}</p>
+  ${(horaire || bons) ? `<p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#999999;">${horaire}${horaire && bons ? '&nbsp;&nbsp;·&nbsp;&nbsp;' : ''}${bons}</p>` : ''}
   <a href="https://bonmoment.app/offre/${o.id}"
-     style="display:inline-block;background:#FF6B00;color:white;font-weight:700;font-size:13px;padding:10px 20px;border-radius:10px;text-decoration:none;font-family:'Montserrat',Arial,sans-serif;">
+     style="display:inline-block;background:#FF6B00;color:#FFFFFF;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;padding:10px 20px;border-radius:8px;text-decoration:none;box-shadow:0 2px 4px rgba(255,107,0,0.3);">
     Réserver mon bon →
   </a>
 </div>`
   }).join('')
 
   const resteHtml = reste > 0 ? `
-<div style="text-align:center;padding:8px 0 16px;">
+<p style="text-align:center;margin:4px 0 16px;">
   <a href="${lienVille}"
-     style="color:#FF6B00;font-weight:700;font-size:13px;text-decoration:none;font-family:'Montserrat',Arial,sans-serif;">
-    Et ${reste} autre${reste > 1 ? 's' : ''} bon${reste > 1 ? 's' : ''} plan${reste > 1 ? 's' : ''} → Voir tout
+     style="color:#FF6B00;font-family:Montserrat,Arial,Helvetica,sans-serif;font-weight:700;font-size:13px;text-decoration:none;">
+    + ${reste} autre${reste > 1 ? 's' : ''} bon${reste > 1 ? 's' : ''} plan${reste > 1 ? 's' : ''} →
   </a>
-</div>` : ''
+</p>` : ''
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -103,49 +103,52 @@ function buildEmailHtml(offres, villesAbonnees) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>${headerTitre}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
 </head>
 <body style="margin:0;padding:0;background:#F5F5F5;">
-<div style="max-width:600px;margin:0 auto;padding:24px 16px;font-family:'Montserrat',Arial,sans-serif;">
 
-  <!-- Header -->
-  <div style="background:#FF6B00;border-radius:16px 16px 0 0;padding:28px 24px;text-align:center;">
-    <p style="margin:0 0 8px;color:rgba(255,255,255,0.85);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;font-family:'Montserrat',Arial,sans-serif;">
-      BONMOMENT
-    </p>
-    <h1 style="margin:0;color:white;font-size:22px;font-weight:900;line-height:1.3;font-family:'Montserrat',Arial,sans-serif;">
-      🔥 ${headerTitre}
-    </h1>
-  </div>
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">🔥 ${headerTitre} — Réserve vite, les bons s'envolent !</div>
 
-  <!-- Corps -->
-  <div style="background:white;padding:24px;border-radius:0 0 16px 16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-    <p style="margin:0 0 20px;font-size:14px;color:#3D3D3D;font-family:'Montserrat',Arial,sans-serif;">
-      Réserve vite, les bons s'envolent ! 🏃
-    </p>
+<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#F5F5F5" style="background:#F5F5F5;padding:20px 0;">
+<tr><td align="center" style="padding:20px 16px;">
 
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#FFFFFF;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+
+  <tr><td style="background:#FF6B00;padding:28px 24px;text-align:center;">
+    <span style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:900;color:#FFFFFF;letter-spacing:2px;">BONMOMENT</span>
+    <div style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:rgba(255,255,255,0.92);margin-top:8px;">🔥 ${headerTitre}</div>
+  </td></tr>
+
+  <tr><td style="padding:32px 28px 8px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:15px;color:#3D3D3D;line-height:1.7;">
+    <p style="margin:0 0 20px;">Réserve vite, les bons s'envolent ! 🏃</p>
     ${offresHtml}
     ${resteHtml}
+  </td></tr>
 
-    <!-- CTA général -->
-    <div style="text-align:center;margin-top:20px;padding-top:20px;border-top:1px solid #F0F0F0;">
-      <a href="${lienVille}"
-         style="display:inline-block;background:#0A0A0A;color:white;font-weight:700;font-size:13px;padding:12px 24px;border-radius:10px;text-decoration:none;font-family:'Montserrat',Arial,sans-serif;">
-        Voir toutes les offres →
-      </a>
-    </div>
-  </div>
+  <tr><td style="padding:8px 28px 32px;text-align:center;">
+    <a href="${lienVille}"
+       style="display:inline-block;background:#FF6B00;color:#FFFFFF;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;padding:14px 36px;border-radius:8px;text-decoration:none;box-shadow:0 2px 4px rgba(255,107,0,0.3);">
+      Voir toutes les offres →
+    </a>
+  </td></tr>
 
-  <!-- Footer -->
-  <div style="text-align:center;padding:20px 0 0;color:#9CA3AF;font-size:11px;line-height:1.6;font-family:Arial,sans-serif;">
-    <p style="margin:0;">${footerText}</p>
-    <p style="margin:8px 0 0;">
-      <a href="https://bonmoment.app/profil" style="color:#FF6B00;text-decoration:none;">Gérer mes préférences</a>
-      &nbsp;·&nbsp;
-      <a href="https://bonmoment.app/profil" style="color:#9CA3AF;text-decoration:none;">Se désabonner</a>
-    </p>
-  </div>
+  <tr><td style="padding:0 28px;">
+    <div style="border-top:1px solid #F0F0F0;"></div>
+  </td></tr>
 
-</div>
+  <tr><td style="padding:20px 28px;text-align:center;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:12px;color:#999999;line-height:1.6;">
+    L'équipe BONMOMENT<br>
+    <a href="mailto:bonmomentapp@gmail.com" style="color:#999999;text-decoration:none;">bonmomentapp@gmail.com</a><br><br>
+    <span style="font-size:11px;">${footerText}</span><br><br>
+    <a href="https://bonmoment.app/profil" style="color:#999999;text-decoration:underline;font-size:11px;">Gérer mes préférences</a>
+    &nbsp;·&nbsp;
+    <a href="https://bonmoment.app/profil" style="color:#999999;text-decoration:underline;font-size:11px;">Se désinscrire</a>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+
 </body>
 </html>`
 }

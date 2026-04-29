@@ -80,50 +80,67 @@ export async function POST(request) {
 function buildEmailGagnant({ prenom, offre, commerce, adresse }) {
   return `<!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#F5F5F5;font-family:Arial,sans-serif;">
-  <div style="max-width:480px;margin:0 auto;padding:24px 16px;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Tu as gagné "${offre.titre}" !</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background:#F5F5F5;">
 
-    <!-- Header orange -->
-    <div style="background:linear-gradient(135deg,#FF6B00,#FFD700);border-radius:20px 20px 0 0;padding:40px 32px;text-align:center;">
-      <p style="margin:0;color:rgba(255,255,255,0.9);font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;">BONMOMENT</p>
-      <div style="font-size:64px;margin:16px 0 8px;">🎉</div>
-      <h1 style="margin:0;color:white;font-size:28px;font-weight:900;line-height:1.2;">
-        Félicitations ${prenom}&nbsp;!
-      </h1>
-      <p style="margin:10px 0 0;color:rgba(255,255,255,0.9);font-size:15px;">Tu as remporté le concours !</p>
-    </div>
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">🎉 Félicitations ${prenom} ! Tu as remporté le concours chez ${commerce.nom} !</div>
 
-    <!-- Corps -->
-    <div style="background:white;padding:32px;border-radius:0 0 20px 20px;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
-      <p style="margin:0 0 6px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#9CA3AF;">Tu as gagné</p>
-      <p style="margin:0 0 24px;font-size:22px;font-weight:900;color:#FF6B00;">${offre.titre}</p>
+<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#F5F5F5" style="background:#F5F5F5;padding:20px 0;">
+<tr><td align="center" style="padding:20px 16px;">
 
-      <div style="background:#FFF0E0;border-radius:12px;padding:16px 20px;margin-bottom:24px;">
-        <p style="margin:0 0 6px;font-size:15px;font-weight:700;color:#0A0A0A;">${commerce.nom}</p>
-        ${adresse ? `<p style="margin:0 0 4px;font-size:13px;color:#3D3D3D;">📍 ${adresse}</p>` : ''}
-        ${commerce.telephone ? `<p style="margin:0;font-size:13px;color:#3D3D3D;">📞 ${commerce.telephone}</p>` : ''}
-      </div>
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#FFFFFF;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
 
-      <p style="font-size:14px;color:#3D3D3D;line-height:1.6;margin:0 0 24px;">
-        Présente-toi chez <strong>${commerce.nom}</strong> pour récupérer ton lot.
-        Montre cet email ou ton bon BONMOMENT à l'accueil.
-      </p>
+  <tr><td style="background:#FF6B00;padding:32px 24px;text-align:center;">
+    <span style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:900;color:#FFFFFF;letter-spacing:2px;">BONMOMENT</span>
+    <div style="font-size:48px;line-height:1;margin:12px 0 8px;">🎉</div>
+    <div style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:24px;font-weight:900;color:#FFFFFF;line-height:1.2;">Félicitations ${prenom}&nbsp;!</div>
+    <div style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:15px;color:rgba(255,255,255,0.92);margin-top:6px;">Tu as remporté le concours !</div>
+  </td></tr>
 
-      <div style="text-align:center;">
-        <a href="https://bonmoment.app"
-          style="display:inline-block;background:#FF6B00;color:white;font-weight:700;font-size:14px;padding:16px 32px;border-radius:14px;text-decoration:none;">
-          Voir mes bons →
-        </a>
-      </div>
-    </div>
+  <tr><td style="padding:32px 28px 8px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:16px;color:#3D3D3D;line-height:1.7;">
 
-    <!-- Footer -->
-    <div style="text-align:center;padding:20px 0 0;color:#9CA3AF;font-size:11px;">
-      <p style="margin:0;">BONMOMENT — Soyez là au bon moment</p>
-    </div>
+    <p style="margin:0 0 4px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#9CA3AF;">Tu as gagné</p>
+    <p style="margin:0 0 24px;font-size:22px;font-weight:900;color:#FF6B00;">${offre.titre}</p>
 
-  </div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#FFF0E0;border-radius:12px;margin-bottom:24px;">
+      <tr><td style="padding:16px 20px;">
+        <p style="margin:0 0 4px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;color:#0A0A0A;">${commerce.nom}</p>
+        ${adresse ? `<p style="margin:0;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:13px;color:#3D3D3D;">📍 ${adresse}</p>` : ''}
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 24px;font-size:14px;color:#3D3D3D;line-height:1.6;">
+      Présente-toi chez <strong>${commerce.nom}</strong> pour récupérer ton lot.
+      Montre cet email ou ton bon BONMOMENT à l'accueil.
+    </p>
+
+  </td></tr>
+
+  <tr><td style="padding:0 28px 32px;text-align:center;">
+    <a href="https://bonmoment.app"
+       style="display:inline-block;background:#FF6B00;color:#FFFFFF;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;padding:14px 36px;border-radius:8px;text-decoration:none;box-shadow:0 2px 4px rgba(255,107,0,0.3);">
+      Voir mes bons →
+    </a>
+  </td></tr>
+
+  <tr><td style="padding:0 28px;">
+    <div style="border-top:1px solid #F0F0F0;"></div>
+  </td></tr>
+
+  <tr><td style="padding:20px 28px;text-align:center;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:12px;color:#999999;line-height:1.6;">
+    L'équipe BONMOMENT<br>
+    <a href="mailto:bonmomentapp@gmail.com" style="color:#999999;text-decoration:none;">bonmomentapp@gmail.com</a>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+
 </body>
 </html>`
 }

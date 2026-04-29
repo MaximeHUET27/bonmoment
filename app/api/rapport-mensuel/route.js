@@ -146,9 +146,9 @@ function buildEmailHtml({ commerce, kpis, moisLabel, anneeLabel, unsubscribeUrl 
   ]
 
   const lignesHtml = lignes.map(([label, valeur], i) => `
-    <tr style="background:${i % 2 === 0 ? '#FAFAFA' : 'white'};">
-      <td style="padding:12px 16px;font-size:13px;color:#6B7280;border-bottom:1px solid #F0F0F0;">${label}</td>
-      <td style="padding:12px 16px;font-size:14px;font-weight:700;color:#0A0A0A;text-align:right;border-bottom:1px solid #F0F0F0;">${valeur}</td>
+    <tr style="background:${i % 2 === 0 ? '#FAFAFA' : '#FFFFFF'};">
+      <td style="padding:12px 16px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:14px;color:#3D3D3D;">${label}</td>
+      <td style="padding:12px 16px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#0A0A0A;text-align:right;">${valeur}</td>
     </tr>`).join('')
 
   return `<!DOCTYPE html>
@@ -157,66 +157,64 @@ function buildEmailHtml({ commerce, kpis, moisLabel, anneeLabel, unsubscribeUrl 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Bilan BONMOMENT — ${moisLabel} ${anneeLabel}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
 </head>
-<body style="margin:0;padding:0;background:#F5F5F5;font-family:'Montserrat',Arial,sans-serif;">
-  <div style="max-width:600px;margin:0 auto;padding:24px 16px;">
+<body style="margin:0;padding:0;background:#F5F5F5;">
 
-    <!-- Header -->
-    <div style="background:#FF6B00;border-radius:16px 16px 0 0;padding:32px 24px;text-align:center;">
-      <p style="margin:0;color:white;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;">BONMOMENT</p>
-      <h1 style="margin:12px 0 4px;color:white;font-size:26px;font-weight:900;line-height:1.2;">
-        📊 Ton bilan mensuel
-      </h1>
-      <p style="margin:0;color:rgba(255,255,255,0.9);font-size:16px;font-weight:600;">
-        ${moisLabel} ${anneeLabel} — ${commerce.nom}
-      </p>
-    </div>
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">📊 Ton bilan BONMOMENT — ${moisLabel} ${anneeLabel} — ${commerce.nom}</div>
 
-    <!-- Corps -->
-    <div style="background:white;padding:28px 24px;border-radius:0 0 16px 16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#F5F5F5" style="background:#F5F5F5;padding:20px 0;">
+<tr><td align="center" style="padding:20px 16px;">
 
-      <p style="margin:0 0 20px;font-size:14px;color:#3D3D3D;line-height:1.6;">
-        Voici le résumé de ton activité sur BONMOMENT pour le mois de <strong>${moisLabel} ${anneeLabel}</strong>.
-      </p>
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#FFFFFF;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
 
-      <!-- Tableau KPIs -->
-      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-radius:12px;overflow:hidden;border:1px solid #F0F0F0;">
-        <thead>
-          <tr style="background:#FF6B00;">
-            <th style="padding:12px 16px;font-size:12px;font-weight:700;color:white;text-align:left;text-transform:uppercase;letter-spacing:1px;">Indicateur</th>
-            <th style="padding:12px 16px;font-size:12px;font-weight:700;color:white;text-align:right;text-transform:uppercase;letter-spacing:1px;">Valeur</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${lignesHtml}
-        </tbody>
-      </table>
+  <tr><td style="background:#FF6B00;padding:28px 24px;text-align:center;">
+    <span style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:900;color:#FFFFFF;letter-spacing:2px;">BONMOMENT</span>
+    <div style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:16px;font-weight:600;color:rgba(255,255,255,0.92);margin-top:8px;">📊 Bilan ${moisLabel} ${anneeLabel} — ${commerce.nom}</div>
+  </td></tr>
 
-      ${messageHtml}
+  <tr><td style="padding:32px 28px 8px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:15px;color:#3D3D3D;line-height:1.7;">
 
-      <!-- CTA -->
-      <div style="text-align:center;margin-top:28px;">
-        <a
-          href="${APP_URL}/commercant/offre/nouvelle"
-          style="display:inline-block;background:#FF6B00;color:white;font-family:'Montserrat',Arial,sans-serif;font-weight:700;font-size:15px;padding:16px 32px;border-radius:12px;text-decoration:none;"
-        >
-          Créer une nouvelle offre →
-        </a>
-      </div>
+    <p style="margin:0 0 20px;">Voici le résumé de ton activité sur BONMOMENT pour le mois de <strong>${moisLabel} ${anneeLabel}</strong>.</p>
 
-    </div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid #F0F0F0;margin-bottom:20px;">
+      <thead>
+        <tr style="background:#FF6B00;">
+          <th style="padding:12px 16px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;color:#FFFFFF;text-align:left;text-transform:uppercase;letter-spacing:1px;">Indicateur</th>
+          <th style="padding:12px 16px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;color:#FFFFFF;text-align:right;text-transform:uppercase;letter-spacing:1px;">Valeur</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${lignesHtml}
+      </tbody>
+    </table>
 
-    <!-- Footer -->
-    <div style="text-align:center;padding:20px 0 0;color:#9CA3AF;font-size:11px;line-height:1.8;">
-      <p style="margin:0;">Tu reçois ce rapport car tu es commerçant sur BONMOMENT.</p>
-      <p style="margin:4px 0 0;">
-        <a href="${unsubscribeUrl}" style="color:#9CA3AF;text-decoration:underline;">
-          Se désinscrire de ces rapports
-        </a>
-      </p>
-    </div>
+    ${messageHtml}
 
-  </div>
+  </td></tr>
+
+  <tr><td style="padding:8px 28px 32px;text-align:center;">
+    <a href="${APP_URL}/commercant/offre/nouvelle"
+       style="display:inline-block;background:#FF6B00;color:#FFFFFF;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;padding:14px 36px;border-radius:8px;text-decoration:none;box-shadow:0 2px 4px rgba(255,107,0,0.3);">
+      Créer une nouvelle offre →
+    </a>
+  </td></tr>
+
+  <tr><td style="padding:0 28px;">
+    <div style="border-top:1px solid #F0F0F0;"></div>
+  </td></tr>
+
+  <tr><td style="padding:20px 28px;text-align:center;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:12px;color:#999999;line-height:1.6;">
+    L'équipe BONMOMENT<br>
+    <a href="mailto:bonmomentapp@gmail.com" style="color:#999999;text-decoration:none;">bonmomentapp@gmail.com</a><br><br>
+    Tu reçois ce rapport car tu es commerçant sur BONMOMENT.<br><br>
+    <a href="${unsubscribeUrl}" style="color:#999999;text-decoration:underline;font-size:11px;">Se désinscrire de ces rapports</a>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+
 </body>
 </html>`
 }
