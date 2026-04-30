@@ -41,6 +41,8 @@ const PLANS = [
   },
 ]
 
+const REMISES = { decouverte: 10, essentiel: 15, pro: 20 }
+
 function AbonnementContent() {
   const { user, loading, supabase } = useAuth()
   const router       = useRouter()
@@ -48,11 +50,17 @@ function AbonnementContent() {
 
   const isAdmin = user?.email === 'bonmomentapp@gmail.com'
 
-  const [commerce,      setCommerce]      = useState(null)
-  const [fetching,      setFetching]      = useState(true)
-  const [cgvAccepted,   setCgvAccepted]   = useState(false)
-  const [choosing,      setChoosing]      = useState(null)   // clé du palier en cours de traitement
-  const [error,         setError]         = useState(null)
+  const [commerce,          setCommerce]          = useState(null)
+  const [fetching,          setFetching]          = useState(true)
+  const [cgvAccepted,       setCgvAccepted]       = useState(false)
+  const [choosing,          setChoosing]          = useState(null)
+  const [error,             setError]             = useState(null)
+  const [codeInput,         setCodeInput]         = useState('')
+  const [codeStatut,        setCodeStatut]        = useState(null)
+  const [codeErreur,        setCodeErreur]        = useState(null)
+  const [parrainNom,        setParrainNom]        = useState('')
+  const [parrainCommerceId, setParrainCommerceId] = useState(null)
+  const [codeValue,         setCodeValue]         = useState('')
 
   useEffect(() => {
     if (!loading && !user) router.replace('/')
@@ -80,6 +88,46 @@ function AbonnementContent() {
         setFetching(false)
       })
   }, [user, supabase, searchParams, router])
+
+  async function handleAppliquerCode() {
+    if (!codeInput.trim() || !commerce?.id) return
+    setCodeStatut('loading')
+    setCodeErreur(null)
+    try {
+      const res = await fetch(
+        `/api/parrainage/valider-code?code=${encodeURIComponent(codeInput.trim().toUpperCase())}&commerce_id=${commerce.id}`
+      )
+      const data = await res.json()
+      if (data.valid) {
+        setCodeStatut('valid')
+        setParrainNom(data.parrain_nom)
+        setParrainCommerceId(data.parrain_commerce_id)
+        setCodeValue(codeInput.trim().toUpperCase())
+      } else {
+        setCodeStatut('invalid')
+        const msgs = {
+          code_inconnu:    "Ce code n'existe pas",
+          code_expire:     'Ce code a expiré',
+          auto_parrainage: 'Tu ne peux pas utiliser ton propre code',
+          limite_atteinte: 'Ce commerçant a atteint sa limite de parrainages ce mois',
+          parrain_inactif: "Ce commerçant n'est plus actif",
+        }
+        setCodeErreur(msgs[data.error] || 'Code invalide')
+      }
+    } catch {
+      setCodeStatut('invalid')
+      setCodeErreur('Erreur réseau — réessaie')
+    }
+  }
+
+  function handleRetirerCode() {
+    setCodeInput('')
+    setCodeStatut(null)
+    setCodeErreur(null)
+    setParrainNom('')
+    setParrainCommerceId(null)
+    setCodeValue('')
+  }
 
   async function handleChoix(palier) {
     if (!cgvAccepted || choosing) return
@@ -118,7 +166,14 @@ function AbonnementContent() {
       const res  = await fetch('/api/stripe/checkout', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ palier, commerce_id: commerce.id, isFirstSubscription }),
+        body:    JSON.stringify({
+          palier,
+          commerce_id:          commerce.id,
+          isFirstSubscription,
+          ...(codeValue && parrainCommerceId
+            ? { code_parrainage: codeValue, parrain_commerce_id: parrainCommerceId }
+            : {}),
+        }),
       })
       const data = await res.json()
       if (data.url) {
@@ -191,6 +246,61 @@ function AbonnementContent() {
           </p>
         </div>
 
+        {/* ── Code parrainage ── */}
+        <div className="flex flex-col gap-2">
+          <p className="text-xs font-bold text-[#0A0A0A] uppercase tracking-widest">
+            Code de parrainage
+          </p>
+          {codeStatut !== 'valid' ? (
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                value={codeInput}
+                onChange={e => {
+                  setCodeInput(e.target.value.toUpperCase())
+                  setCodeErreur(null)
+                  if (codeStatut === 'invalid') setCodeStatut(null)
+                }}
+                onKeyDown={e => e.key === 'Enter' && handleAppliquerCode()}
+                placeholder="Code de parrainage (optionnel)"
+                maxLength={8}
+                style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '15px' }}
+                className={`flex-1 px-4 py-3 border rounded-lg outline-none transition-colors placeholder:text-[#999] ${
+                  codeStatut === 'invalid'
+                    ? 'border-red-400 bg-red-50'
+                    : 'border-[#E0E0E0] focus:border-[#FF6B00]'
+                }`}
+              />
+              <button
+                onClick={handleAppliquerCode}
+                disabled={!codeInput.trim() || codeStatut === 'loading'}
+                style={{ fontFamily: 'Montserrat, sans-serif' }}
+                className="bg-[#FF6B00] hover:bg-[#CC5500] active:bg-[#AA4400] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm px-6 py-3 rounded-lg transition-colors whitespace-nowrap min-h-[48px] flex items-center justify-center"
+              >
+                {codeStatut === 'loading' ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : 'Appliquer'}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 px-4 py-3 border border-green-500 bg-green-50 rounded-lg">
+              <p className="flex-1 text-sm text-green-700 font-semibold">
+                ✅ Code accepté — parrainage de {parrainNom}
+              </p>
+              <button
+                onClick={handleRetirerCode}
+                className="text-green-700 hover:text-green-900 font-bold text-lg leading-none transition-colors shrink-0"
+                aria-label="Retirer le code"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+          {codeStatut === 'invalid' && codeErreur && (
+            <p className="text-xs text-red-500 font-semibold">{codeErreur}</p>
+          )}
+        </div>
+
         {/* ── Cartes paliers — row sur desktop, colonne sur mobile ── */}
         <div className="flex flex-col md:flex-row gap-4 md:gap-3 md:items-stretch">
           {PLANS.map(plan => {
@@ -216,10 +326,22 @@ function AbonnementContent() {
                   <p className={`text-lg font-black ${plan.populaire ? 'text-[#FF6B00]' : 'text-[#0A0A0A]'}`}>
                     {plan.nom}
                   </p>
-                  <p className="text-2xl font-black text-[#0A0A0A] mt-0.5 leading-none">
-                    {plan.prix}€
-                    <span className="text-sm font-semibold text-[#3D3D3D]/60">/mois</span>
-                  </p>
+                  {codeStatut === 'valid' ? (
+                    <>
+                      <p className="text-sm line-through text-gray-400 mt-0.5">{plan.prix}€/mois</p>
+                      <p className="text-xl font-black text-green-600 leading-tight">
+                        {plan.prix - REMISES[plan.key]}€
+                        <span className="text-xs font-semibold text-green-600/80"> sur ta 1ère mensualité payante</span>
+                      </p>
+                      <p className="text-xs text-green-600 mt-0.5">(-{REMISES[plan.key]}€ parrainage)</p>
+                      <p className="text-xs text-gray-400 mt-0.5">puis {plan.prix}€/mois</p>
+                    </>
+                  ) : (
+                    <p className="text-2xl font-black text-[#0A0A0A] mt-0.5 leading-none">
+                      {plan.prix}€
+                      <span className="text-sm font-semibold text-[#3D3D3D]/60">/mois</span>
+                    </p>
+                  )}
                 </div>
 
                 {/* Caractéristiques */}

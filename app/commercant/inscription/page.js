@@ -89,17 +89,12 @@ export default function InscriptionCommercant() {
   const [query, setQuery]               = useState('')
   const [predictions, setPredictions]   = useState([])
   const [selectedPlace, setSelectedPlace] = useState(null)
-  const [codeParrainage, setCodeParrainage] = useState('')
   const [showPredictions, setShowPredictions] = useState(false)
 
   // États d'envoi
   const [showAllHoraires, setShowAllHoraires] = useState(false)
   const [submitting, setSubmitting]     = useState(false)
   const [duplicate, setDuplicate]       = useState(false)
-  const [parrainInvalid,  setParrainInvalid]  = useState(false)
-  const [parrainExpire,   setParrainExpire]   = useState(false)
-  const [parrainUtilise,  setParrainUtilise]  = useState(false)
-  const [parrainAutoRef,  setParrainAutoRef]  = useState(false)
   const [submitError, setSubmitError]   = useState(null)
 
   // Multi-commerce
@@ -217,10 +212,6 @@ export default function InscriptionCommercant() {
     if (!selectedPlace || !user) return
     setSubmitting(true)
     setDuplicate(false)
-    setParrainInvalid(false)
-    setParrainExpire(false)
-    setParrainUtilise(false)
-    setParrainAutoRef(false)
     setSubmitError(null)
 
     // 1. Vérification du doublon
@@ -236,51 +227,7 @@ export default function InscriptionCommercant() {
       return
     }
 
-    // 2. Validation du code de parrainage (si renseigné)
-    let parrainCodeId      = null
-    let parrainCommerceId  = null
-    const cleanCode = codeParrainage.trim().toUpperCase()
-    if (cleanCode) {
-      const { data: codeRow } = await supabase
-        .from('codes_parrainage')
-        .select('id, statut, expire_at, commerce_id')
-        .eq('code', cleanCode)
-        .maybeSingle()
-
-      if (!codeRow) {
-        setParrainInvalid(true)
-        setSubmitting(false)
-        return
-      }
-      if (codeRow.statut === 'utilise') {
-        setParrainUtilise(true)
-        setSubmitting(false)
-        return
-      }
-      if (codeRow.statut === 'expire' || new Date(codeRow.expire_at) < new Date()) {
-        setParrainExpire(true)
-        setSubmitting(false)
-        return
-      }
-
-      // Anti-auto-parrainage : le code ne peut pas appartenir à un commerce du même utilisateur
-      const { data: ownedCommerce } = await supabase
-        .from('commerces')
-        .select('id')
-        .eq('id', codeRow.commerce_id)
-        .eq('owner_id', user.id)
-        .maybeSingle()
-      if (ownedCommerce) {
-        setParrainAutoRef(true)
-        setSubmitting(false)
-        return
-      }
-
-      parrainCodeId     = codeRow.id
-      parrainCommerceId = codeRow.commerce_id
-    }
-
-    // 3. Insertion du commerce (on récupère l'id pour l'upload de photo)
+    // 2. Insertion du commerce (on récupère l'id pour l'upload de photo)
     const { data: insertData, error: insertError } = await supabase.from('commerces').insert({
       owner_id:            user.id,
       place_id:            selectedPlace.place_id,
@@ -296,7 +243,6 @@ export default function InscriptionCommercant() {
       latitude:            selectedPlace.latitude,
       longitude:           selectedPlace.longitude,
       abonnement_actif:    true,
-      ...(parrainCommerceId ? { parrain_id: parrainCommerceId } : {}),
     }).select('id').single()
 
     if (insertError) {
@@ -336,17 +282,7 @@ export default function InscriptionCommercant() {
       }).catch(err => console.error('upsert-ville:', err))
     }
 
-    // 4. Marquer le code de parrainage comme utilisé
-    // utilise_par = id du commerce filleul (pas le user.id)
-    if (parrainCodeId) {
-      const { error: parrainErr } = await supabase
-        .from('codes_parrainage')
-        .update({ utilise_par: insertData.id, statut: 'utilise', utilise_at: new Date().toISOString() })
-        .eq('id', parrainCodeId)
-      if (parrainErr) console.error('Parrainage update:', parrainErr.message)
-    }
-
-    // 5. Passage du user en rôle commerçant
+    // 3. Passage du user en rôle commerçant
     const { error: roleErr } = await supabase.from('users').update({ role: 'commercant' }).eq('id', user.id)
     if (roleErr) console.error('Role update:', roleErr.message)
 
@@ -625,45 +561,6 @@ export default function InscriptionCommercant() {
                     </a>.
                   </p>
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* ÉTAPE 3 — Code de parrainage */}
-          {selectedPlace && !duplicate && (
-            <div className="animate-in fade-in duration-300">
-              <StepLabel num={3} optional>Code de parrainage</StepLabel>
-              <p className="text-xs text-[#3D3D3D]/60 mb-3">
-                Si un autre commerçant t&apos;a recommandé BONMOMENT, entre son code pour que
-                vous bénéficiez tous les deux d&apos;une remise sur le premier mois.
-              </p>
-              <input
-                type="text"
-                value={codeParrainage}
-                onChange={e => { setCodeParrainage(e.target.value.toUpperCase()); setParrainInvalid(false); setParrainExpire(false); setParrainUtilise(false); setParrainAutoRef(false) }}
-                placeholder="Ex : BMABC123"
-                maxLength={8}
-                className="w-full px-4 py-3.5 bg-[#F5F5F5] rounded-2xl border-2 border-transparent focus:border-[#FF6B00] focus:bg-white outline-none text-sm font-mono font-bold text-[#0A0A0A] tracking-widest placeholder:font-sans placeholder:tracking-normal placeholder:text-[#3D3D3D]/40 transition-all"
-              />
-              {parrainInvalid && (
-                <p className="mt-2 text-xs text-red-500 font-semibold">
-                  ❌ Code de parrainage introuvable. Vérifie le code.
-                </p>
-              )}
-              {parrainExpire && (
-                <p className="mt-2 text-xs text-red-500 font-semibold">
-                  ❌ Ce code est expiré.
-                </p>
-              )}
-              {parrainUtilise && (
-                <p className="mt-2 text-xs text-red-500 font-semibold">
-                  ❌ Ce code a déjà été utilisé.
-                </p>
-              )}
-              {parrainAutoRef && (
-                <p className="mt-2 text-xs text-red-500 font-semibold">
-                  ❌ Tu ne peux pas utiliser un code issu d&apos;un de tes propres commerces.
-                </p>
               )}
             </div>
           )}

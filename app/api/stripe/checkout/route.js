@@ -1,10 +1,16 @@
 import { stripe } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { rateLimit } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
 const checkRate = rateLimit({ maxRequests: 5, windowMs: 60 * 1000 })
+
+const supabaseAdmin = createAdminClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+)
 
 export async function POST(request) {
   const limited = checkRate(request)
@@ -15,7 +21,7 @@ export async function POST(request) {
   if (!user) return Response.json({ error: 'Non authentifié' }, { status: 401 })
 
   const body = await request.json().catch(() => ({}))
-  const { palier, commerce_id, isFirstSubscription } = body
+  const { palier, commerce_id, isFirstSubscription, code_parrainage, parrain_commerce_id } = body
 
   const priceId = {
     decouverte: process.env.STRIPE_PRICE_DECOUVERTE,
@@ -46,12 +52,81 @@ export async function POST(request) {
     return Response.json({ error: 'Commerce introuvable' }, { status: 404 })
   }
 
+  // ── Validation et application du code parrainage (re-validation serveur) ──
+  let parrainIdEffectif = commerce.parrain_id
+
+  if (code_parrainage && parrain_commerce_id && isFirstSubscription) {
+    const codeUpper = code_parrainage.trim().toUpperCase()
+    let codeValide  = false
+
+    do {
+      const { data: codeRow } = await supabaseAdmin
+        .from('codes_parrainage')
+        .select('id, statut, expire_at, commerce_id')
+        .eq('code', codeUpper)
+        .eq('statut', 'actif')
+        .maybeSingle()
+
+      if (!codeRow) break
+      if (new Date(codeRow.expire_at) <= new Date()) break
+      if (codeRow.commerce_id === commerce_id) break
+      if (codeRow.commerce_id !== parrain_commerce_id) break
+
+      // Anti-auto-parrainage: vérifier que le parrain n'appartient pas au même utilisateur
+      const { data: parrainCom } = await supabaseAdmin
+        .from('commerces')
+        .select('id, nom, abonnement_actif, owner_id')
+        .eq('id', codeRow.commerce_id)
+        .maybeSingle()
+
+      if (!parrainCom) break
+      if (parrainCom.owner_id === user.id) break
+      if (!parrainCom.abonnement_actif) break
+
+      // Limite 3 parrainages ce mois calendaire
+      const debutMois = new Date()
+      debutMois.setDate(1)
+      debutMois.setHours(0, 0, 0, 0)
+      const { count } = await supabaseAdmin
+        .from('codes_parrainage')
+        .select('id', { count: 'exact', head: true })
+        .eq('commerce_id', codeRow.commerce_id)
+        .eq('statut', 'utilise')
+        .gte('utilise_at', debutMois.toISOString())
+
+      if ((count ?? 0) >= 3) break
+
+      // Code valide — mettre à jour parrain_id et marquer le code comme utilisé
+      await supabaseAdmin
+        .from('commerces')
+        .update({ parrain_id: parrain_commerce_id })
+        .eq('id', commerce_id)
+
+      await supabaseAdmin
+        .from('codes_parrainage')
+        .update({
+          statut:      'utilise',
+          utilise_par: commerce_id,
+          utilise_at:  new Date().toISOString(),
+        })
+        .eq('id', codeRow.id)
+
+      parrainIdEffectif = parrain_commerce_id
+      codeValide = true
+    } while (false)
+
+    if (!codeValide) {
+      // Code fourni mais invalide — on continue sans coupon
+      parrainIdEffectif = commerce.parrain_id
+    }
+  }
+
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bonmoment.app'
 
   // ── Coupon parrainage filleul ─────────────────────────────────────────────
   // S'applique à la première facture payante (après la période d'essai)
   const subscriptionDiscounts = []
-  if (commerce.parrain_id && isFirstSubscription) {
+  if (parrainIdEffectif && isFirstSubscription) {
     const discountAmountsCents = { decouverte: 1000, essentiel: 1500, pro: 2000 }
     const amountOff = discountAmountsCents[palier] ?? 1000
     try {
