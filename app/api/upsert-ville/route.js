@@ -17,17 +17,22 @@ export async function POST(request) {
   const nom  = body.nom?.trim()
   if (!nom) return NextResponse.json({ error: 'Nom requis' }, { status: 400 })
 
-  /* Récupère code INSEE + département via geo.api.gouv.fr */
+  /* Récupère code INSEE + département + coordonnées via geo.api.gouv.fr */
   let code_insee  = null
   let departement = null
+  let latitude    = null
+  let longitude   = null
   try {
     const res  = await fetch(
-      `https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(nom)}&fields=code,codeDepartement&boost=population&limit=1`,
+      `https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(nom)}&fields=code,codeDepartement,centre&boost=population&limit=1`,
       { signal: AbortSignal.timeout(4000) }
     )
     const data = await res.json()
-    code_insee  = data[0]?.code            ?? null
-    departement = data[0]?.codeDepartement ?? null
+    code_insee  = data[0]?.code                        ?? null
+    departement = data[0]?.codeDepartement             ?? null
+    // GeoJSON : centre.coordinates = [longitude, latitude]
+    longitude   = data[0]?.centre?.coordinates?.[0]   ?? null
+    latitude    = data[0]?.centre?.coordinates?.[1]   ?? null
   } catch {
     /* geo.api indisponible → sera null */
   }
@@ -49,7 +54,7 @@ export async function POST(request) {
     /* Nouvelle ville → INSERT (on ignore si une course condition crée un doublon) */
     const { error } = await admin
       .from('villes')
-      .insert({ nom, code_insee, departement, active: true })
+      .insert({ nom, code_insee, departement, active: true, latitude, longitude })
     if (error && !error.message.includes('duplicate')) {
       console.error('[upsert-ville] insert error:', error.message)
     }
