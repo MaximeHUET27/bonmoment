@@ -46,30 +46,36 @@ export async function POST(request) {
   /* Vérifie si la ville existe déjà (case-insensitive) */
   const { data: existing } = await admin
     .from('villes')
-    .select('id, active')
+    .select('id, active, latitude, longitude')
     .ilike('nom', nom)
     .maybeSingle()
 
   if (!existing) {
-    /* Nouvelle ville → INSERT (on ignore si une course condition crée un doublon) */
+    /* Nouvelle ville → INSERT */
     const { error } = await admin
       .from('villes')
       .insert({ nom, code_insee, departement, active: true, latitude, longitude })
     if (error && !error.message.includes('duplicate')) {
       console.error('[upsert-ville] insert error:', error.message)
     }
-  } else if (!existing.active) {
-    /* Ville existante mais inactive → activer */
-    const { error } = await admin
-      .from('villes')
-      .update({ active: true })
-      .eq('id', existing.id)
-    if (error) {
-      console.error('[upsert-ville] update error:', error.message)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+  } else {
+    /* Ville existante → activer si besoin + compléter les coordonnées manquantes */
+    const updates = {}
+    if (!existing.active)   updates.active = true
+    if (!existing.latitude  && latitude)  updates.latitude  = latitude
+    if (!existing.longitude && longitude) updates.longitude = longitude
+
+    if (Object.keys(updates).length > 0) {
+      const { error } = await admin
+        .from('villes')
+        .update(updates)
+        .eq('id', existing.id)
+      if (error) {
+        console.error('[upsert-ville] update error:', error.message)
+        return NextResponse.json({ error: error.message }, { status: 500 })
+      }
     }
   }
-  /* Sinon : déjà active → no-op */
 
   return NextResponse.json({ success: true })
 }
