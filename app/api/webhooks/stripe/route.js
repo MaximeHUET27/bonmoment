@@ -94,6 +94,8 @@ export async function POST(request) {
         const invoice = event.data.object
         // On ne traite que les factures d'abonnement (pas les one-time)
         if (!invoice.subscription) break
+        // Ignorer les factures à 0€ (trial, ou entièrement couvertes par un avoir)
+        if (!invoice.amount_paid || invoice.amount_paid === 0) break
 
         // Cherche le commerce filleul via son stripe_subscription_id
         const { data: filleul } = await supabaseAdmin
