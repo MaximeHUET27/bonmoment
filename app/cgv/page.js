@@ -64,13 +64,13 @@ export default function CGV() {
                   <td className="px-4 py-3 font-semibold text-[#0A0A0A]">Découverte</td>
                   <td className="px-4 py-3">29 €/mois — 4 offres/mois — Bons illimités</td>
                 </tr>
-                <tr className="border-b border-[#F5F5F5] bg-[#FFF8F3]">
-                  <td className="px-4 py-3 font-semibold text-[#FF6B00]">Essentiel</td>
+                <tr className="border-b border-[#F5F5F5]">
+                  <td className="px-4 py-3 font-semibold text-[#0A0A0A]">Essentiel</td>
                   <td className="px-4 py-3">49 €/mois — 8 offres/mois — Bons illimités</td>
                 </tr>
-                <tr>
-                  <td className="px-4 py-3 font-semibold text-[#0A0A0A]">Pro</td>
-                  <td className="px-4 py-3">79 €/mois — 16 offres/mois — Bons illimités</td>
+                <tr className="bg-[#FFF8F3]">
+                  <td className="px-4 py-3 font-semibold text-[#FF6B00]">Pro ⭐</td>
+                  <td className="px-4 py-3">79 €/mois — 16 offres/mois — Bons illimités — Carte de fidélité unique et dématérialisée</td>
                 </tr>
               </tbody>
             </table>
@@ -103,7 +103,6 @@ export default function CGV() {
             <ul className="list-disc pl-5 space-y-1 text-[#3D3D3D]/80">
               <li>Un parrain ne peut bénéficier de cette remise que pour 3 parrainages maximum par mois calendaire — au-delà, le code reste actif mais n&apos;ouvre plus droit à la remise pour le mois en cours</li>
               <li>Chaque code de parrainage a une durée de validité de 3 mois à compter de sa date de génération. À expiration, un nouveau code est automatiquement régénéré et l&apos;ancien ne peut plus être utilisé</li>
-              <li>Les remises de parrainage sont cumulables sans limite au lancement de la plateforme</li>
               <li>La remise est non remboursable, non reportable et ne peut pas être convertie en avoir</li>
               <li>BONMOMENT se réserve le droit de suspendre le bénéfice du parrainage en cas d&apos;usage frauduleux détecté (auto-parrainage, faux comptes, tentatives de contournement des limites mensuelles)</li>
             </ul>

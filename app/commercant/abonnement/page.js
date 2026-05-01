@@ -355,7 +355,7 @@ function AbonnementContent() {
                             {f}
                           </li>
                           <li className="bg-orange-50 px-2 py-1.5 rounded-md font-bold text-[#3D3D3D]">
-                            🎯 Carte de fidélité numérique universelle
+                            🎯 Carte de fidélité unique et dématérialisée
                           </li>
                         </Fragment>
                       )

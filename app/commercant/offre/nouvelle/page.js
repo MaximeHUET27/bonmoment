@@ -667,8 +667,8 @@ function NouvelleOffrePageInner() {
                 className={inputBase}
               />
             </div>
-            <div className="flex gap-3 sm:contents">
-              <div className="flex-1 flex flex-col gap-1.5">
+            <div className="flex gap-2 w-full sm:contents">
+              <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                 <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
                   ⏰ De
                 </label>
@@ -677,10 +677,10 @@ function NouvelleOffrePageInner() {
                   value={heureDebut}
                   step="900"
                   onChange={e => setHeureDebut(e.target.value)}
-                  className={inputBase}
+                  className={`${inputBase} min-w-0`}
                 />
               </div>
-              <div className="flex-1 flex flex-col gap-1.5">
+              <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                 <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
                   ⏰ À
                 </label>
@@ -689,7 +689,7 @@ function NouvelleOffrePageInner() {
                   value={heureFin}
                   step="900"
                   onChange={e => setHeureFin(e.target.value)}
-                  className={inputBase}
+                  className={`${inputBase} min-w-0`}
                 />
               </div>
             </div>
