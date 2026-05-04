@@ -37,7 +37,7 @@ export async function POST(request) {
 
         await supabaseAdmin.from('commerces').update({
           abonnement_actif:       true,
-          palier:                 palier || 'decouverte',
+          palier:                 palier || 'essentiel',
           stripe_customer_id:     session.customer,
           stripe_subscription_id: session.subscription,
           resiliation_prevue:     false,
@@ -114,7 +114,7 @@ export async function POST(request) {
           .eq('id', filleul.parrain_id)
           .maybeSingle()
 
-        const discountAmountsCents = { decouverte: 1000, essentiel: 1500, pro: 2000 }
+        const discountAmountsCents = { essentiel: 1000, pro: 1500 }
         const amountOff = discountAmountsCents[filleul.palier] ?? 1000
 
         if (parrain?.stripe_subscription_id) {

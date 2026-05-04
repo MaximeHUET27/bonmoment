@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
 const ADMIN_EMAIL = 'bonmomentapp@gmail.com'
-const PALIER_PRIX = { decouverte: 29, essentiel: 49, pro: 79 }
+const PALIER_PRIX = { essentiel: 29, pro: 49 }
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -14,7 +14,7 @@ const admin = createClient(
 function calcMRR(commerces) {
   return commerces
     .filter(c => c.abonnement_actif)
-    .reduce((s, c) => s + (PALIER_PRIX[c.palier || 'decouverte'] || 29), 0)
+    .reduce((s, c) => s + (PALIER_PRIX[c.palier || 'essentiel'] || 29), 0)
 }
 
 function monthRange(year, month) {
@@ -82,7 +82,7 @@ export async function GET() {
     .filter(c => c.created_at < finMoisPre)
     .reduce((s, c) => {
       if (!c.abonnement_actif) return s
-      return s + (PALIER_PRIX[c.palier || 'decouverte'] || 29)
+      return s + (PALIER_PRIX[c.palier || 'essentiel'] || 29)
     }, 0)
 
   /* ── Commerçants segments ── */
@@ -137,7 +137,7 @@ export async function GET() {
     const m = new Date(now.getFullYear(), now.getMonth() - i, 1)
     const label = m.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' })
     const actifsCeMois = comm.filter(c => c.created_at <= new Date(now.getFullYear(), now.getMonth() - i + 1, 1).toISOString() && c.abonnement_actif)
-    const mrrPoint = actifsCeMois.reduce((s, c) => s + (PALIER_PRIX[c.palier || 'decouverte'] || 29), 0)
+    const mrrPoint = actifsCeMois.reduce((s, c) => s + (PALIER_PRIX[c.palier || 'essentiel'] || 29), 0)
     graphMRR.push({ label, mrr: mrrPoint })
   }
 

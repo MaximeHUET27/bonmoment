@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 const ADMIN_EMAIL   = 'bonmomentapp@gmail.com'
-const PALIER_PRIX   = { decouverte: 29, essentiel: 49, pro: 79 }
+const PALIER_PRIX   = { essentiel: 29, pro: 49 }
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -62,7 +62,7 @@ export async function GET() {
   /* ── MRR ── */
   const mrr = commerces
     .filter(c => c.abonnement_actif)
-    .reduce((s, c) => s + (PALIER_PRIX[c.palier || 'decouverte'] || 29), 0)
+    .reduce((s, c) => s + (PALIER_PRIX[c.palier || 'essentiel'] || 29), 0)
 
   /* ── Villes actives ── */
   const villesActives = new Set(

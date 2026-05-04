@@ -375,21 +375,17 @@ function AbonnementSection({ commerce, offres }) {
   }, [commerce.stripe_subscription_id])
 
   const PALIERS = {
-    decouverte: { nom: 'Découverte', quota: 4,  prix: '29€/mois' },
-    essentiel:  { nom: 'Essentiel',  quota: 8,  prix: '49€/mois' },
-    pro:        { nom: 'Pro',        quota: 16, prix: '79€/mois' },
-    1:          { nom: 'Découverte', quota: 4,  prix: '29€/mois' },
-    2:          { nom: 'Essentiel',  quota: 8,  prix: '49€/mois' },
-    3:          { nom: 'Pro',        quota: 16, prix: '79€/mois' },
+    essentiel: { nom: 'Essentiel', quota: 8,    prix: '29€/mois' },
+    pro:       { nom: 'Pro',       quota: null,  prix: '49€/mois' },
   }
 
-  const palier = PALIERS[commerce.palier] || PALIERS['decouverte']
+  const palier = PALIERS[commerce.palier] || PALIERS['essentiel']
   const now    = new Date()
 
   const debutMois    = new Date(now.getFullYear(), now.getMonth(), 1)
   const publieesMois = offres.filter(o => new Date(o.created_at || o.date_debut) >= debutMois).length
-  const restantes    = Math.max(0, palier.quota - publieesMois)
-  const progPct      = Math.min(100, Math.round((publieesMois / palier.quota) * 100))
+  const restantes    = palier.quota === null ? null : Math.max(0, palier.quota - publieesMois)
+  const progPct      = palier.quota === null ? 0 : Math.min(100, Math.round((publieesMois / palier.quota) * 100))
 
   // Pas encore de palier → section masquée
   if (!commerce.palier) return null
@@ -419,7 +415,7 @@ function AbonnementSection({ commerce, offres }) {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xl font-black text-[#FF6B00]">📦 {palier.nom}</p>
-          <p className="text-xs text-[#3D3D3D]/60 mt-0.5">{palier.quota} offres/mois · {palier.prix}</p>
+          <p className="text-xs text-[#3D3D3D]/60 mt-0.5">{palier.quota === null ? 'Offres illimitées' : `${palier.quota} offres/mois`} · {palier.prix}</p>
         </div>
         <div className="flex gap-2">
           <Link
@@ -439,17 +435,25 @@ function AbonnementSection({ commerce, offres }) {
 
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold text-[#0A0A0A]">{publieesMois}/{palier.quota} offres publiées ce mois</p>
-          <p className={`text-xs font-bold ${restantes <= 1 ? 'text-orange-500' : 'text-[#3D3D3D]/60'}`}>
-            {restantes} restante{restantes > 1 ? 's' : ''}
+          <p className="text-xs font-semibold text-[#0A0A0A]">
+            {palier.quota === null
+              ? `${publieesMois} offres publiées ce mois`
+              : `${publieesMois}/${palier.quota} offres publiées ce mois`}
           </p>
+          {restantes !== null && (
+            <p className={`text-xs font-bold ${restantes <= 1 ? 'text-orange-500' : 'text-[#3D3D3D]/60'}`}>
+              {restantes} restante{restantes > 1 ? 's' : ''}
+            </p>
+          )}
         </div>
-        <div className="w-full h-2 bg-[#F0F0F0] rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-500 ${restantes <= 1 ? 'bg-orange-400' : 'bg-[#FF6B00]'}`}
-            style={{ width: `${progPct}%` }}
-          />
-        </div>
+        {palier.quota !== null && (
+          <div className="w-full h-2 bg-[#F0F0F0] rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${restantes !== null && restantes <= 1 ? 'bg-orange-400' : 'bg-[#FF6B00]'}`}
+              style={{ width: `${progPct}%` }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Date de renouvellement OU message résiliation — même emplacement */}

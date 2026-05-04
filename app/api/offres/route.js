@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/rate-limit'
 import { sendPushToMany } from '@/lib/push'
 
-const QUOTA_PAR_PALIER = { decouverte: 4, essentiel: 8, pro: 16 }
+const QUOTA_PAR_PALIER = { essentiel: 8, pro: null }
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -50,21 +50,23 @@ export async function POST(request) {
   }
 
   /* ── Vérification quota ──────────────────────────────────────────────── */
-  const palier    = commerce.palier || 'decouverte'
-  const limite    = QUOTA_PAR_PALIER[palier] ?? 4
+  const palier    = commerce.palier || 'essentiel'
+  const limite    = QUOTA_PAR_PALIER[palier] ?? 8
   const debutMois = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
 
-  const { count } = await admin
-    .from('offres')
-    .select('id', { count: 'exact', head: true })
-    .eq('commerce_id', commerce.id)
-    .gte('created_at', debutMois)
+  if (limite !== null) {
+    const { count } = await admin
+      .from('offres')
+      .select('id', { count: 'exact', head: true })
+      .eq('commerce_id', commerce.id)
+      .gte('created_at', debutMois)
 
-  if ((count ?? 0) >= limite) {
-    return NextResponse.json(
-      { error: "Quota d'offres atteint pour ce mois." },
-      { status: 403 }
-    )
+    if ((count ?? 0) >= limite) {
+      return NextResponse.json(
+        { error: "Quota d'offres atteint pour ce mois." },
+        { status: 403 }
+      )
+    }
   }
 
   /* ── Insertion ───────────────────────────────────────────────────────── */

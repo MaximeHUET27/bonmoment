@@ -50,7 +50,7 @@ const JOURS = [
   { id: 'dimanche', label: 'D' },
 ]
 
-const QUOTA_PAR_PALIER = { decouverte: 4, essentiel: 8, pro: 16 }
+const QUOTA_PAR_PALIER = { essentiel: 8, pro: null }
 
 /* ── Helpers ────────────────────────────────────────────────────────────── */
 
@@ -95,7 +95,7 @@ function NouvelleOffrePageInner() {
   const [commerce,      setCommerce]      = useState(null)
   const [fetching,      setFetching]      = useState(true)
   const [quotaAtteint,  setQuotaAtteint]  = useState(false)
-  const [quotaInfo,     setQuotaInfo]     = useState({ used: 0, limite: 4, palier: 'decouverte' })
+  const [quotaInfo,     setQuotaInfo]     = useState({ used: 0, limite: 8, palier: 'essentiel' })
 
   /* ── Modal première offre ── */
   const [showFirstModal,  setShowFirstModal]  = useState(false)
@@ -161,8 +161,8 @@ function NouvelleOffrePageInner() {
 
       setCommerce(data)
 
-      const palier    = data.palier || 'decouverte'
-      const limite    = QUOTA_PAR_PALIER[palier] ?? 4
+      const palier    = data.palier || 'essentiel'
+      const limite    = QUOTA_PAR_PALIER[palier] ?? 8
       const debutMois = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
 
       const [{ count: used }, { count: total }] = await Promise.all([
@@ -173,7 +173,7 @@ function NouvelleOffrePageInner() {
       ])
 
       setQuotaInfo({ used: used ?? 0, limite, palier })
-      if ((used ?? 0) >= limite) setQuotaAtteint(true)
+      if (limite !== null && (used ?? 0) >= limite) setQuotaAtteint(true)
 
       // Modal tutoriel si aucune offre publiée jusqu'ici et tutoriel pas encore complété
       if ((total ?? 0) === 0 && !isTutoriel && !data.tutoriel_complete) { setShowFirstModal(true) }
@@ -495,7 +495,7 @@ function NouvelleOffrePageInner() {
           <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${
             quotaAtteint ? 'bg-red-100 text-red-600' : 'bg-[#FFF0E0] text-[#FF6B00]'
           }`}>
-            {quotaInfo.used}/{quotaInfo.limite} offres
+            {quotaInfo.limite === null ? `${quotaInfo.used} offres` : `${quotaInfo.used}/${quotaInfo.limite} offres`}
           </span>
           <Link href="/commercant/dashboard" className="bg-[#FF6B00] hover:bg-[#CC5500] text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors min-h-[44px] flex items-center whitespace-nowrap">
             Mon commerce

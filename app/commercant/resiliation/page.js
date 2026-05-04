@@ -85,7 +85,7 @@ function ResiliationContent() {
         const created = com.created_at ? new Date(com.created_at) : new Date()
         const mois    = Math.max(1, Math.round((new Date() - created) / (1000 * 60 * 60 * 24 * 30)))
 
-        const PALIER_LABELS = { decouverte: 'Découverte', essentiel: 'Essentiel', pro: 'Pro' }
+        const PALIER_LABELS = { essentiel: 'Essentiel', pro: 'Pro' }
 
         setStats({
           nbOffres:    nbOffres    ?? 0,

@@ -425,7 +425,7 @@ export const NODES = {
   'c-off-2': {
     type: 'answer',
     question: "Combien d'offres il me reste ce mois ?",
-    response: `Le quota mensuel est visible dans ton **Dashboard → Ton abonnement**.\n\nTu y vois :\n- Ton palier actuel (Découverte / Essentiel / Pro)\n- Le nombre d'offres publiées ce mois\n- Le nombre de créations restantes\n- La date de renouvellement du quota 📅`,
+    response: `Le quota mensuel est visible dans ton **Dashboard → Ton abonnement**.\n\nTu y vois :\n- Ton palier actuel (Essentiel / Pro)\n- Le nombre d'offres publiées ce mois\n- Le nombre de créations restantes (illimité en Pro)\n- La date de renouvellement du quota 📅`,
     actions: [
       { label: '📊 Mon dashboard', type: 'redirect', path: '/commercant/dashboard' },
     ],
@@ -521,7 +521,7 @@ export const NODES = {
   'c-fidel-1': {
     type: 'answer',
     question: "La carte fidélité est-elle incluse dans mon abonnement ?",
-    response: `Elle est incluse dans le **palier Pro** uniquement (79€/mois). 🚀\n\nLes paliers Découverte et Essentiel te donnent accès aux offres mais pas au système de fidélité.\n\nTu peux passer au Pro à tout moment depuis ton dashboard.`,
+    response: `Elle est incluse dans le **palier Pro** uniquement (49€/mois). 🚀\n\nLe palier Essentiel te donne accès aux offres mais pas au système de fidélité.\n\nTu peux passer au Pro à tout moment depuis ton dashboard.`,
     actions: [
       { label: '📊 Mon abonnement', type: 'redirect', path: '/commercant/dashboard' },
     ],
@@ -671,7 +671,7 @@ export const NODES = {
   'c-ab-3': {
     type: 'answer',
     question: "Comment changer de palier ?",
-    response: `Tu peux changer de formule directement depuis ton dashboard :\n\n1. Va dans **Mon commerce → Abonnement**\n2. Clique sur **Changer de formule**\n3. Sélectionne le nouveau palier (Découverte / Essentiel / Pro)\n4. Confirme — le changement est effectif au **prochain cycle de facturation**\n\nAucune interruption de service. Tu peux monter ou descendre librement. 🔄`,
+    response: `Tu peux changer de formule directement depuis ton dashboard :\n\n1. Va dans **Mon commerce → Abonnement**\n2. Clique sur **Changer de formule**\n3. Sélectionne le nouveau palier (Essentiel / Pro)\n4. Confirme — le changement est effectif au **prochain cycle de facturation**\n\nAucune interruption de service. Tu peux monter ou descendre librement. 🔄`,
     actions: [
       { label: '📊 Mon abonnement', type: 'redirect', path: '/commercant/dashboard' },
     ],
@@ -680,7 +680,7 @@ export const NODES = {
   'c-ab-4': {
     type: 'answer',
     question: "Quels sont les tarifs ?",
-    response: `BONMOMENT propose 3 formules :\n\n🆓 **Découverte** — 29 €/mois\n→ 4 offres par mois\n\n⭐ **Essentiel** — 49 €/mois\n→ 8 offres par mois\n\n🚀 **Pro** — 79 €/mois\n→ 16 offres par mois\n\nTous les paliers incluent : validation QR, statistiques, QR code vitrine et parrainage. 💼\n\n_Prix nets — TVA non applicable, article 293 B du CGI._`,
+    response: `BONMOMENT propose 2 formules :\n\n⭐ **Essentiel** — 29 €/mois\n→ 8 offres par mois\n\n🚀 **Pro** — 49 €/mois\n→ Offres illimitées + Carte de fidélité unique et dématérialisée\n\nTous les paliers incluent : validation QR, statistiques, QR code vitrine et parrainage. 💼\n\n_Prix nets — TVA non applicable, article 293 B du CGI._`,
   },
 
   'c-ab-5': {

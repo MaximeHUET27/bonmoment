@@ -15,33 +15,23 @@ const FEATURES_COMMUNES = [
 
 const PLANS = [
   {
-    key:      'decouverte',
-    nom:      'Découverte',
-    prix:     29,
-    offres:   4,
-    populaire: false,
-    features: ['4 offres/mois', ...FEATURES_COMMUNES],
-  },
-  {
     key:      'essentiel',
     nom:      'Essentiel',
-    prix:     49,
-    offres:   8,
+    prix:     29,
     populaire: false,
     features: ['8 offres/mois', ...FEATURES_COMMUNES],
   },
   {
     key:      'pro',
     nom:      'Pro',
-    prix:     79,
-    offres:   16,
+    prix:     49,
     populaire: true,
-    features: ['16 offres/mois', ...FEATURES_COMMUNES],
+    features: ['Offres illimitées', ...FEATURES_COMMUNES],
     fidelite: true,
   },
 ]
 
-const REMISES = { decouverte: 10, essentiel: 15, pro: 20 }
+const REMISES = { essentiel: 10, pro: 15 }
 
 function AbonnementContent() {
   const { user, loading, supabase } = useAuth()
@@ -302,13 +292,13 @@ function AbonnementContent() {
         </div>
 
         {/* ── Cartes paliers — row sur desktop, colonne sur mobile ── */}
-        <div className="flex flex-col md:flex-row gap-4 md:gap-3 md:items-stretch">
+        <div className="flex flex-col md:flex-row md:justify-center gap-4 md:gap-5 md:items-stretch">
           {PLANS.map(plan => {
             const isDisabled = !cgvAccepted || choosing !== null
             return (
               <div
                 key={plan.key}
-                className={`relative bg-white rounded-3xl px-5 py-6 flex flex-col gap-3 border-2 transition-all flex-1 md:max-w-[280px] ${
+                className={`relative bg-white rounded-3xl px-5 py-6 flex flex-col gap-3 border-2 transition-all md:w-[360px] md:max-w-[360px] ${
                   plan.populaire
                     ? 'border-[#FF6B00] shadow-lg shadow-orange-100 md:scale-[1.03]'
                     : 'border-[#F0F0F0]'

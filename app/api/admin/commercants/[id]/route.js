@@ -116,7 +116,7 @@ export async function POST(request, { params }) {
 
   if (action === 'change_palier') {
     const { palier } = body
-    if (!['decouverte', 'essentiel', 'pro'].includes(palier))
+    if (!['essentiel', 'pro'].includes(palier))
       return NextResponse.json({ error: 'Palier invalide' }, { status: 400 })
     await admin.from('commerces').update({ palier }).eq('id', id)
     return NextResponse.json({ success: true })

@@ -61,16 +61,12 @@ export default function CGV() {
               </thead>
               <tbody>
                 <tr className="border-b border-[#F5F5F5]">
-                  <td className="px-4 py-3 font-semibold text-[#0A0A0A]">Découverte</td>
-                  <td className="px-4 py-3">29 €/mois — 4 offres/mois — Bons illimités</td>
-                </tr>
-                <tr className="border-b border-[#F5F5F5]">
                   <td className="px-4 py-3 font-semibold text-[#0A0A0A]">Essentiel</td>
-                  <td className="px-4 py-3">49 €/mois — 8 offres/mois — Bons illimités</td>
+                  <td className="px-4 py-3">29 €/mois — 8 offres/mois — Bons illimités</td>
                 </tr>
                 <tr className="bg-[#FFF8F3]">
                   <td className="px-4 py-3 font-semibold text-[#FF6B00]">Pro ⭐</td>
-                  <td className="px-4 py-3">79 €/mois — 16 offres/mois — Bons illimités — Carte de fidélité unique et dématérialisée</td>
+                  <td className="px-4 py-3">49 €/mois — Offres illimitées — Bons illimités — Carte de fidélité unique et dématérialisée</td>
                 </tr>
               </tbody>
             </table>
@@ -96,9 +92,8 @@ export default function CGV() {
               Lorsqu&apos;un nouveau commerçant s&apos;inscrit en utilisant un code de parrainage valide, le parrain et le filleul bénéficient chacun d&apos;une remise appliquée automatiquement lors du premier prélèvement Stripe, dont le montant dépend du palier souscrit par le filleul :
             </p>
             <ul className="list-disc pl-5 space-y-1 mb-3">
-              <li>Palier Découverte (29 €/mois) : remise de <strong className="text-[#0A0A0A]">10 €</strong> pour le parrain et le filleul</li>
-              <li>Palier Essentiel (49 €/mois) : remise de <strong className="text-[#0A0A0A]">15 €</strong> pour le parrain et le filleul</li>
-              <li>Palier Pro (79 €/mois) : remise de <strong className="text-[#0A0A0A]">20 €</strong> pour le parrain et le filleul</li>
+              <li>Palier Essentiel (29 €/mois) : remise de <strong className="text-[#0A0A0A]">10 €</strong> pour le parrain et le filleul</li>
+              <li>Palier Pro (49 €/mois) : remise de <strong className="text-[#0A0A0A]">15 €</strong> pour le parrain et le filleul</li>
             </ul>
             <ul className="list-disc pl-5 space-y-1 text-[#3D3D3D]/80">
               <li>Un parrain ne peut bénéficier de cette remise que pour 3 parrainages maximum par mois calendaire — au-delà, le code reste actif mais n&apos;ouvre plus droit à la remise pour le mois en cours</li>

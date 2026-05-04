@@ -24,9 +24,8 @@ export async function POST(request) {
   const { palier, commerce_id, isFirstSubscription, code_parrainage, parrain_commerce_id } = body
 
   const priceId = {
-    decouverte: process.env.STRIPE_PRICE_DECOUVERTE,
-    essentiel:  process.env.STRIPE_PRICE_ESSENTIEL,
-    pro:        process.env.STRIPE_PRICE_PRO,
+    essentiel: process.env.STRIPE_PRICE_ESSENTIEL,
+    pro:       process.env.STRIPE_PRICE_PRO,
   }[palier]
 
   if (!priceId) {
@@ -127,7 +126,7 @@ export async function POST(request) {
   // S'applique à la première facture payante (après la période d'essai)
   const subscriptionDiscounts = []
   if (parrainIdEffectif && isFirstSubscription) {
-    const discountAmountsCents = { decouverte: 1000, essentiel: 1500, pro: 2000 }
+    const discountAmountsCents = { essentiel: 1000, pro: 1500 }
     const amountOff = discountAmountsCents[palier] ?? 1000
     try {
       const coupon = await stripe.coupons.create({
