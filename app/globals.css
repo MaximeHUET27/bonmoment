@@ -46,7 +46,7 @@ body {
   display: flex;
   gap: 16px;
   width: max-content;
-  animation: scroll-banner 20s linear infinite;
+  animation: scroll-banner 35s linear infinite;
   will-change: transform;
 }
 
