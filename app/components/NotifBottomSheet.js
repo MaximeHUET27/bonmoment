@@ -10,8 +10,9 @@ import IOSInstallPrompt, { isIOSNonStandalone } from './IOSInstallPrompt'
  */
 export default function NotifBottomSheet({ isOpen, onClose, villeNom }) {
   const { user, supabase } = useAuth()
-  const [emailOn,       setEmailOn]       = useState(true)
-  const [pushOn,        setPushOn]        = useState(true)
+  const [emailOn,          setEmailOn]          = useState(true)
+  const [emailInstantOn,   setEmailInstantOn]   = useState(true)
+  const [pushOn,           setPushOn]           = useState(true)
   const [saving,        setSaving]        = useState(false)
   const [showIOSPrompt, setShowIOSPrompt] = useState(false)
 
@@ -70,7 +71,7 @@ export default function NotifBottomSheet({ isOpen, onClose, villeNom }) {
     if (user) {
       await supabase
         .from('users')
-        .update({ notifications_email: emailOn, notifications_push: pushOn })
+        .update({ notifications_email: emailOn, notifications_email_push: emailInstantOn, notifications_push: pushOn })
         .eq('id', user.id)
     }
     setSaving(false)
@@ -106,6 +107,20 @@ export default function NotifBottomSheet({ isOpen, onClose, villeNom }) {
             className={`relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 ml-3 ${emailOn ? 'bg-[#FF6B00]' : 'bg-gray-300'}`}
           >
             <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${emailOn ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+        </div>
+
+        {/* Toggle email instantané */}
+        <div className="flex items-center justify-between py-4 border-b border-[#F5F5F5]">
+          <div>
+            <p className="text-sm font-bold text-[#0A0A0A]">📩 Email instantané</p>
+            <p className="text-xs text-[#3D3D3D]/50 mt-0.5">Un email dès qu&apos;une offre est publiée dans ta ville ou chez un favori</p>
+          </div>
+          <button
+            onClick={() => setEmailInstantOn(v => !v)}
+            className={`relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 ml-3 ${emailInstantOn ? 'bg-[#FF6B00]' : 'bg-gray-300'}`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${emailInstantOn ? 'translate-x-5' : 'translate-x-0'}`} />
           </button>
         </div>
 
