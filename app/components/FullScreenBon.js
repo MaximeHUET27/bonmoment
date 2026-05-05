@@ -7,6 +7,7 @@ import CommerceInfoCard from '@/app/components/CommerceInfoCard'
 import { useAuth } from '@/app/context/AuthContext'
 import { formatDebut } from '@/lib/offreStatus'
 import { getFullOffreTitle } from '@/lib/offreTitle'
+import { toSlug } from '@/lib/utils'
 import { useToast } from '@/app/components/Toast'
 
 /* QRCodeSVG chargé dynamiquement (évite SSR) */
@@ -254,7 +255,8 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
           offre={offre}
           commerce={commerce}
           label="Fais profiter tes proches ! ↗"
-          shareText={`Je viens de réserver un bon chez ${commerce?.nom || 'ce commerce'} à ${commerce?.ville || 'ma ville'} ! Il reste encore des places 👉 bonmoment.app/offre/${offre?.id}`}
+          shareText={`Je viens de réserver un bon chez ${commerce?.nom || 'ce commerce'} à ${commerce?.ville || 'ma ville'} 🎟️ Toi aussi profite des bons plans de tes commerçants :`}
+          shareUrl={`https://bonmoment.app/ville/${toSlug(commerce?.ville || '')}`}
           shareTitle={`Bon plan chez ${commerce?.nom || 'ce commerce'} — BONMOMENT`}
           className="w-full [&>button]:w-full"
         />

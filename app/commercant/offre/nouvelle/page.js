@@ -366,9 +366,10 @@ function NouvelleOffrePageInner() {
 
   /* ── Succès (mode normal) ── */
   if (success && !tutActive) {
-    const shareUrl = createdOffreId ? `https://bonmoment.app/offre/${createdOffreId}` : 'https://bonmoment.app'
-    const shareTitle = `${commerce?.nom || 'Bonmoment'} — ${getFullOffreTitle({ type_remise: typeRemise, valeur: Number(valeur) || null, titre: titre.trim() }) || 'Nouvelle offre'}`
-    const shareText  = `Profite de mon offre sur Bonmoment 🎁`
+    const shareUrl    = createdOffreId ? `https://bonmoment.app/offre/${createdOffreId}` : 'https://bonmoment.app'
+    const fullTitre   = getFullOffreTitle({ type_remise: typeRemise, valeur: Number(valeur) || null, titre: titre.trim() }) || 'Nouvelle offre'
+    const shareTitle  = `🎁 ${fullTitre} — ${commerce?.nom || 'BONMOMENT'}`
+    const shareText   = `${fullTitre} chez ${commerce?.nom || 'ce commerce'} à ${commerce?.ville || 'votre ville'} 🎁 Réservez votre bon gratuit :`
 
     async function handleShare() {
       if (navigator.share) {

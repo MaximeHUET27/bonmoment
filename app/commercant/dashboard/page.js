@@ -969,7 +969,7 @@ function ParrainageSection({ commerce, supabase }) {
   async function partagerCode(code) {
     try {
       await navigator.share({
-        text: `Rejoins BONMOMENT avec mon code ${code} et profite d'une remise ! 👉 bonmoment.app`,
+        text: `Rejoignez BONMOMENT et boostez votre commerce ! 🚀 1er mois offert + remise parrainage avec mon code : ${code}. Inscription : bonmoment.app/commercant/inscription`,
       })
     } catch {}
   }
@@ -1131,8 +1131,8 @@ function OffreRow({ offre, commerce, expired = false }) {
           <ShareButton
             offre={{ ...offre, commerces: commerce }}
             commerce={commerce}
-            shareText={`🎉 Nouvelle offre chez ${commerce.nom} ! ${getFullOffreTitle(offre)} — Réserve ton bon gratuit 👉 bonmoment.app/offre/${offre.id}`}
-            shareTitle={`Nouvelle offre chez ${commerce.nom} — BONMOMENT`}
+            shareText={`${getFullOffreTitle(offre)} chez ${commerce.nom} à ${commerce.ville} 🎁 Réservez votre bon gratuit :`}
+            shareTitle={`🎁 ${getFullOffreTitle(offre)} — ${commerce.nom}`}
           />
         )}
       </div>
