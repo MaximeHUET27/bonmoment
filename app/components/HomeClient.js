@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import AuthButton from './AuthButton'
@@ -9,6 +9,45 @@ import OffreCard, { getCategorieFiltre } from '@/app/ville/[slug]/OffreCard'
 import SkeletonCard from './SkeletonCard'
 import { useAuth } from '@/app/context/AuthContext'
 import { toSlug } from '@/lib/utils'
+
+const VillesBanner = memo(function VillesBanner({ villes, paused, onVilleSelect, onTouchStart, onTouchEnd }) {
+  if (!villes.length) return null
+  return (
+    <div style={{ width: '100vw', marginLeft: 'calc(-50vw + 50%)', marginTop: '24px' }}>
+      <p style={{ fontSize: '11px', color: 'rgba(61,61,61,0.5)', textAlign: 'center', marginBottom: '8px' }}>
+        Villes disponibles :
+      </p>
+      <div className="villes-banner" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        <div className={`villes-track${paused ? ' paused' : ''}`}>
+          {Array.from({ length: 6 }, (_, rep) =>
+            villes.map(v => (
+              <button
+                key={`a-${rep}-${v.id}`}
+                onClick={() => onVilleSelect(v.nom)}
+                style={{ fontSize: '12px', padding: '5px 14px', background: '#FFF0E0', color: '#FF6B00', fontWeight: 600, borderRadius: '20px', border: 'none', cursor: 'pointer', flexShrink: 0 }}
+              >
+                {v.nom}
+              </button>
+            ))
+          )}
+          {Array.from({ length: 6 }, (_, rep) =>
+            villes.map(v => (
+              <button
+                key={`b-${rep}-${v.id}`}
+                onClick={() => onVilleSelect(v.nom)}
+                style={{ fontSize: '12px', padding: '5px 14px', background: '#FFF0E0', color: '#FF6B00', fontWeight: 600, borderRadius: '20px', border: 'none', cursor: 'pointer', flexShrink: 0 }}
+                aria-hidden="true"
+                tabIndex={-1}
+              >
+                {v.nom}
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  )
+})
 
 function isActive(offre) {
   return new Date(offre.date_fin) > new Date() && offre.nb_bons_restants !== 0
@@ -54,18 +93,18 @@ export default function HomeClient({ villes, offres }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, supabase])
 
-  function handleVilleSelect(nomVille) {
+  const handleVilleSelect = useCallback((nomVille) => {
     router.push(`/ville/${toSlug(nomVille)}`)
-  }
+  }, [router])
 
-  // ── Touch (mobile) : pause CSS au toucher, reprise après 2s ──────────────
-  function handleVillesTouchStart() {
+  const handleVillesTouchStart = useCallback(() => {
     clearTimeout(pauseTimerRef.current)
     setBannerPaused(true)
-  }
-  function handleVillesTouchEnd() {
+  }, [])
+
+  const handleVillesTouchEnd = useCallback(() => {
     pauseTimerRef.current = setTimeout(() => setBannerPaused(false), 2000)
-  }
+  }, [])
 
   /* Tri : actives urgentes → actives → expirées */
   const offresTriees = (offres || []).sort((a, b) => {
@@ -87,16 +126,6 @@ export default function HomeClient({ villes, offres }) {
       <div className="fixed top-4 right-4 z-40 bg-white rounded-full shadow-sm">
         <AuthButton />
       </div>
-
-      {/* CSS animation pulse */}
-      <style>{`
-        @keyframes pulse-border {
-          0%, 100% { border-color: #FF6B00; box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.2); }
-          50%       { border-color: #FFB366; box-shadow: 0 0 0 8px rgba(255, 107, 0, 0); }
-        }
-        .search-ville        { animation: pulse-border 2s ease-in-out infinite; }
-        .search-ville.active { animation: none; box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.15); }
-      `}</style>
 
       {/* ── Bloc recherche + chips ── */}
       <div className="flex flex-col items-center px-6 pt-16 pb-8 text-center">
@@ -134,52 +163,13 @@ export default function HomeClient({ villes, offres }) {
         </button>
 
         {/* Chips des villes actives */}
-        {villes.length > 0 && (
-          /* Bleed full-width hors du px-6 parent */
-          <div style={{ width: '100vw', marginLeft: 'calc(-50vw + 50%)', marginTop: '24px' }}>
-
-            {/* Label fixe centré au-dessus de la bannière */}
-            <p style={{ fontSize: '11px', color: 'rgba(61,61,61,0.5)', textAlign: 'center', marginBottom: '8px' }}>
-              Villes disponibles :
-            </p>
-
-            {/* Bannière défilante CSS pure — fonctionne sur tous les navigateurs et mobile */}
-            <div
-              className="villes-banner"
-              onTouchStart={handleVillesTouchStart}
-              onTouchEnd={handleVillesTouchEnd}
-            >
-              <div className={`villes-track${bannerPaused ? ' paused' : ''}`}>
-                {/* Set A (6 répétitions) */}
-                {Array.from({ length: 6 }, (_, rep) =>
-                  villes.map(v => (
-                    <button
-                      key={`a-${rep}-${v.id}`}
-                      onClick={() => handleVilleSelect(v.nom)}
-                      style={{ fontSize: '12px', padding: '5px 14px', background: '#FFF0E0', color: '#FF6B00', fontWeight: 600, borderRadius: '20px', border: 'none', cursor: 'pointer', flexShrink: 0 }}
-                    >
-                      {v.nom}
-                    </button>
-                  ))
-                )}
-                {/* Set B — copie exacte pour boucle seamless (-50%) */}
-                {Array.from({ length: 6 }, (_, rep) =>
-                  villes.map(v => (
-                    <button
-                      key={`b-${rep}-${v.id}`}
-                      onClick={() => handleVilleSelect(v.nom)}
-                      style={{ fontSize: '12px', padding: '5px 14px', background: '#FFF0E0', color: '#FF6B00', fontWeight: 600, borderRadius: '20px', border: 'none', cursor: 'pointer', flexShrink: 0 }}
-                      aria-hidden="true"
-                      tabIndex={-1}
-                    >
-                      {v.nom}
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        <VillesBanner
+          villes={villes}
+          paused={bannerPaused}
+          onVilleSelect={handleVilleSelect}
+          onTouchStart={handleVillesTouchStart}
+          onTouchEnd={handleVillesTouchEnd}
+        />
       </div>
 
       {/* ── Grille des offres (toutes villes actives) ── */}

@@ -71,3 +71,11 @@ body {
 .animate-pulse-orange {
   animation: pulse-orange 1.2s ease-in-out infinite;
 }
+
+@keyframes pulse-border {
+  0%, 100% { border-color: #FF6B00; box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.2); }
+  50%       { border-color: #FFB366; box-shadow: 0 0 0 8px rgba(255, 107, 0, 0); }
+}
+
+.search-ville        { animation: pulse-border 2s ease-in-out infinite; }
+.search-ville.active { animation: none; box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.15); }
