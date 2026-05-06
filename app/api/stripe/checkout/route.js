@@ -151,9 +151,8 @@ export async function POST(request) {
     }
   }
 
-  let session
   try {
-    session = await stripe.checkout.sessions.create({
+    const session = await stripe.checkout.sessions.create({
       mode:                 'subscription',
       payment_method_types: ['card'],
       line_items:           [{ price: priceId, quantity: 1 }],
@@ -168,10 +167,9 @@ export async function POST(request) {
       cancel_url:     `${siteUrl}/commercant/abonnement?commerce_id=${commerce_id}`,
       locale:         'fr',
     })
+    return Response.json({ url: session.url })
   } catch (err) {
     console.error('Stripe checkout session:', err.message)
     return Response.json({ error: `Erreur Stripe : ${err.message}` }, { status: 500 })
   }
-
-  return Response.json({ url: session.url })
 }
