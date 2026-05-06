@@ -97,6 +97,7 @@ export default function CGV() {
             </ul>
             <ul className="list-disc pl-5 space-y-1 text-[#3D3D3D]/80">
               <li>Un parrain ne peut bénéficier de cette remise que pour 3 parrainages maximum par mois calendaire — au-delà, le code reste actif mais n&apos;ouvre plus droit à la remise pour le mois en cours</li>
+              <li>Les remises de parrainage ne sont pas cumulables : une seule remise peut être appliquée par facture mensuelle</li>
               <li>Chaque code de parrainage a une durée de validité de 3 mois à compter de sa date de génération. À expiration, un nouveau code est automatiquement régénéré et l&apos;ancien ne peut plus être utilisé</li>
               <li>La remise est non remboursable, non reportable et ne peut pas être convertie en avoir</li>
               <li>BONMOMENT se réserve le droit de suspendre le bénéfice du parrainage en cas d&apos;usage frauduleux détecté (auto-parrainage, faux comptes, tentatives de contournement des limites mensuelles)</li>
