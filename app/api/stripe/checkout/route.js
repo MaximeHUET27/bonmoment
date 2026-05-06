@@ -123,39 +123,55 @@ export async function POST(request) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bonmoment.app'
 
   // ── Coupon parrainage filleul ─────────────────────────────────────────────
-  // S'applique à la première facture payante (après la période d'essai)
+  // Stripe interdit de combiner trial_period_days + discounts dans subscription_data.
+  // Quand isFirstSubscription, on stocke l'info dans les metadata et le webhook
+  // invoice.created applique la remise (item négatif) avant la 1ère facture payante.
+  const discountAmountsCents = { essentiel: 1000, pro: 1500 }
   const subscriptionDiscounts = []
-  if (parrainIdEffectif && isFirstSubscription) {
-    const discountAmountsCents = { essentiel: 1000, pro: 1500 }
+  const filleulMeta = {}
+
+  if (parrainIdEffectif) {
     const amountOff = discountAmountsCents[palier] ?? 1000
-    try {
-      const coupon = await stripe.coupons.create({
-        amount_off: amountOff,
-        currency:   'eur',
-        duration:   'once',
-        name:       `Parrainage filleul — ${palier}`,
-      })
-      subscriptionDiscounts.push({ coupon: coupon.id })
-    } catch (err) {
-      console.error('Création coupon filleul:', err.message)
+    if (isFirstSubscription) {
+      filleulMeta.parrainage_filleul  = 'true'
+      filleulMeta.parrainage_montant  = String(amountOff)
+      filleulMeta.parrain_commerce_id = parrainIdEffectif
+    } else {
+      try {
+        const coupon = await stripe.coupons.create({
+          amount_off: amountOff,
+          currency:   'eur',
+          duration:   'once',
+          name:       `Parrainage filleul — ${palier}`,
+        })
+        subscriptionDiscounts.push({ coupon: coupon.id })
+      } catch (err) {
+        console.error('Création coupon filleul:', err.message)
+      }
     }
   }
 
-  const session = await stripe.checkout.sessions.create({
-    mode:                 'subscription',
-    payment_method_types: ['card'],
-    line_items:           [{ price: priceId, quantity: 1 }],
-    subscription_data: {
-      ...(isFirstSubscription ? { trial_period_days: 30 } : {}),
-      ...(subscriptionDiscounts.length ? { discounts: subscriptionDiscounts } : {}),
-      metadata: { commerce_id, palier, user_id: user.id },
-    },
-    customer_email: user.email,
-    metadata:       { commerce_id, palier, user_id: user.id },
-    success_url:    `${siteUrl}/commercant/abonnement/succes?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url:     `${siteUrl}/commercant/abonnement?commerce_id=${commerce_id}`,
-    locale:         'fr',
-  })
+  let session
+  try {
+    session = await stripe.checkout.sessions.create({
+      mode:                 'subscription',
+      payment_method_types: ['card'],
+      line_items:           [{ price: priceId, quantity: 1 }],
+      subscription_data: {
+        ...(isFirstSubscription ? { trial_period_days: 30 } : {}),
+        ...(subscriptionDiscounts.length ? { discounts: subscriptionDiscounts } : {}),
+        metadata: { commerce_id, palier, user_id: user.id, ...filleulMeta },
+      },
+      customer_email: user.email,
+      metadata:       { commerce_id, palier, user_id: user.id },
+      success_url:    `${siteUrl}/commercant/abonnement/succes?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url:     `${siteUrl}/commercant/abonnement?commerce_id=${commerce_id}`,
+      locale:         'fr',
+    })
+  } catch (err) {
+    console.error('Stripe checkout session:', err.message)
+    return Response.json({ error: `Erreur Stripe : ${err.message}` }, { status: 500 })
+  }
 
   return Response.json({ url: session.url })
 }

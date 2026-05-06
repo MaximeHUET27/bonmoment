@@ -89,6 +89,41 @@ export async function POST(request) {
         break
       }
 
+      /* ── Remise filleul — item négatif sur la 1ère facture payante après trial ── */
+      case 'invoice.created': {
+        const invoice = event.data.object
+        if (!invoice.subscription) break
+        // Uniquement la 1ère facture du cycle (pas la facture $0 créée à la souscription)
+        if (invoice.billing_reason !== 'subscription_cycle') break
+        if (!invoice.amount_due || invoice.amount_due === 0) break
+        // Si déjà finalisée (race condition rare), on ne peut plus ajouter d'item
+        if (invoice.status !== 'draft') break
+
+        const subscription = await stripe.subscriptions.retrieve(invoice.subscription)
+        const meta = subscription.metadata || {}
+        if (meta.parrainage_filleul !== 'true' || !meta.parrainage_montant) break
+
+        const montant = parseInt(meta.parrainage_montant, 10)
+        if (isNaN(montant) || montant <= 0) break
+
+        try {
+          await stripe.invoiceItems.create({
+            customer:    invoice.customer,
+            invoice:     invoice.id,
+            amount:      -montant,
+            currency:    'eur',
+            description: `Remise parrainage filleul — ${meta.palier || ''}`.trim(),
+          })
+          // Marquer 'applied' pour idempotence (le check 'true' ci-dessus ne passera plus)
+          await stripe.subscriptions.update(invoice.subscription, {
+            metadata: { ...meta, parrainage_filleul: 'applied' },
+          })
+        } catch (err) {
+          console.error('Remise filleul invoice.created:', err.message)
+        }
+        break
+      }
+
       /* ── Premier paiement filleul → récompense le parrain ── */
       case 'invoice.paid': {
         const invoice = event.data.object
