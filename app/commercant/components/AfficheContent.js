@@ -4,19 +4,27 @@ import { useEffect, useRef } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { toSlug } from '@/lib/utils'
 
+// Mesure le texte via un <span> interne → pas besoin d'overflow:hidden sur le conteneur,
+// ce qui évite le clipping agressif de html2canvas.
 function AutoFitLine({ text, style }) {
-  const ref = useRef(null)
+  const containerRef = useRef(null)
   useEffect(() => {
-    const el = ref.current
-    if (!el) return
+    const container = containerRef.current
+    if (!container) return
+    const span = container.querySelector('span')
+    if (!span) return
     let size = 20
-    el.style.fontSize = size + 'px'
-    while (el.scrollWidth > el.clientWidth && size > 7) {
+    span.style.fontSize = size + 'px'
+    while (span.offsetWidth > container.clientWidth && size > 7) {
       size -= 0.5
-      el.style.fontSize = size + 'px'
+      span.style.fontSize = size + 'px'
     }
   }, [text])
-  return <div ref={ref} style={style}>{text}</div>
+  return (
+    <div ref={containerRef} style={style}>
+      <span style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>{text}</span>
+    </div>
+  )
 }
 
 export default function AfficheContent({ commerce }) {
@@ -42,8 +50,7 @@ export default function AfficheContent({ commerce }) {
           fontSize: '20px',
           color: '#0A0A0A',
           textTransform: 'uppercase',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
+          overflow: 'visible',
           zIndex: 10,
         }}
       />
@@ -70,8 +77,7 @@ export default function AfficheContent({ commerce }) {
           fontSize: '20px',
           color: '#0A0A0A',
           textTransform: 'uppercase',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
+          overflow: 'visible',
           zIndex: 10,
         }}
       />

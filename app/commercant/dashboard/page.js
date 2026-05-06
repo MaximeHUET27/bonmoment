@@ -1508,8 +1508,8 @@ function QRVitrine({ commerce }) {
         setTimeout(waitForImg, 50)
       })
 
-      // Attendre les effets React (AutoFitLine)
-      await new Promise(r => setTimeout(r, 300))
+      // Attendre les effets React (AutoFitLine font sizing)
+      await new Promise(r => setTimeout(r, 500))
 
       const canvas = await html2canvas(container, {
         scale: 4,
