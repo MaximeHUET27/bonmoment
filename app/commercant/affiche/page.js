@@ -73,10 +73,12 @@ function AficheInner() {
 
         body { background: #F5F5F5; }
 
+        /* aspect-ratio garantit le rapport A4 à toute taille d'écran ou d'impression */
         .affiche-container {
           position: relative;
-          width: 210mm;
-          height: 297mm;
+          width: 100%;
+          max-width: 210mm;
+          aspect-ratio: 210 / 297;
           margin: 0 auto;
           overflow: hidden;
           background: white;
@@ -117,6 +119,13 @@ function AficheInner() {
           align-items: center;
         }
 
+        /* QR SVGs responsifs dans leur conteneur — évite le débordement à l'impression */
+        .overlay-qr-commerce svg,
+        .overlay-qr-ville svg {
+          max-width: 100%;
+          height: auto;
+        }
+
         /* Petit cadre ville : x 14.8%–33.5%, y 77.3%–91.8% (mesuré par analyse pixel) */
         .overlay-nom-ville {
           position: absolute;
@@ -155,16 +164,20 @@ function AficheInner() {
             margin: 0;
           }
 
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow: hidden !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
           * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
             color-adjust: exact !important;
-          }
-
-          body {
-            margin: 0;
-            padding: 0;
-            background: white;
           }
 
           footer, nav, header,
@@ -174,9 +187,23 @@ function AficheInner() {
           }
 
           .affiche-container {
-            width: 100%;
-            height: 100vh;
-            page-break-after: avoid;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            page-break-after: avoid !important;
+            page-break-before: avoid !important;
+            overflow: hidden !important;
+          }
+
+          .affiche-fond {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain !important;
           }
         }
       `}</style>
