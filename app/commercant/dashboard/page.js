@@ -1480,7 +1480,7 @@ function QRVitrine({ commerce }) {
         onClick={() => window.open('/commercant/affiche?id=' + commerce.id, '_blank')}
         className="w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-semibold text-sm py-3 rounded-lg transition-colors min-h-[48px]"
       >
-        🖨️ Afficher &amp; imprimer mon QR code
+        📥 Télécharger mon affiche vitrine
       </button>
     </div>
   )

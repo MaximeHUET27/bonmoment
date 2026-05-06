@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
 import { createClient } from '@/lib/supabase/client'
 import { toSlug } from '@/lib/utils'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 
 function AutoFitLine({ text, className }) {
   const ref = useRef(null)
@@ -27,8 +29,10 @@ function AficheInner() {
   const commerceId   = searchParams.get('id')
   const [commerce, setCommerce] = useState(null)
   const [notFound, setNotFound] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [imageLoaded, setImageLoaded] = useState(false)
+  const afficheRef = useRef(null)
 
-  // Cacher footer + chatbot du layout global sur cette page
   useEffect(() => {
     document.body.classList.add('affiche-page')
     return () => document.body.classList.remove('affiche-page')
@@ -47,6 +51,54 @@ function AficheInner() {
         else setCommerce(data)
       })
   }, [commerceId])
+
+  const downloadPDF = async () => {
+    if (!afficheRef.current || isGenerating) return
+    setIsGenerating(true)
+
+    try {
+      const canvas = await html2canvas(afficheRef.current, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#FFFFFF',
+        width: afficheRef.current.offsetWidth,
+        height: afficheRef.current.offsetHeight,
+        logging: false,
+      })
+
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      })
+
+      const pageWidth = 210
+      const pageHeight = 297
+      let finalWidth = pageWidth
+      let finalHeight = (canvas.height * pageWidth) / canvas.width
+
+      if (finalHeight > pageHeight) {
+        finalHeight = pageHeight
+        finalWidth = (canvas.width * pageHeight) / canvas.height
+      }
+
+      const xOffset = (pageWidth - finalWidth) / 2
+      const yOffset = (pageHeight - finalHeight) / 2
+
+      const imgData = canvas.toDataURL('image/png', 1.0)
+      pdf.addImage(imgData, 'PNG', xOffset, yOffset, finalWidth, finalHeight)
+
+      const nomCommerce = commerce?.nom || 'commerce'
+      const nomFichier = `affiche-bonmoment-${nomCommerce.toLowerCase().replace(/[^a-z0-9]/g, '-')}.pdf`
+      pdf.save(nomFichier)
+    } catch (error) {
+      console.error('Erreur génération PDF:', error)
+      alert('Erreur lors de la génération du PDF. Réessayez.')
+    } finally {
+      setIsGenerating(false)
+    }
+  }
 
   if (notFound) {
     return (
@@ -73,12 +125,10 @@ function AficheInner() {
 
         body { background: #F5F5F5; }
 
-        /* aspect-ratio garantit le rapport A4 à toute taille d'écran ou d'impression */
         .affiche-container {
           position: relative;
-          width: 100%;
-          max-width: 210mm;
-          aspect-ratio: 210 / 297;
+          width: 210mm;
+          height: 297mm;
           margin: 0 auto;
           overflow: hidden;
           background: white;
@@ -119,13 +169,6 @@ function AficheInner() {
           align-items: center;
         }
 
-        /* QR SVGs responsifs dans leur conteneur — évite le débordement à l'impression */
-        .overlay-qr-commerce svg,
-        .overlay-qr-ville svg {
-          max-width: 100%;
-          height: auto;
-        }
-
         /* Petit cadre ville : x 14.8%–33.5%, y 77.3%–91.8% (mesuré par analyse pixel) */
         .overlay-nom-ville {
           position: absolute;
@@ -157,58 +200,9 @@ function AficheInner() {
         body.affiche-page [aria-label="Ouvrir l'aide BONMOMENT"] {
           display: none !important;
         }
-
-        @media print {
-          @page {
-            size: A4 portrait;
-            margin: 0;
-          }
-
-          html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            overflow: hidden !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-
-          * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            color-adjust: exact !important;
-          }
-
-          footer, nav, header,
-          [aria-label="Ouvrir l'aide BONMOMENT"],
-          .no-print {
-            display: none !important;
-          }
-
-          .affiche-container {
-            width: 100vw !important;
-            height: 100vh !important;
-            max-width: 100% !important;
-            max-height: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-            page-break-after: avoid !important;
-            page-break-before: avoid !important;
-            overflow: hidden !important;
-          }
-
-          .affiche-fond {
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: contain !important;
-          }
-        }
       `}</style>
 
-      <div className="no-print" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', padding: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', padding: '16px' }}>
         <button
           onClick={() => router.push('/commercant/dashboard')}
           style={{
@@ -226,25 +220,35 @@ function AficheInner() {
           ← Retour
         </button>
         <button
-          onClick={() => window.print()}
+          onClick={downloadPDF}
+          disabled={isGenerating || !imageLoaded}
           style={{
-            background: '#FF6B00',
+            background: isGenerating || !imageLoaded ? '#ccc' : '#FF6B00',
             color: 'white',
             border: 'none',
-            padding: '12px 32px',
+            padding: '14px 28px',
             borderRadius: '8px',
-            fontSize: '16px',
             fontFamily: 'Montserrat, sans-serif',
             fontWeight: 600,
-            cursor: 'pointer',
+            fontSize: '16px',
+            cursor: isGenerating || !imageLoaded ? 'wait' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
           }}
         >
-          🖨️ Imprimer cette affiche
+          {isGenerating ? '⏳ Génération en cours...' : '📥 Télécharger mon affiche (PDF)'}
         </button>
       </div>
 
-      <div className="affiche-container">
-        <img src="/affiche-bonmoment.png" alt="Affiche BONMOMENT" className="affiche-fond" />
+      <div ref={afficheRef} className="affiche-container">
+        <img
+          src="/affiche-bonmoment.png"
+          alt="Affiche BONMOMENT"
+          className="affiche-fond"
+          crossOrigin="anonymous"
+          onLoad={() => setImageLoaded(true)}
+        />
 
         <AutoFitLine text={commerce.nom} className="overlay-nom-commerce" />
 
