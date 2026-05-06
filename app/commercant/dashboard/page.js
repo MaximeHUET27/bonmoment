@@ -1473,14 +1473,107 @@ function OffreExpireCard({ offre, commerce, stats, nbParticipants, gagnantUser, 
 /* ── Section QR code vitrine ─────────────────────────────────────────────── */
 
 function QRVitrine({ commerce }) {
+  const [isGenerating, setIsGenerating] = useState(false)
+
+  const downloadPDF = async () => {
+    if (isGenerating) return
+    setIsGenerating(true)
+
+    const container = document.createElement('div')
+    container.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:794px;height:1123px;overflow:hidden;background:white;'
+    document.body.appendChild(container)
+
+    let root
+    try {
+      const [{ createRoot }, html2canvas, { default: jsPDF }, { default: AfficheContent }] = await Promise.all([
+        import('react-dom/client'),
+        import('html2canvas').then(m => m.default),
+        import('jspdf'),
+        import('@/app/commercant/components/AfficheContent'),
+      ])
+
+      root = createRoot(container)
+      root.render(<AfficheContent commerce={commerce} />)
+
+      // Attendre le premier rendu React puis le chargement de l'image
+      await new Promise((resolve) => {
+        const waitForImg = () => {
+          const img = container.querySelector('img')
+          if (!img) { setTimeout(waitForImg, 50); return }
+          if (img.complete) { resolve(); return }
+          img.onload = resolve
+          img.onerror = resolve
+          setTimeout(resolve, 5000)
+        }
+        setTimeout(waitForImg, 50)
+      })
+
+      // Attendre les effets React (AutoFitLine)
+      await new Promise(r => setTimeout(r, 300))
+
+      const canvas = await html2canvas(container, {
+        scale: 4,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#FFFFFF',
+        width: container.offsetWidth,
+        height: container.offsetHeight,
+        logging: false,
+        imageTimeout: 0,
+      })
+
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+      const pageWidth = 210
+      const pageHeight = 297
+      let finalWidth = pageWidth
+      let finalHeight = (canvas.height * pageWidth) / canvas.width
+      if (finalHeight > pageHeight) {
+        finalHeight = pageHeight
+        finalWidth = (canvas.width * pageHeight) / canvas.height
+      }
+      const xOffset = (pageWidth - finalWidth) / 2
+      const yOffset = (pageHeight - finalHeight) / 2
+
+      const imgData = canvas.toDataURL('image/jpeg', 1.0)
+      pdf.addImage(imgData, 'JPEG', xOffset, yOffset, finalWidth, finalHeight, undefined, 'FAST')
+
+      const nomCommerce = commerce?.nom || 'commerce'
+      const nomFichier = `affiche-bonmoment-${nomCommerce.toLowerCase().replace(/[^a-z0-9]/g, '-')}.pdf`
+      pdf.save(nomFichier)
+    } catch (error) {
+      console.error('Erreur génération PDF:', error)
+      alert('Erreur lors de la génération du PDF. Réessayez.')
+    } finally {
+      root?.unmount()
+      document.body.removeChild(container)
+      setIsGenerating(false)
+    }
+  }
+
   return (
     <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-3 shadow-sm">
       <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">Mon QR code</h2>
       <button
-        onClick={() => window.open('/commercant/affiche?id=' + commerce.id, '_blank')}
-        className="w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-semibold text-sm py-3 rounded-lg transition-colors min-h-[48px]"
+        onClick={downloadPDF}
+        disabled={isGenerating}
+        style={{
+          background: isGenerating ? '#ccc' : '#FF6B00',
+          color: 'white',
+          border: 'none',
+          padding: '14px 28px',
+          borderRadius: '8px',
+          fontFamily: 'Montserrat, sans-serif',
+          fontWeight: 600,
+          fontSize: '16px',
+          cursor: isGenerating ? 'wait' : 'pointer',
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+        }}
       >
-        📥 Télécharger mon affiche vitrine
+        {isGenerating ? '⏳ Génération en cours...' : '📥 Télécharger mon affiche vitrine'}
       </button>
     </div>
   )
