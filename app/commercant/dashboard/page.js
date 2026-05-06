@@ -1564,7 +1564,7 @@ function QRVitrine({ commerce }) {
           borderRadius: '8px',
           fontFamily: 'Montserrat, sans-serif',
           fontWeight: 600,
-          fontSize: '16px',
+          fontSize: '14px',
           cursor: isGenerating ? 'wait' : 'pointer',
           width: '100%',
           display: 'flex',
@@ -1573,7 +1573,7 @@ function QRVitrine({ commerce }) {
           gap: '8px',
         }}
       >
-        {isGenerating ? '⏳ Génération en cours...' : '📥 Télécharger mon affiche vitrine'}
+        {isGenerating ? '⏳ Génération...' : '📥 Télécharger l\'affiche'}
       </button>
     </div>
   )

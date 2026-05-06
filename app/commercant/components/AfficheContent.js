@@ -44,6 +44,7 @@ export default function AfficheContent({ commerce }) {
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
+          zIndex: 10,
         }}
       />
 
@@ -71,6 +72,7 @@ export default function AfficheContent({ commerce }) {
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
+          zIndex: 10,
         }}
       />
 
