@@ -151,6 +151,10 @@ export async function POST(request) {
     }
   }
 
+  const hasParrainage = filleulMeta.parrainage_filleul === 'true' || subscriptionDiscounts.length > 0
+  const prixCentimes  = { essentiel: 2900, pro: 4900 }
+  const amountOff     = discountAmountsCents[palier] ?? 1000
+
   try {
     const session = await stripe.checkout.sessions.create({
       mode:                 'subscription',
@@ -166,6 +170,13 @@ export async function POST(request) {
       success_url:    `${siteUrl}/commercant/abonnement/succes?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url:     `${siteUrl}/commercant/abonnement?commerce_id=${commerce_id}`,
       locale:         'fr',
+      ...(hasParrainage ? {
+        custom_text: {
+          submit: {
+            message: `🎉 Votre remise parrainage de ${amountOff / 100}€ sera automatiquement appliquée sur votre 1ère facture. Vous ne paierez que ${(prixCentimes[palier] - amountOff) / 100}€ au lieu de ${prixCentimes[palier] / 100}€.`,
+          },
+        },
+      } : {}),
     })
     return Response.json({ url: session.url })
   } catch (err) {
