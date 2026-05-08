@@ -126,6 +126,9 @@ BEGIN
   RAISE NOTICE 'Test 8 OK : index idx_commerces_affiche_logo présent';
 END $$;
 
-RAISE NOTICE '====================================';
-RAISE NOTICE 'TOUS LES TESTS POST-MIGRATION OK';
-RAISE NOTICE '====================================';
+DO $$
+BEGIN
+  RAISE NOTICE '====================================';
+  RAISE NOTICE 'TOUS LES TESTS POST-MIGRATION OK';
+  RAISE NOTICE '====================================';
+END $$;
