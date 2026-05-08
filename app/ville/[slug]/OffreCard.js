@@ -48,6 +48,9 @@ const CATEGORIE_MAP = {
     'bijouterie', 'horlogerie', 'antiquaire', 'brocante',
     'vetements', 'chaussures', 'animalerie', 'sante',
   ],
+  mairie_asso: [
+    'local_government_office', 'city_hall', 'town_hall',
+  ],
   loisirs: [
     'gym', 'bowling_alley', 'movie_theater', 'amusement_park',
     'museum', 'art_gallery', 'zoo', 'aquarium', 'stadium',

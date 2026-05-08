@@ -467,3 +467,77 @@ ACTIVATION PROGRESSIVE
 3. Activer sur Preview Vercel → tester sur l'URL preview
 4. Activer sur Production uniquement après validation complète
 5. Passer un commerce pilote en palier 'pro' + configurer son programme
+
+---
+
+FEATURE : MODULE MAIRIE / ASSOCIATION
+=====================================
+Branche Git : feat/mairie-asso-lot1-fondations (Lot 1 sur 4)
+État        : Lot 1 terminé — fondations en place, aucune UI fonctionnelle visible
+Feature flag: NEXT_PUBLIC_MAIRIE_ASSO_ENABLED (false par défaut partout)
+
+PRINCIPE DE SÉCURITÉ
+--------------------
+Double garde-fou avant tout affichage ou exécution :
+  1. NEXT_PUBLIC_MAIRIE_ASSO_ENABLED === 'true' (variable d'environnement)
+  2. commerce.categorie_bonmoment === 'mairie_asso' (côté BDD)
+Si l'un est false → aucune UI mairie_asso visible, aucun endpoint actif.
+
+COLONNES AJOUTÉES SUR TABLES EXISTANTES
+----------------------------------------
+commerces.logo_url (TEXT, NULLABLE)
+  → Logo personnalisé pour les comptes mairie_asso uniquement
+commerces.affiche_logo_mairie_asso_id (UUID, NULLABLE, FK→commerces)
+  → Choix du commerçant pour son affiche vitrine PDF
+offres.avec_bon (BOOLEAN, NOT NULL, DEFAULT TRUE)
+  → FALSE = offre d'information (réservé aux mairie_asso, lot 3)
+
+NOUVELLE TABLE
+--------------
+mairie_asso_membres
+  → Liens N-N entre comptes mairie_asso et commerces
+  → Statuts : pending / accepted / declined / removed
+  → 2 triggers de cohérence + 4 policies RLS
+
+CATÉGORIE AJOUTÉE
+-----------------
+'mairie_asso' devient la 6ème valeur acceptée pour commerces.categorie_bonmoment
+(categorie_bonmoment est TEXT sans CHECK constraint — validation applicative uniquement)
+Filtre client correspondant : 🏛️ Mairie / Association (à venir lot 3)
+Détection auto Google Places : local_government_office, city_hall, town_hall
+
+FICHIERS SQL
+------------
+sql/add_mairie_asso.sql              → Migration (à exécuter manuellement)
+sql/rollback_mairie_asso.sql         → Rollback complet
+sql/test_post_migration_mairie_asso.sql → Tests post-migration (8 tests)
+
+TESTS AUTOMATISÉS
+-----------------
+Framework : Vitest (unitaires) + Playwright (E2E)
+Commandes :
+  npm test                 → Vitest run
+  npm run test:e2e         → Playwright
+  npm run test:non-regression → Tests de non-régression uniquement
+Objectif unique : si flag OFF, aucun test commerce existant ne doit échouer.
+
+PROCÉDURE DE ROLLBACK (3 niveaux)
+----------------------------------
+Niveau 0 — Désactiver le flag (INSTANTANÉ, données conservées) :
+  Vercel → Environment Variables → NEXT_PUBLIC_MAIRIE_ASSO_ENABLED = false → redeploy
+
+Niveau 1 — Désactiver côté serveur (1s, données conservées) :
+  SQL : UPDATE commerces SET categorie_bonmoment = 'autres' WHERE categorie_bonmoment = 'mairie_asso';
+  (à n'exécuter qu'en dernier recours, casse les liens existants)
+
+Niveau 2 — Revert Git (code retiré, tables conservées) :
+  git revert <hash_commit_lot1> && git push
+
+Niveau 3 — Rollback DB complet (données mairie_asso perdues) :
+  Exécuter sql/rollback_mairie_asso.sql dans Supabase SQL Editor
+
+LOTS RESTANTS
+-------------
+Lot 2 — Invitations : système d'invitation depuis dashboard, acceptation/refus, gestion adhérents
+Lot 3 — Offres et validation : formulaire d'offre adapté, offres sans bon, validation multi-points
+Lot 4 — Dashboard + SAV + admin + légal : KPIs cumulés, CGV, chatbot, FAQ, filtres admin, banc de test V3
