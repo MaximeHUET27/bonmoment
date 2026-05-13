@@ -70,9 +70,23 @@ export async function POST(request) {
 
   /* ── Vérifications dans l'ordre ───────────────────────────────────────── */
 
-  // 1. Appartient à l'un des commerces du commerçant ?
-  if (!commerceIds.includes(offre.commerce_id))
-    return NextResponse.json({ error: "Ce bon appartient à un autre commerce" }, { status: 403 })
+  // 1. Appartient à l'un des commerces du commerçant, ou à une asso dont il est membre ?
+  let assoNom = null
+  if (!commerceIds.includes(offre.commerce_id)) {
+    const { data: membership } = await admin
+      .from('mairie_asso_membres')
+      .select('mairie_asso_id, commerces!mairie_asso_id(nom, categorie_bonmoment)')
+      .in('commerce_id', commerceIds)
+      .eq('mairie_asso_id', offre.commerce_id)
+      .eq('statut', 'accepted')
+      .maybeSingle()
+
+    const isAsso = membership?.commerces?.categorie_bonmoment === 'mairie_asso'
+    if (!membership || !isAsso)
+      return NextResponse.json({ error: "Ce bon appartient à un autre commerce" }, { status: 403 })
+
+    assoNom = membership.commerces.nom
+  }
 
   // 2. Déjà utilisé ?
   if (res.statut === 'utilisee')
@@ -187,7 +201,8 @@ export async function POST(request) {
 
   return NextResponse.json({
     success: true,
-    offre:  { titre: offre.titre, type_remise: offre.type_remise, valeur: offre.valeur },
-    client: { prenom, telephone },
+    offre:   { titre: offre.titre, type_remise: offre.type_remise, valeur: offre.valeur },
+    client:  { prenom, telephone },
+    asso_nom: assoNom,
   })
 }

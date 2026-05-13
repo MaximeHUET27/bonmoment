@@ -17,6 +17,7 @@ import { isMairieAssoEnabled } from '@/lib/featureFlags'
 import GestionAdherents from '@/app/components/mairie-asso/GestionAdherents'
 import BandeauInvitations from '@/app/components/mairie-asso/BandeauInvitations'
 import MesAdhesions from '@/app/components/mairie-asso/MesAdhesions'
+import OffresCollectives from '@/app/components/mairie-asso/OffresCollectives'
 const BarChart         = dynamic(() => import('recharts').then(m => m.BarChart),         { ssr: false })
 const Bar              = dynamic(() => import('recharts').then(m => m.Bar),              { ssr: false })
 const XAxis            = dynamic(() => import('recharts').then(m => m.XAxis),            { ssr: false })
@@ -323,6 +324,11 @@ export default function DashboardPage() {
         {/* MES ADHÉSIONS — flag ON, commerçants non mairie_asso uniquement ─── */}
         {commerce && isMairieAssoEnabled() && commerce.categorie_bonmoment !== 'mairie_asso' && (
           <MesAdhesions commerceId={commerce.id} />
+        )}
+
+        {/* OFFRES COLLECTIVES — flag ON, membres d'une asso uniquement ─────── */}
+        {commerce && isMairieAssoEnabled() && commerce.categorie_bonmoment !== 'mairie_asso' && (
+          <OffresCollectives commerceId={commerce.id} />
         )}
 
         {/* 6. OFFRES — onglets actives / expirées ─────────────────────────── */}

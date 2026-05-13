@@ -577,7 +577,42 @@ Tests ajoutés :
   tests/e2e/mairie-asso/invitations-flow.spec.js     → non-régression UI avec flag OFF
   tests/non-regression/feature-flag.test.js          → enrichi (bloc API routes)
 
+LOT 3 — OFFRES ET VALIDATION (terminé)
+---------------------------------------
+État : code livré sur la branche feat/mairie-asso-lot1-fondations, non mergé sur master
+
+SQL ajouté (add_mairie_asso_lot3.sql) :
+  - Table participations_offres  → inscriptions aux événements sans bon, 4 policies RLS
+  - RPC get_offres_collectives_commerce(p_commerce_id) → offres actives des assos parentes
+  - RPC get_participants_offre(p_offre_id) → participants d'une offre sans bon
+
+API Routes ajoutées :
+  GET/POST /api/offres/[id]/participants     → liste/inscription participants sans bon
+  GET      /api/commercant/offres-collectives → offres actives de l'asso (RPC)
+
+Modifications formulaire offre (nouvelle/page.js) :
+  - Ajout categorie_bonmoment au select commerce
+  - Toggle "Événement sans bon" visible si typeRemise=atelier + compte mairie_asso
+  - Champ date fin séparé (multi-jours jusqu'à 30j) pour événements sans bon
+  - Validation : skip nbBons si avecBon=false, max 30j pour mairie_asso
+
+Modifications API offres (route.js) :
+  - categorie_bonmoment dans le select commerce
+  - Validation durée : max 30j si mairie_asso, max 1j sinon
+  - Insertion du champ avec_bon dans offres
+
+Modifications côté client :
+  - VilleClient.js : filtre 🏛️ Mairie/Asso ajouté aux FILTERS_CATEGORIE
+  - OffreCard.js : gestion avec_bon=false (plage dates, "📍 En savoir plus", pas de timer/stock)
+  - offre/[id]/page.js : fetch participants, bloc "sans bon" (dates + participants), mention asso
+  - valider-bon/route.js : validation multi-point (membres asso peuvent valider bons de l'asso)
+  - commercant/valider/page.js ResultScreen : mention "🏛️ Bon de [Asso]" si validation croisée
+
+Composant ajouté :
+  app/components/mairie-asso/OffresCollectives.js  → liste des offres collectives dans dashboard membre
+
+Modification dashboard :
+  app/commercant/dashboard/page.js → ajout <OffresCollectives> pour les membres non-mairie_asso
+
 Lots restants :
-  Lot 3 — Offres et validation : formulaire d'offre adapté (durée 30j, "Sans bon"),
-          validation multi-points, affichage côté client
-  Lot 4 — Dashboard cumulé + SAV + admin + légal
+  Lot 4 — Dashboard KPIs cumulés + SAV + admin + légal

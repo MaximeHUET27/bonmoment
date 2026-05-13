@@ -76,10 +76,10 @@ export default async function OffrePage({ params }) {
   const supabase = await createClient()
 
   /* ── Données offre ── */
-  const [{ data: offre }, { count: reservationsCount }] = await Promise.all([
+  const [{ data: offre }, { count: reservationsCount }, { count: participantsCount }] = await Promise.all([
     supabase
       .from('offres')
-      .select('*, commerces(id, nom, categorie, adresse, ville, description, photo_url, note_google, telephone, horaires, place_id)')
+      .select('*, commerces(id, nom, categorie, categorie_bonmoment, adresse, ville, description, photo_url, note_google, telephone, horaires, place_id)')
       .eq('id', id)
       .single(),
     supabase
@@ -87,6 +87,10 @@ export default async function OffrePage({ params }) {
       .select('id', { count: 'exact', head: true })
       .eq('offre_id', id)
       .eq('statut', 'reservee'),
+    supabase
+      .from('participations_offres')
+      .select('id', { count: 'exact', head: true })
+      .eq('offre_id', id),
   ])
 
   if (!offre) {
@@ -102,9 +106,11 @@ export default async function OffrePage({ params }) {
     )
   }
 
-  const commerce  = offre.commerces
-  const villeSlug = commerce?.ville ? toSlug(commerce.ville) : null
-  const expired   = offre.statut === 'expiree' || new Date(offre.date_fin) < new Date()
+  const commerce   = offre.commerces
+  const villeSlug  = commerce?.ville ? toSlug(commerce.ville) : null
+  const expired    = offre.statut === 'expiree' || new Date(offre.date_fin) < new Date()
+  const sansBon    = offre.avec_bon === false
+  const isMairieAsso = commerce?.categorie_bonmoment === 'mairie_asso'
 
   return (
     <main className="min-h-screen bg-white flex flex-col">
@@ -156,8 +162,45 @@ export default async function OffrePage({ params }) {
           {getFullOffreTitle(offre)}
         </h1>
 
-        {/* 3. Barre d'urgence + CTA + preuve sociale — ABOVE THE FOLD */}
-        <UrgencyAndCTA offre={offre} reservationsCount={reservationsCount ?? 0} />
+        {/* 3. CTA / Info événement */}
+        {sansBon ? (
+          <div className="flex flex-col gap-3">
+            {isMairieAsso && (
+              <div className="flex items-center gap-2 bg-[#FFF0E0] rounded-xl px-4 py-2.5">
+                <span className="text-lg">🏛️</span>
+                <p className="text-xs font-semibold text-[#CC5500]">
+                  Événement organisé par {commerce?.nom}
+                </p>
+              </div>
+            )}
+            <div className="bg-[#F5F5F5] rounded-2xl px-4 py-4 flex flex-col gap-1.5">
+              <p className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">Dates</p>
+              <p className="text-sm font-bold text-[#0A0A0A]">
+                {new Date(offre.date_debut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
+              {offre.date_debut !== offre.date_fin && (
+                <p className="text-xs text-[#3D3D3D]/60">
+                  → {new Date(offre.date_fin).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                </p>
+              )}
+              <p className="text-xs text-[#3D3D3D]/60">
+                {new Date(offre.date_debut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                {' → '}
+                {new Date(offre.date_fin).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            </div>
+            {(participantsCount ?? 0) > 0 && (
+              <p className="text-xs text-[#3D3D3D]/60 text-center">
+                👥 {participantsCount} personne{(participantsCount ?? 0) > 1 ? 's' : ''} intéressée{(participantsCount ?? 0) > 1 ? 's' : ''}
+              </p>
+            )}
+            {expired && (
+              <p className="text-sm font-bold text-[#9CA3AF] text-center">Événement terminé</p>
+            )}
+          </div>
+        ) : (
+          <UrgencyAndCTA offre={offre} reservationsCount={reservationsCount ?? 0} />
+        )}
 
         {/* ── Séparateur ── */}
         <div className="border-t border-[#F0F0F0] my-1" />
