@@ -16,6 +16,14 @@ const nextConfig = {
       { protocol: 'https', hostname: '**' },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/.well-known/microsoft-identity-association.json',
+        destination: '/api/microsoft-identity',
+      },
+    ]
+  },
   async headers() {
     return [
       {
