@@ -541,3 +541,43 @@ LOTS RESTANTS
 Lot 2 — Invitations : système d'invitation depuis dashboard, acceptation/refus, gestion adhérents
 Lot 3 — Offres et validation : formulaire d'offre adapté, offres sans bon, validation multi-points
 Lot 4 — Dashboard + SAV + admin + légal : KPIs cumulés, CGV, chatbot, FAQ, filtres admin, banc de test V3
+
+LOT 2 — INVITATIONS (terminé)
+------------------------------
+État : code livré sur la branche feat/mairie-asso-lot1-fondations, non mergé sur master
+
+API Routes ajoutées :
+  GET    /api/mairie-asso/commercants-invitables  → recherche commerces invitables (par ville + nom)
+  POST   /api/mairie-asso/invitations              → créer invitation (rate limit 20/min)
+  PATCH  /api/mairie-asso/invitations/[id]         → accept/decline/remove/leave
+
+Composants ajoutés :
+  app/components/ConfirmModal.js                       → modale réutilisable charte BONMOMENT
+  app/components/mairie-asso/GestionAdherents.js       → section dashboard mairie/asso
+  app/components/mairie-asso/BandeauInvitations.js     → bandeau dashboard commerçant
+  app/components/mairie-asso/MesAdhesions.js           → section dashboard commerçant
+
+Helpers ajoutés :
+  lib/brevo/sendInvitationEmail.js  → envoi email invitation Brevo
+
+Modifications :
+  app/commercant/dashboard/page.js  → ajout categorie_bonmoment au select, intégration des 3 composants sous flag
+
+Décisions produit appliquées :
+  - Recherche par nom uniquement (pas de filtre catégorie ni pagination)
+  - Bandeau orange + modale au clic (pas de toast permanent)
+  - Ré-invitation immédiate possible après refus ou retrait (pas de délai)
+  - Aucune notification à l'asso quand le commerçant agit (visible dans dashboard)
+  - Confirmation : pas pour Accepter, modale pour Décliner / Retirer / Quitter
+  - Rate limit : 20 invitations/minute par IP (pattern existant lib/rate-limit.js)
+  - useState(() => createClient()) pour stabilité de la ref Supabase dans useCallback
+
+Tests ajoutés :
+  tests/unit/mairie-asso/invitations-logic.test.js  → logique transitions + permissions + removed_by
+  tests/e2e/mairie-asso/invitations-flow.spec.js     → non-régression UI avec flag OFF
+  tests/non-regression/feature-flag.test.js          → enrichi (bloc API routes)
+
+Lots restants :
+  Lot 3 — Offres et validation : formulaire d'offre adapté (durée 30j, "Sans bon"),
+          validation multi-points, affichage côté client
+  Lot 4 — Dashboard cumulé + SAV + admin + légal

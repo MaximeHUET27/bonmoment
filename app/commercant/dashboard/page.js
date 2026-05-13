@@ -13,6 +13,10 @@ import DeleteCommerceButton from '@/app/commercant/[id]/DeleteCommerceButton'
 import DashboardFideliteSection from '@/app/components/fidelite/DashboardFideliteSection'
 import { getFullOffreTitle } from '@/lib/offreTitle'
 import dynamic from 'next/dynamic'
+import { isMairieAssoEnabled } from '@/lib/featureFlags'
+import GestionAdherents from '@/app/components/mairie-asso/GestionAdherents'
+import BandeauInvitations from '@/app/components/mairie-asso/BandeauInvitations'
+import MesAdhesions from '@/app/components/mairie-asso/MesAdhesions'
 const BarChart         = dynamic(() => import('recharts').then(m => m.BarChart),         { ssr: false })
 const Bar              = dynamic(() => import('recharts').then(m => m.Bar),              { ssr: false })
 const XAxis            = dynamic(() => import('recharts').then(m => m.XAxis),            { ssr: false })
@@ -46,7 +50,7 @@ export default function DashboardPage() {
       // Sélection complète avec les nouvelles colonnes
       let { data, error } = await supabase
         .from('commerces')
-        .select('id, nom, categorie, ville, adresse, note_google, palier, photo_url, telephone, horaires, maps_url, stripe_subscription_id, stripe_customer_id, abonnement_actif, resiliation_prevue, date_fin_abonnement')
+        .select('id, nom, categorie, categorie_bonmoment, ville, adresse, note_google, palier, photo_url, telephone, horaires, maps_url, stripe_subscription_id, stripe_customer_id, abonnement_actif, resiliation_prevue, date_fin_abonnement')
         .eq('owner_id', user.id)
 
       // Fallback si les colonnes maps_url/palier n'existent pas encore en BDD
@@ -208,6 +212,11 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* BANDEAU INVITATIONS — flag ON, commerçants non mairie_asso uniquement ── */}
+        {commerce && isMairieAssoEnabled() && commerce.categorie_bonmoment !== 'mairie_asso' && (
+          <BandeauInvitations commerceId={commerce.id} />
+        )}
+
         {/* 1. Boutons principaux ──────────────────────────────────────────── */}
         {commerce && (
           <div className="flex gap-4 items-start">
@@ -304,6 +313,16 @@ export default function DashboardPage() {
         {/* 4. TES STATISTIQUES ────────────────────────────────────────────── */}
         {commerce && (
           <StatsSection commerce={commerce} supabase={supabase} />
+        )}
+
+        {/* GESTION ADHÉRENTS — flag ON, mairie_asso uniquement ─────────────── */}
+        {commerce && isMairieAssoEnabled() && commerce.categorie_bonmoment === 'mairie_asso' && (
+          <GestionAdherents commerce={commerce} />
+        )}
+
+        {/* MES ADHÉSIONS — flag ON, commerçants non mairie_asso uniquement ─── */}
+        {commerce && isMairieAssoEnabled() && commerce.categorie_bonmoment !== 'mairie_asso' && (
+          <MesAdhesions commerceId={commerce.id} />
         )}
 
         {/* 6. OFFRES — onglets actives / expirées ─────────────────────────── */}

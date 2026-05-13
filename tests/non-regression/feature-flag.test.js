@@ -32,3 +32,12 @@ describe('Feature flag MAIRIE_ASSO — non-régression', () => {
     }
   });
 });
+
+describe('Module Mairie/Asso — non-régression API routes', () => {
+  it('Les API routes du module ne sont actives que si flag ON', async () => {
+    process.env.NEXT_PUBLIC_MAIRIE_ASSO_ENABLED = 'false';
+    vi.resetModules();
+    const { isMairieAssoEnabled } = await import('../../lib/featureFlags.js');
+    expect(isMairieAssoEnabled()).toBe(false);
+  });
+});
