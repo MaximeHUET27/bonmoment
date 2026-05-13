@@ -366,7 +366,7 @@ export default function OffreCard({ offre, userReservation }) {
             <span className="shrink-0 bg-[#FF6B00] text-white font-bold text-[11px] px-2 py-0.5 rounded-[8px] whitespace-nowrap">
               {formatBadge(offre)}
             </span>
-            <span className="font-bold text-[#0A0A0A] leading-snug" style={{ fontSize: titreFontSize }}>
+            <span className="font-bold text-[#0A0A0A] leading-snug line-clamp-2" style={{ fontSize: titreFontSize }}>
               {getFullOffreTitle(offre)}
             </span>
           </Link>
