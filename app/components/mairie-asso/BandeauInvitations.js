@@ -77,18 +77,17 @@ export default function BandeauInvitations({ commerceId }) {
     <>
       <div
         onClick={() => setModalOpen(true)}
-        className="bg-[#FFF0E0] border border-[#FF6B00] rounded-xl p-4 cursor-pointer hover:bg-[#FFE4D0] transition flex items-center justify-between"
+        className="w-full bg-[#FFF0E0] border border-[#FF6B00]/30 rounded-xl px-4 py-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-[#FFE4D0] transition-colors"
         role="button"
         tabIndex={0}
         onKeyDown={e => e.key === 'Enter' && setModalOpen(true)}
       >
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">📩</span>
-          <span className="font-bold text-[#CC5500]">
-            Tu as {invitations.length} invitation{invitations.length > 1 ? 's' : ''} en attente
-          </span>
-        </div>
-        <span className="text-[#FF6B00] font-bold">Voir →</span>
+        <p className="text-[#CC5500] font-bold text-[11px] sm:text-[13px] leading-tight">
+          📩 Tu as {invitations.length} invitation{invitations.length > 1 ? 's' : ''} en attente
+        </p>
+        <span className="shrink-0 bg-[#FF6B00] text-white font-black text-xs px-3 py-2 rounded-lg hover:bg-[#CC5500] transition-colors whitespace-nowrap">
+          Voir →
+        </span>
       </div>
 
       {modalOpen && (
@@ -97,48 +96,48 @@ export default function BandeauInvitations({ commerceId }) {
           onClick={() => setModalOpen(false)}
         >
           <div
-            className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-xl max-h-[90vh] overflow-y-auto"
+            className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl px-6 py-6 shadow-xl max-h-[90vh] overflow-y-auto flex flex-col gap-4"
             onClick={e => e.stopPropagation()}
           >
-            <h2 className="text-xl font-bold text-[#0A0A0A] mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">
               Invitations en attente
             </h2>
-            <ul className="space-y-4">
+            <div className="flex flex-col gap-3">
               {invitations.map(inv => (
-                <li key={inv.id} className="border border-[#F5F5F5] rounded-lg p-4">
-                  <div className="flex items-center gap-3 mb-3">
+                <div key={inv.id} className="border border-[#F0F0F0] rounded-2xl px-4 py-4 flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
                     {inv.mairie_asso?.photo_url && (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={inv.mairie_asso.photo_url} alt="" className="w-12 h-12 rounded-full object-cover" />
+                      <img src={inv.mairie_asso.photo_url} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
                     )}
-                    <div>
-                      <p className="font-bold text-[#0A0A0A]">{inv.mairie_asso?.nom}</p>
-                      <p className="text-xs text-[#3D3D3D]">{inv.mairie_asso?.ville}</p>
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm text-[#0A0A0A] truncate">{inv.mairie_asso?.nom}</p>
+                      <p className="text-[11px] text-[#3D3D3D]/60">{inv.mairie_asso?.ville}</p>
                     </div>
                   </div>
-                  <p className="text-sm text-[#3D3D3D] mb-3">
+                  <p className="text-xs text-[#3D3D3D]/70 leading-relaxed">
                     En acceptant, tu pourras valider les bons de leurs offres dans ton commerce.
                   </p>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleAccept(inv.id)}
-                      className="flex-1 px-4 py-3 bg-[#FF6B00] hover:bg-[#CC5500] text-white rounded-lg font-bold min-h-[44px]"
+                      className="flex-1 bg-[#FF6B00] hover:bg-[#CC5500] text-white font-bold text-sm py-3 rounded-xl transition-colors flex items-center justify-center min-h-[44px]"
                     >
                       ✓ Accepter
                     </button>
                     <button
                       onClick={() => { setModalOpen(false); setConfirmDecline(inv); }}
-                      className="flex-1 px-4 py-3 bg-[#F5F5F5] hover:bg-gray-200 text-[#3D3D3D] rounded-lg font-bold min-h-[44px]"
+                      className="flex-1 border border-[#E0E0E0] text-[#3D3D3D] font-bold text-sm py-3 rounded-xl hover:border-[#FF6B00] hover:text-[#FF6B00] transition-colors flex items-center justify-center min-h-[44px]"
                     >
                       Décliner
                     </button>
                   </div>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
             <button
               onClick={() => setModalOpen(false)}
-              className="mt-4 w-full px-4 py-3 text-[#3D3D3D] font-semibold min-h-[44px]"
+              className="w-full text-[11px] font-semibold text-[#3D3D3D]/50 hover:text-[#3D3D3D] py-3 min-h-[44px] transition-colors"
             >
               Fermer
             </button>
@@ -157,7 +156,7 @@ export default function BandeauInvitations({ commerceId }) {
       />
 
       {toast && (
-        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-3 rounded-lg shadow-lg text-white font-semibold z-50 ${
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-3 rounded-xl shadow-lg text-white font-semibold z-50 text-sm ${
           toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
         }`}>
           {toast.msg}

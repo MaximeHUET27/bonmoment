@@ -118,112 +118,112 @@ export default function GestionAdherents({ commerce }) {
   };
 
   return (
-    <section className="bg-white rounded-2xl p-6 shadow-sm border border-[#F5F5F5] space-y-6">
-      <h2 className="text-2xl font-bold text-[#0A0A0A]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-        🤝 Gestion des adhérents
-      </h2>
+    <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
+      <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">🤝 Gestion des adhérents</h2>
 
       {/* Adhérents actifs */}
-      <div>
-        <h3 className="text-lg font-semibold text-[#0A0A0A] mb-3">
+      <div className="flex flex-col gap-2">
+        <p className="text-[10px] font-semibold text-[#3D3D3D]/40 uppercase tracking-widest">
           Adhérents actifs ({adherentsActifs.length})
-        </h3>
+        </p>
         {loading ? (
-          <p className="text-[#3D3D3D] text-sm">Chargement...</p>
+          <div className="flex flex-col gap-2 animate-pulse">
+            {[...Array(2)].map((_, i) => <div key={i} className="h-10 bg-[#F5F5F5] rounded-xl" />)}
+          </div>
         ) : adherentsActifs.length === 0 ? (
-          <p className="text-[#3D3D3D] text-sm italic">Aucun adhérent pour l&apos;instant. Invite des commerçants ci-dessous.</p>
+          <p className="text-sm text-[#3D3D3D]/50 italic">Aucun adhérent pour l&apos;instant. Invite des commerçants ci-dessous.</p>
         ) : (
-          <ul className="space-y-2">
+          <div className="flex flex-col">
             {adherentsActifs.map(m => (
-              <li key={m.id} className="flex items-center justify-between p-3 bg-[#F5F5F5] rounded-lg">
-                <div className="flex items-center gap-3">
+              <div key={m.id} className="flex items-center justify-between gap-3 py-2.5 border-b border-[#F5F5F5] last:border-0">
+                <div className="flex items-center gap-3 min-w-0">
                   {m.commerce.photo_url && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={m.commerce.photo_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                    <img src={m.commerce.photo_url} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
                   )}
-                  <span className="font-semibold text-[#0A0A0A]">{m.commerce.nom}</span>
+                  <span className="text-sm font-bold text-[#0A0A0A] truncate">{m.commerce.nom}</span>
                 </div>
                 <button
                   onClick={() => confirmRemove(m, 'membre')}
-                  className="text-sm text-red-600 hover:text-red-700 font-semibold min-h-[44px] px-3"
+                  className="text-[11px] font-semibold text-red-400 hover:text-red-600 transition-colors shrink-0"
                 >
                   Retirer
                 </button>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
 
       {/* Invitations en attente */}
-      <div>
-        <h3 className="text-lg font-semibold text-[#0A0A0A] mb-3">
+      <div className="flex flex-col gap-2">
+        <p className="text-[10px] font-semibold text-[#3D3D3D]/40 uppercase tracking-widest">
           Invitations en attente ({invitationsEnAttente.length})
-        </h3>
+        </p>
         {invitationsEnAttente.length === 0 ? (
-          <p className="text-[#3D3D3D] text-sm italic">Aucune invitation en attente.</p>
+          <p className="text-sm text-[#3D3D3D]/50 italic">Aucune invitation en attente.</p>
         ) : (
-          <ul className="space-y-2">
+          <div className="flex flex-col">
             {invitationsEnAttente.map(m => (
-              <li key={m.id} className="flex items-center justify-between p-3 bg-[#FFF0E0] rounded-lg">
-                <div className="flex items-center gap-3">
+              <div key={m.id} className="flex items-center justify-between gap-3 py-2.5 border-b border-[#F5F5F5] last:border-0">
+                <div className="flex items-center gap-3 min-w-0">
                   {m.commerce.photo_url && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={m.commerce.photo_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                    <img src={m.commerce.photo_url} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
                   )}
-                  <div>
-                    <span className="font-semibold text-[#0A0A0A]">{m.commerce.nom}</span>
-                    <span className="block text-xs text-[#CC5500] font-bold uppercase">En attente</span>
+                  <div className="min-w-0">
+                    <span className="text-sm font-bold text-[#0A0A0A] truncate block">{m.commerce.nom}</span>
+                    <span className="text-[10px] font-semibold text-[#FF6B00] uppercase tracking-widest">En attente</span>
                   </div>
                 </div>
                 <button
                   onClick={() => confirmRemove(m, 'invitation')}
-                  className="text-sm text-[#3D3D3D] hover:text-red-600 font-semibold min-h-[44px] px-3"
+                  className="text-[11px] font-semibold text-[#3D3D3D]/50 hover:text-red-500 transition-colors shrink-0"
                 >
                   Annuler
                 </button>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
 
       {/* Inviter un commerçant */}
-      <div>
-        <h3 className="text-lg font-semibold text-[#0A0A0A] mb-3">
+      <div className="flex flex-col gap-2">
+        <p className="text-[10px] font-semibold text-[#3D3D3D]/40 uppercase tracking-widest">
           Inviter un commerçant
-        </h3>
+        </p>
         <input
           type="text"
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           placeholder="Rechercher par nom (min. 2 caractères)..."
-          className="w-full px-4 py-3 border border-[#E0E0E0] rounded-lg focus:outline-none focus:border-[#FF6B00] text-base"
+          className="w-full px-4 py-3 border border-[#E0E0E0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B00] transition-colors"
         />
-        {searching && <p className="text-sm text-[#3D3D3D] mt-2">Recherche...</p>}
+        {searching && <p className="text-[11px] text-[#3D3D3D]/50">Recherche...</p>}
         {!searching && resultsRecherche.length > 0 && (
-          <ul className="space-y-2 mt-3 max-h-96 overflow-y-auto">
+          <div className="flex flex-col max-h-80 overflow-y-auto">
             {resultsRecherche.map(c => (
-              <li key={c.id} className="flex items-center justify-between p-3 bg-[#F5F5F5] rounded-lg">
-                <div className="flex items-center gap-3">
+              <div key={c.id} className="flex items-center justify-between gap-3 py-2.5 border-b border-[#F5F5F5] last:border-0">
+                <div className="flex items-center gap-3 min-w-0">
                   {c.photo_url && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={c.photo_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                    <img src={c.photo_url} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
                   )}
-                  <span className="font-semibold text-[#0A0A0A]">{c.nom}</span>
+                  <span className="text-sm font-bold text-[#0A0A0A] truncate">{c.nom}</span>
                 </div>
                 <button
                   onClick={() => handleInvite(c.id)}
-                  className="px-4 py-2 bg-[#FF6B00] hover:bg-[#CC5500] text-white rounded-lg font-bold text-sm min-h-[44px]"
+                  className="text-xs font-bold text-[#FF6B00] border border-[#FF6B00] px-3 py-1.5 rounded-full hover:bg-[#FFF0E0] transition-colors shrink-0 min-h-[36px] flex items-center"
                 >
                   Inviter
                 </button>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
         {!searching && searchQuery.trim().length >= 2 && resultsRecherche.length === 0 && (
-          <p className="text-sm text-[#3D3D3D] italic mt-2">
+          <p className="text-[11px] text-[#3D3D3D]/50 italic">
             Aucun commerçant trouvé. Vérifie qu&apos;il est inscrit sur BONMOMENT dans ta ville.
           </p>
         )}
@@ -243,12 +243,12 @@ export default function GestionAdherents({ commerce }) {
       )}
 
       {toast && (
-        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-3 rounded-lg shadow-lg text-white font-semibold z-40 ${
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-3 rounded-xl shadow-lg text-white font-semibold z-40 text-sm ${
           toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
         }`}>
           {toast.msg}
         </div>
       )}
-    </section>
+    </div>
   );
 }

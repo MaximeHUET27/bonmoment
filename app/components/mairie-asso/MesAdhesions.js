@@ -61,32 +61,32 @@ export default function MesAdhesions({ commerceId }) {
   if (adhesions.length === 0) return null;
 
   return (
-    <section className="bg-white rounded-2xl p-6 shadow-sm border border-[#F5F5F5]">
-      <h2 className="text-xl font-bold text-[#0A0A0A] mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+    <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
+      <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">
         🤝 Mes adhésions ({adhesions.length})
       </h2>
-      <ul className="space-y-2">
+      <div className="flex flex-col">
         {adhesions.map(a => (
-          <li key={a.id} className="flex items-center justify-between p-3 bg-[#F5F5F5] rounded-lg">
-            <div className="flex items-center gap-3">
+          <div key={a.id} className="flex items-center justify-between gap-3 py-2.5 border-b border-[#F5F5F5] last:border-0">
+            <div className="flex items-center gap-3 min-w-0">
               {a.mairie_asso?.photo_url && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={a.mairie_asso.photo_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                <img src={a.mairie_asso.photo_url} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
               )}
-              <div>
-                <span className="font-semibold text-[#0A0A0A] block">{a.mairie_asso?.nom}</span>
-                <span className="text-xs text-[#3D3D3D]">{a.mairie_asso?.ville}</span>
+              <div className="min-w-0">
+                <span className="text-sm font-bold text-[#0A0A0A] truncate block">{a.mairie_asso?.nom}</span>
+                <span className="text-[11px] text-[#3D3D3D]/50">{a.mairie_asso?.ville}</span>
               </div>
             </div>
             <button
               onClick={() => setConfirmLeave(a)}
-              className="text-sm text-[#3D3D3D] hover:text-red-600 font-semibold min-h-[44px] px-3"
+              className="text-[11px] font-semibold text-[#3D3D3D]/50 hover:text-red-500 transition-colors shrink-0"
             >
               Quitter
             </button>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
 
       <ConfirmModal
         open={!!confirmLeave}
@@ -99,12 +99,12 @@ export default function MesAdhesions({ commerceId }) {
       />
 
       {toast && (
-        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-3 rounded-lg shadow-lg text-white font-semibold z-50 ${
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-3 rounded-xl shadow-lg text-white font-semibold z-50 text-sm ${
           toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
         }`}>
           {toast.msg}
         </div>
       )}
-    </section>
+    </div>
   );
 }
