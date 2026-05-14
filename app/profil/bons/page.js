@@ -216,7 +216,7 @@ function ParticipationCard({ participation, onDesinscrit }) {
       {/* Badge + titre + commerce */}
       <div className="flex items-start gap-3">
         <span className="inline-block shrink-0 px-3 py-1.5 rounded-full bg-[#FFF0E0] text-[#CC5500] text-xs font-bold whitespace-nowrap">
-          🤔 Ça m&apos;intéresse
+          Ça m&apos;intéresse
         </span>
         <div className="min-w-0">
           <p className="text-sm font-bold text-[#0A0A0A] leading-snug">{getFullOffreTitle(offre)}</p>
