@@ -3,10 +3,12 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { toSlug } from '@/lib/utils'
 import UrgencyAndCTA from './UrgencyAndCTA'
+import CaMInteresseButton from './CaMInteresseButton'
 import ShareButton from '@/app/components/ShareButton'
 import FavoriButton from '@/app/components/FavoriButton'
 import CommerceInfoCard from '@/app/components/CommerceInfoCard'
 import { getFullOffreTitle } from '@/lib/offreTitle'
+import { isMairieAssoEnabled } from '@/lib/featureFlags'
 
 const OG_DEFAULT_IMAGE = 'https://bonmoment.app/og-default.jpg'
 
@@ -76,7 +78,12 @@ export default async function OffrePage({ params }) {
   const supabase = await createClient()
 
   /* ── Données offre ── */
-  const [{ data: offre }, { count: reservationsCount }, { count: participantsCount }] = await Promise.all([
+  const [
+    { data: offre },
+    { count: reservationsCount },
+    { count: participantsCount },
+    { data: authData },
+  ] = await Promise.all([
     supabase
       .from('offres')
       .select('*, commerces(id, nom, categorie, categorie_bonmoment, adresse, ville, description, photo_url, note_google, telephone, horaires, place_id)')
@@ -91,6 +98,7 @@ export default async function OffrePage({ params }) {
       .from('participations_offres')
       .select('id', { count: 'exact', head: true })
       .eq('offre_id', id),
+    supabase.auth.getUser(),
   ])
 
   if (!offre) {
@@ -111,6 +119,20 @@ export default async function OffrePage({ params }) {
   const expired    = offre.statut === 'expiree' || new Date(offre.date_fin) < new Date()
   const sansBon    = offre.avec_bon === false
   const isMairieAsso = commerce?.categorie_bonmoment === 'mairie_asso'
+  const flagOn     = isMairieAssoEnabled()
+
+  /* Vérifie si l'utilisateur courant est déjà inscrit (seulement si pertinent) */
+  const currentUser = authData?.user ?? null
+  let isCurrentUserParticipating = false
+  if (currentUser && sansBon && isMairieAsso && flagOn && !expired) {
+    const { data: myPartic } = await supabase
+      .from('participations_offres')
+      .select('id')
+      .eq('offre_id', id)
+      .eq('user_id', currentUser.id)
+      .maybeSingle()
+    isCurrentUserParticipating = !!myPartic
+  }
 
   return (
     <main className="min-h-screen bg-white flex flex-col">
@@ -189,11 +211,17 @@ export default async function OffrePage({ params }) {
                 {new Date(offre.date_fin).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
-            {(participantsCount ?? 0) > 0 && (
+            {isMairieAsso && flagOn && !expired ? (
+              <CaMInteresseButton
+                offreId={id}
+                initialIsParticipating={isCurrentUserParticipating}
+                initialCount={participantsCount ?? 0}
+              />
+            ) : (participantsCount ?? 0) > 0 ? (
               <p className="text-xs text-[#3D3D3D]/60 text-center">
                 👥 {participantsCount} personne{(participantsCount ?? 0) > 1 ? 's' : ''} intéressée{(participantsCount ?? 0) > 1 ? 's' : ''}
               </p>
-            )}
+            ) : null}
             {expired && (
               <p className="text-sm font-bold text-[#9CA3AF] text-center">Événement terminé</p>
             )}

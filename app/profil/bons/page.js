@@ -9,6 +9,7 @@ import FullScreenBon from '@/app/components/FullScreenBon'
 import CommerceInfoCard from '@/app/components/CommerceInfoCard'
 import { formatDebut } from '@/lib/offreStatus'
 import { getFullOffreTitle } from '@/lib/offreTitle'
+import { isMairieAssoEnabled } from '@/lib/featureFlags'
 
 /* ── Helpers ──────────────────────────────────────────────────────────────── */
 
@@ -179,14 +180,103 @@ function BonActifCard({ resa, supabase, onCancelled }) {
   )
 }
 
+/* ── Carte participation "Ça m'intéresse" ────────────────────────────────── */
+
+function ParticipationCard({ participation, onDesinscrit }) {
+  const [loading,             setLoading]             = useState(false)
+  const [confirmDesinscription, setConfirmDesinscription] = useState(false)
+
+  async function handleDesinscription() {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/offres/${participation.offres?.id}/participants`, { method: 'DELETE' })
+      if (res.ok) onDesinscrit(participation.id)
+    } finally {
+      setLoading(false)
+      setConfirmDesinscription(false)
+    }
+  }
+
+  const offre     = participation.offres
+  const dateDebut = offre?.date_debut ? new Date(offre.date_debut) : null
+  const dateFin   = offre?.date_fin   ? new Date(offre.date_fin)   : null
+  const expired   = dateFin && dateFin < new Date()
+
+  const fmtDate = (d) => d?.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  const isSameDay = dateDebut && dateFin && dateDebut.toDateString() === dateFin.toDateString()
+  const dateText = isSameDay
+    ? `Le ${fmtDate(dateDebut)}`
+    : dateDebut && dateFin
+    ? `Du ${fmtDate(dateDebut)} au ${fmtDate(dateFin)}`
+    : dateDebut ? fmtDate(dateDebut) : null
+
+  return (
+    <div className={`bg-white rounded-3xl px-5 py-5 shadow-sm flex flex-col gap-4 border border-[#F0F0F0] ${expired ? 'opacity-60' : ''}`}>
+
+      {/* Badge + titre + commerce */}
+      <div className="flex items-start gap-3">
+        <span className="inline-block shrink-0 px-3 py-1.5 rounded-full bg-[#FFF0E0] text-[#CC5500] text-xs font-bold whitespace-nowrap">
+          🤔 Ça m&apos;intéresse
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-[#0A0A0A] leading-snug">{getFullOffreTitle(offre)}</p>
+          <p className="text-xs text-[#3D3D3D]/60 mt-0.5">{offre?.commerces?.nom}</p>
+        </div>
+      </div>
+
+      {/* Dates */}
+      {dateText && (
+        <p className="text-sm font-semibold text-[#0A0A0A]">{dateText}</p>
+      )}
+
+      {/* Infos commerce */}
+      <CommerceInfoCard commerce={offre?.commerces} commerceId={offre?.commerces?.id} />
+
+      {/* Désinscription */}
+      {!expired && (
+        !confirmDesinscription ? (
+          <button
+            onClick={() => setConfirmDesinscription(true)}
+            className="text-[11px] text-center text-[#3D3D3D]/40 hover:text-red-400 transition-colors"
+          >
+            Ne plus m&apos;intéresser
+          </button>
+        ) : (
+          <div className="bg-red-50 border border-red-100 rounded-2xl px-4 py-3 flex flex-col gap-3">
+            <p className="text-sm font-bold text-red-600 text-center">Se désinscrire ?</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirmDesinscription(false)}
+                className="flex-1 border border-[#E0E0E0] text-sm font-semibold py-2.5 rounded-xl"
+              >
+                Non
+              </button>
+              <button
+                onClick={handleDesinscription}
+                disabled={loading}
+                className="flex-1 bg-red-500 text-white text-sm font-bold py-2.5 rounded-xl flex items-center justify-center"
+              >
+                {loading
+                  ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  : 'Oui, retirer'}
+              </button>
+            </div>
+          </div>
+        )
+      )}
+    </div>
+  )
+}
+
 /* ── Page ─────────────────────────────────────────────────────────────────── */
 
 export default function MesBonsPage() {
   const { user, loading, supabase } = useAuth()
   const router = useRouter()
-  const [reservations, setReservations] = useState([])
-  const [fetching,     setFetching]     = useState(true)
-  const [expandedId,   setExpandedId]   = useState(null)
+  const [reservations,   setReservations]   = useState([])
+  const [participations, setParticipations] = useState([])
+  const [fetching,       setFetching]       = useState(true)
+  const [expandedId,     setExpandedId]     = useState(null)
 
   useEffect(() => {
     if (!loading && !user) router.replace('/')
@@ -195,14 +285,19 @@ export default function MesBonsPage() {
   useEffect(() => {
     if (!user) return
     async function load() {
-      const res = await fetch('/api/mes-bons')
-      const data = res.ok ? await res.json() : []
-      const sorted = (data || []).sort((a, b) => {
+      const [resaBons, resaPartic] = await Promise.all([
+        fetch('/api/mes-bons'),
+        fetch('/api/mes-participations'),
+      ])
+      const dataBons   = resaBons.ok   ? await resaBons.json()   : []
+      const dataPartic = resaPartic.ok ? await resaPartic.json() : []
+      const sorted = (dataBons || []).sort((a, b) => {
         const da = a.offres?.date_fin ? new Date(a.offres.date_fin) : new Date(0)
         const db = b.offres?.date_fin ? new Date(b.offres.date_fin) : new Date(0)
         return da - db
       })
       setReservations(sorted)
+      setParticipations(dataPartic || [])
       setFetching(false)
     }
     load()
@@ -210,6 +305,10 @@ export default function MesBonsPage() {
 
   function handleCancelled(id) {
     setReservations(prev => prev.map(r => r.id === id ? { ...r, statut: 'annulee' } : r))
+  }
+
+  function handleDesinscrit(id) {
+    setParticipations(prev => prev.filter(p => p.id !== id))
   }
 
   const now         = new Date()
@@ -430,6 +529,18 @@ export default function MesBonsPage() {
                   </div>
                 )}
               </div>
+            ))}
+          </section>
+        )}
+
+        {/* ── Ça m'intéresse (participations mairie/asso) ── */}
+        {isMairieAssoEnabled() && participations.length > 0 && (
+          <section className="flex flex-col gap-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00]">
+              Ça m&apos;intéresse
+            </p>
+            {participations.map(p => (
+              <ParticipationCard key={p.id} participation={p} onDesinscrit={handleDesinscrit} />
             ))}
           </section>
         )}
