@@ -538,9 +538,8 @@ Niveau 3 — Rollback DB complet (données mairie_asso perdues) :
 
 LOTS RESTANTS
 -------------
-Lot 2 — Invitations : système d'invitation depuis dashboard, acceptation/refus, gestion adhérents
-Lot 3 — Offres et validation : formulaire d'offre adapté, offres sans bon, validation multi-points
-Lot 4 — Dashboard + SAV + admin + légal : KPIs cumulés, CGV, chatbot, FAQ, filtres admin, banc de test V3
+Lot 4B — Textes légaux (CGV, Confidentialité, retrait section RGPD), Chatbot,
+         FAQ, filtres admin, banc de test V3
 
 LOT 2 — INVITATIONS (terminé)
 ------------------------------
@@ -614,5 +613,68 @@ Composant ajouté :
 Modification dashboard :
   app/commercant/dashboard/page.js → ajout <OffresCollectives> pour les membres non-mairie_asso
 
+LOT 4A — DASHBOARD STATS CUMULÉES + UPLOAD LOGO + AFFICHE ENRICHIE (terminé)
+------------------------------------------------------------------------------
+État : code livré sur la branche feat/mairie-asso-lot1-fondations, non mergé sur master
+
+SQL ajouté :
+  sql/add_mairie_asso_lot4a.sql        → RPC get_stats_cumulees_mairie_asso + colonne nb_avis_google
+  sql/update_rpc_lot4a.sql             → mise à jour get_invitations_et_adhesions_commerce (ajout logo_url)
+  sql/setup_storage_lot4a.md           → instructions bucket Supabase Storage logos-mairie-asso
+  sql/test_post_migration_mairie_asso_lot4a.sql → 5 tests post-migration
+  sql/rollback_mairie_asso_lot4a.sql   → rollback
+
+ROUTES API LOT 4A
+-----------------
+  POST   /api/mairie-asso/logo             → upload logo (PNG/JPG/WEBP, max 2 MB)
+  DELETE /api/mairie-asso/logo             → suppression logo + reset logo_url
+  GET    /api/mairie-asso/stats-cumulees   → 6 KPIs cumulés avec filtre 7j/30j/total
+  PATCH  /api/commercant/logo-affiche      → choix du logo à afficher sur l'affiche vitrine
+
+RPC SQL
+-------
+  get_stats_cumulees_mairie_asso(asso_id, periode)   SECURITY DEFINER
+  get_invitations_et_adhesions_commerce (mise à jour, ajout colonne mairie_asso_logo_url)
+
+NOUVEAU CHAMP
+-------------
+  commerces.nb_avis_google INTEGER DEFAULT 0   (pour cumul avis Google des membres)
+
+SUPABASE STORAGE
+----------------
+  Bucket public : logos-mairie-asso
+  Structure des chemins : {mairie_asso_id}/logo.{ext}
+  Policies RLS : lecture publique, upload/update/delete uniquement par l'owner mairie_asso
+
+COMPOSANTS AJOUTÉS
+------------------
+  app/components/mairie-asso/StatsCumuleesMairieAsso.js  → 6 KPIs + filtre temporel
+  app/components/mairie-asso/UploadLogoMairieAsso.js     → upload/suppression logo
+  app/components/mairie-asso/SelecteurLogoAffiche.js     → choix logo pour commerçants membres
+
+HELPERS AJOUTÉS
+---------------
+  lib/supabase/storage-logos.js   → uploadLogoMairieAsso / deleteLogosMairieAsso
+
+MODIFICATIONS
+-------------
+  app/commercant/dashboard/page.js :
+    - Select commerce enrichi : logo_url, affiche_logo_mairie_asso_id
+    - Intégration StatsCumuleesMairieAsso (mairie_asso uniquement)
+    - Intégration UploadLogoMairieAsso (mairie_asso uniquement)
+    - Intégration SelecteurLogoAffiche (commerçants non-mairie_asso)
+    - QRVitrine : fetch logo asso + passage logoAssoUrl à AfficheContent
+  app/commercant/components/AfficheContent.js :
+    - Prop logoAssoUrl ajoutée (optionnelle)
+    - Logo positionné en haut à droite : top:15px, right:15px, 80×80px
+    - Marges : 272px du bord droit du nom (top 28.5%), 225px au-dessus du nom
+
+TESTS AJOUTÉS
+-------------
+  tests/unit/mairie-asso/stats-cumulees.test.js     → validation paramètres + KPIs
+  tests/non-regression/lot4a-isolation.test.js      → 404 avec flag OFF
+  tests/e2e/mairie-asso/lot4a-affiche.spec.js        → absences UI avec flag OFF
+
 Lots restants :
-  Lot 4 — Dashboard KPIs cumulés + SAV + admin + légal
+  Lot 4B — Textes légaux (CGV, Confidentialité, retrait RGPD), Chatbot,
+           FAQ, filtres admin, banc de test V3

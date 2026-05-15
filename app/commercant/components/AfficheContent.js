@@ -27,7 +27,7 @@ function AutoFitLine({ text, style }) {
   )
 }
 
-export default function AfficheContent({ commerce }) {
+export default function AfficheContent({ commerce, logoAssoUrl }) {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', background: 'white' }}>
       <img
@@ -36,6 +36,30 @@ export default function AfficheContent({ commerce }) {
         crossOrigin="anonymous"
         style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }}
       />
+
+      {/* Logo mairie/asso : haut à droite, dans la zone libre (aucun élément overlay ici)
+          Position : 15px du bord supérieur, 15px du bord droit.
+          Marges par rapport aux éléments overlay les plus proches :
+          - Commerce nom (top 28.5% = ~320px, droite ~427px) : 272px de distance horizontale ✓
+          - Le logo ne dépasse pas le bas de la zone haute (top 15 → 95px vs nom à 320px) ✓
+          Validation visuelle requise par Maxime : vérifier que l'image /affiche-bonmoment.png
+          n'a pas d'élément dans ce coin. */}
+      {logoAssoUrl && (
+        <img
+          src={logoAssoUrl}
+          alt="Logo partenaire"
+          crossOrigin="anonymous"
+          style={{
+            position: 'absolute',
+            top: '15px',
+            right: '15px',
+            width: '80px',
+            height: '80px',
+            objectFit: 'contain',
+            zIndex: 10,
+          }}
+        />
+      )}
 
       <AutoFitLine
         text={commerce.nom}

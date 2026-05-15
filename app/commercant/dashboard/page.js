@@ -18,6 +18,9 @@ import GestionAdherents from '@/app/components/mairie-asso/GestionAdherents'
 import BandeauInvitations from '@/app/components/mairie-asso/BandeauInvitations'
 import MesAdhesions from '@/app/components/mairie-asso/MesAdhesions'
 import OffresCollectives from '@/app/components/mairie-asso/OffresCollectives'
+import StatsCumuleesMairieAsso from '@/app/components/mairie-asso/StatsCumuleesMairieAsso'
+import UploadLogoMairieAsso from '@/app/components/mairie-asso/UploadLogoMairieAsso'
+import SelecteurLogoAffiche from '@/app/components/mairie-asso/SelecteurLogoAffiche'
 const BarChart         = dynamic(() => import('recharts').then(m => m.BarChart),         { ssr: false })
 const Bar              = dynamic(() => import('recharts').then(m => m.Bar),              { ssr: false })
 const XAxis            = dynamic(() => import('recharts').then(m => m.XAxis),            { ssr: false })
@@ -51,7 +54,7 @@ export default function DashboardPage() {
       // Sélection complète avec les nouvelles colonnes
       let { data, error } = await supabase
         .from('commerces')
-        .select('id, nom, categorie, categorie_bonmoment, ville, adresse, note_google, palier, photo_url, telephone, horaires, maps_url, stripe_subscription_id, stripe_customer_id, abonnement_actif, resiliation_prevue, date_fin_abonnement')
+        .select('id, nom, categorie, categorie_bonmoment, ville, adresse, note_google, palier, photo_url, telephone, horaires, maps_url, stripe_subscription_id, stripe_customer_id, abonnement_actif, resiliation_prevue, date_fin_abonnement, logo_url, affiche_logo_mairie_asso_id')
         .eq('owner_id', user.id)
 
       // Fallback si les colonnes maps_url/palier n'existent pas encore en BDD
@@ -124,6 +127,20 @@ export default function DashboardPage() {
     }
     loadOffres()
   }, [commerce, supabase])
+
+  function handleLogoUpdate(newLogoUrl) {
+    setCommerce(prev => ({ ...prev, logo_url: newLogoUrl }))
+    setAllCommerces(prev => prev.map(c =>
+      c.id === commerce?.id ? { ...c, logo_url: newLogoUrl } : c
+    ))
+  }
+
+  function handleAfficheLogoUpdate(newId) {
+    setCommerce(prev => ({ ...prev, affiche_logo_mairie_asso_id: newId || null }))
+    setAllCommerces(prev => prev.map(c =>
+      c.id === commerce?.id ? { ...c, affiche_logo_mairie_asso_id: newId || null } : c
+    ))
+  }
 
   if (loading || fetching) {
     return (
@@ -316,9 +333,23 @@ export default function DashboardPage() {
           <StatsSection commerce={commerce} supabase={supabase} />
         )}
 
+        {/* STATS CUMULÉES ADHÉRENTS — flag ON, mairie_asso uniquement ─────── */}
+        {commerce && isMairieAssoEnabled() && commerce.categorie_bonmoment === 'mairie_asso' && (
+          <StatsCumuleesMairieAsso commerceId={commerce.id} />
+        )}
+
         {/* GESTION ADHÉRENTS — flag ON, mairie_asso uniquement ─────────────── */}
         {commerce && isMairieAssoEnabled() && commerce.categorie_bonmoment === 'mairie_asso' && (
           <GestionAdherents commerce={commerce} />
+        )}
+
+        {/* UPLOAD LOGO — flag ON, mairie_asso uniquement ─────────────────── */}
+        {commerce && isMairieAssoEnabled() && commerce.categorie_bonmoment === 'mairie_asso' && (
+          <UploadLogoMairieAsso
+            commerceId={commerce.id}
+            currentLogoUrl={commerce.logo_url}
+            onUpdate={handleLogoUpdate}
+          />
         )}
 
         {/* MES ADHÉSIONS — flag ON, commerçants non mairie_asso uniquement ─── */}
@@ -357,6 +388,15 @@ export default function DashboardPage() {
         {/* 8. QR CODE ─────────────────────────────────────────────────────── */}
         {commerce && (
           <QRVitrine commerce={commerce} />
+        )}
+
+        {/* SÉLECTEUR LOGO AFFICHE — flag ON, commerçant membre avec asso ayant un logo ── */}
+        {commerce && isMairieAssoEnabled() && commerce.categorie_bonmoment !== 'mairie_asso' && (
+          <SelecteurLogoAffiche
+            commerceId={commerce.id}
+            currentAfficheLogoId={commerce.affiche_logo_mairie_asso_id}
+            onUpdate={handleAfficheLogoUpdate}
+          />
         )}
 
         {/* 8. Supprimer ce commerce ───────────────────────────────────────── */}
@@ -1517,8 +1557,33 @@ function QRVitrine({ commerce }) {
         import('@/app/commercant/components/AfficheContent'),
       ])
 
+      // Récupérer le logo asso si le commerçant en a choisi un (flag ON uniquement)
+      let logoAssoUrl = null
+      if (isMairieAssoEnabled() && commerce.affiche_logo_mairie_asso_id) {
+        try {
+          const { createClient: createBrowserClient } = await import('@/lib/supabase/client')
+          const supabase = createBrowserClient()
+          // Vérifier que le commerçant est toujours membre accepted
+          const { data: membre } = await supabase
+            .from('mairie_asso_membres')
+            .select('id')
+            .eq('mairie_asso_id', commerce.affiche_logo_mairie_asso_id)
+            .eq('commerce_id', commerce.id)
+            .eq('statut', 'accepted')
+            .maybeSingle()
+          if (membre) {
+            const { data: asso } = await supabase
+              .from('commerces')
+              .select('logo_url')
+              .eq('id', commerce.affiche_logo_mairie_asso_id)
+              .single()
+            logoAssoUrl = asso?.logo_url || null
+          }
+        } catch (_) { /* ne bloque pas la génération PDF */ }
+      }
+
       root = createRoot(container)
-      root.render(<AfficheContent commerce={commerce} />)
+      root.render(<AfficheContent commerce={commerce} logoAssoUrl={logoAssoUrl} />)
 
       // Attendre le premier rendu React puis le chargement de l'image
       await new Promise((resolve) => {
