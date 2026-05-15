@@ -32,7 +32,7 @@ export async function POST(request) {
 
   const { data: commerce, error: commerceErr } = await admin
     .from('commerces')
-    .select('id, nom, ville, palier')
+    .select('id, nom, ville, palier, categorie_bonmoment')
     .eq('id', commerceId)
     .eq('owner_id', user.id)
     .maybeSingle()
@@ -47,6 +47,19 @@ export async function POST(request) {
   }
   if (body.date_debut && new Date(body.date_debut) < new Date(now.getTime() - 5 * 60 * 1000)) {
     return NextResponse.json({ error: "L'heure de début est dans le passé" }, { status: 400 })
+  }
+
+  /* ── Validation durée ────────────────────────────────────────────────── */
+  if (body.date_debut && body.date_fin) {
+    const maxDays = commerce.categorie_bonmoment === 'mairie_asso' ? 30 : 1
+    const diffMs  = new Date(body.date_fin) - new Date(body.date_debut)
+    const diffDays = diffMs / (1000 * 60 * 60 * 24)
+    if (diffDays > maxDays) {
+      return NextResponse.json(
+        { error: `Durée maximale : ${maxDays} jour${maxDays > 1 ? 's' : ''}` },
+        { status: 400 }
+      )
+    }
   }
 
   /* ── Vérification quota ──────────────────────────────────────────────── */
@@ -76,12 +89,13 @@ export async function POST(request) {
     valeur:           body.valeur ?? null,
     titre:            body.titre,
     nb_bons_total:    body.nb_bons_total ?? null,
-    nb_bons_restants: body.nb_bons_restants,
+    nb_bons_restants: body.nb_bons_restants ?? null,
     date_debut:       body.date_debut,
     date_fin:         body.date_fin,
     statut:           'active',
     est_recurrente:   body.est_recurrente ?? false,
     jours_recurrence: body.jours_recurrence ?? null,
+    avec_bon:         body.avec_bon ?? true,
   }).select('id').single()
 
   if (insertErr) {

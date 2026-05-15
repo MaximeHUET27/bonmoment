@@ -48,6 +48,9 @@ const CATEGORIE_MAP = {
     'bijouterie', 'horlogerie', 'antiquaire', 'brocante',
     'vetements', 'chaussures', 'animalerie', 'sante',
   ],
+  mairie_asso: [
+    'local_government_office', 'city_hall', 'town_hall',
+  ],
   loisirs: [
     'gym', 'bowling_alley', 'movie_theater', 'amusement_park',
     'museum', 'art_gallery', 'zoo', 'aquarium', 'stadium',
@@ -112,11 +115,17 @@ function formatBadge(offre) {
 
 /* ── Composant ───────────────────────────────────────────────────────────── */
 
+function formatDateCourt(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+}
+
 export default function OffreCard({ offre, userReservation }) {
   const timeLeft   = useCountdown(offre.date_fin)
   const commerce   = offre.commerces
   const programmee = new Date(offre.date_debut) > new Date()
   const expired    = !timeLeft
+  const sansBon    = offre.avec_bon === false
 
   const { user, supabase } = useAuth()
   const { isFavori, toggleFavori } = useFavoris()
@@ -329,7 +338,14 @@ export default function OffreCard({ offre, userReservation }) {
           {/* Ligne 1 : timer + bons + partage — barre orange */}
           <div className="flex items-center justify-between gap-1 min-w-0 bg-[#FFF0E0] rounded-[8px] px-[6px] py-[3px]">
             <Link href={`/offre/${offre.id}`} className="flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
-              {programmee ? (
+              {sansBon ? (
+                <>
+                  <span className="text-[10px] shrink-0">📅</span>
+                  <span className="text-[10px] font-semibold text-[#FF6B00] truncate">
+                    {formatDateCourt(offre.date_debut)} → {formatDateCourt(offre.date_fin)}
+                  </span>
+                </>
+              ) : programmee ? (
                 <>
                   <span className="text-[10px] shrink-0">📅</span>
                   <span className="text-[10px] font-semibold text-[#FF6B00] truncate">
@@ -352,11 +368,13 @@ export default function OffreCard({ offre, userReservation }) {
               )}
             </Link>
             <div className="flex items-center gap-1 shrink-0">
-              <Link href={`/offre/${offre.id}`}>
-                <span className={`text-[10px] font-bold text-[#FF6B00] ${nbPulse ? 'animate-pulse' : ''}`}>
-                  {nbBons === null || nbBons === 9999 ? '∞' : `🎟 ${nbBons}`}
-                </span>
-              </Link>
+              {!sansBon && (
+                <Link href={`/offre/${offre.id}`}>
+                  <span className={`text-[10px] font-bold text-[#FF6B00] ${nbPulse ? 'animate-pulse' : ''}`}>
+                    {nbBons === null || nbBons === 9999 ? '∞' : `🎟 ${nbBons}`}
+                  </span>
+                </Link>
+              )}
               <span className="text-[#FF6B00]"><ShareButton offre={offre} commerce={commerce} /></span>
             </div>
           </div>
@@ -391,7 +409,14 @@ export default function OffreCard({ offre, userReservation }) {
 
           {/* Ligne 5 : CTA */}
           <div className="mt-auto">
-            {fini ? (
+            {sansBon ? (
+              <Link
+                href={`/offre/${offre.id}`}
+                className={`w-full text-white font-bold text-[11px] h-[30px] rounded-full flex items-center justify-center gap-1 transition duration-150 ${expired ? 'bg-[#D0D0D0] cursor-not-allowed pointer-events-none' : 'bg-[#FF6B00] hover:bg-[#CC5500]'}`}
+              >
+                📍 En savoir plus
+              </Link>
+            ) : fini ? (
               <button
                 onClick={handleAbonnerComm}
                 disabled={abonneCommLoading}

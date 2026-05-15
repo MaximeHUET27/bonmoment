@@ -160,33 +160,6 @@ export default function RegistreCNIL() {
           </div>
         </div>
 
-        {/* Checklist */}
-        <div>
-          <SectionTitle>Obligations à remplir avant le lancement</SectionTitle>
-          <p className="mt-2 text-xs text-[#3D3D3D]/60">Liste de contrôle de conformité RGPD :</p>
-          <ul className="mt-3 space-y-2">
-            {[
-              { done: true, text: "Remplir le présent registre des traitements (Article 30 RGPD)" },
-              { done: true, text: "Publier la Politique de confidentialité sur le site" },
-              { done: true, text: "Publier les CGU avec lien vers la politique de confidentialité" },
-              { done: false, text: "Mettre en place le bouton « Supprimer mon compte » dans l'interface client" },
-              { done: false, text: "Activer le Row Level Security (RLS) sur toutes les tables Supabase" },
-              { done: false, text: "Configurer toutes les clés API en variables d'environnement Vercel" },
-              { done: false, text: "Sélectionner la région EU West lors de la création du projet Supabase" },
-              { done: false, text: "Sélectionner la région EU lors de la configuration Vercel" },
-              { done: false, text: "Tester l'exercice du droit d'accès avant le lancement" },
-              { done: false, text: "Tester l'exercice du droit d'effacement avant le lancement" },
-            ].map(({ done, text }, i) => (
-              <li key={i} className="flex items-start gap-3">
-                <span className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black mt-0.5 ${done ? 'bg-green-100 text-green-600' : 'bg-[#F5F5F5] text-[#3D3D3D]/40'}`}>
-                  {done ? '✓' : '○'}
-                </span>
-                <span className={done ? 'text-[#3D3D3D]' : 'text-[#3D3D3D]/60'}>{text}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
         {/* Procédure violation */}
         <div>
           <SectionTitle>Procédure en cas de violation de données</SectionTitle>

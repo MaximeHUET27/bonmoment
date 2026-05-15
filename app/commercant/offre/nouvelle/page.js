@@ -127,6 +127,8 @@ function NouvelleOffrePageInner() {
     const j = searchParams.get('prefill_jours')
     return j ? j.split(',').filter(Boolean) : []
   })
+  const [avecBon,         setAvecBon]         = useState(true)
+  const [dateFinEvent,    setDateFinEvent]     = useState(today)
 
   /* ── État soumission ── */
   const [submitting,      setSubmitting]      = useState(false)
@@ -148,7 +150,7 @@ function NouvelleOffrePageInner() {
       const commerceId = searchParams.get('commerce')
       const { data: list } = await supabase
         .from('commerces')
-        .select('id, nom, categorie, ville, adresse, palier, note_google, photo_url, tutoriel_complete')
+        .select('id, nom, categorie, categorie_bonmoment, ville, adresse, palier, note_google, photo_url, tutoriel_complete')
         .eq('owner_id', user.id)
 
       const all  = list || []
@@ -243,15 +245,29 @@ function NouvelleOffrePageInner() {
     return suggestionsData[commerce.categorie] || suggestionsData['default'] || []
   })()
 
+  const isMairieAsso = commerce?.categorie_bonmoment === 'mairie_asso'
+  const showSansBonToggle = isMairieAsso && typeRemise === 'atelier'
+
   /* ── Validation plage horaire (temps réel) ── */
-  const diff = diffHours(dateOffre, heureDebut, heureFin)
-  const erreurHoraire = diff <= 0 ? "L'heure de fin doit être après l'heure de début." : null
+  const dateFinPour = avecBon ? dateOffre : dateFinEvent
+  const diff = (() => {
+    const start = new Date(`${dateOffre}T${heureDebut}:00`)
+    const end   = new Date(`${dateFinPour}T${heureFin}:00`)
+    return (end - start) / 3_600_000
+  })()
+  const erreurHoraire = diff <= 0 ? "La date/heure de fin doit être après le début." : null
+
+  const erreur30j = !avecBon && (() => {
+    const start = new Date(`${dateOffre}T${heureDebut}:00`)
+    const end   = new Date(`${dateFinPour}T${heureFin}:00`)
+    return (end - start) / (1000 * 60 * 60 * 24) > 30
+  })() ? "Durée maximale : 30 jours pour un événement." : null
 
   /* ── Validation dates passées (temps réel) ── */
   const erreurDateDebut = new Date(`${dateOffre}T${heureDebut}:00`) < new Date()
     ? "L'heure de début ne peut pas être dans le passé"
     : null
-  const erreurDateFin = new Date(`${dateOffre}T${heureFin}:00`) <= new Date()
+  const erreurDateFin = new Date(`${dateFinPour}T${heureFin}:00`) <= new Date()
     ? "L'heure de fin ne peut pas être dans le passé"
     : null
 
@@ -300,11 +316,12 @@ function NouvelleOffrePageInner() {
         errs.valeur = 'Le montant doit être au moins 1€.'
       }
     }
-    if (!illimite && (!nbBons || nbBons < 1)) errs.nbBons = 'Indique un nombre de bons valide.'
+    if (avecBon && !illimite && (!nbBons || nbBons < 1)) errs.nbBons = 'Indique un nombre de bons valide.'
     if (erreurHoraire) errs.horaire = erreurHoraire
+    if (erreur30j) errs.horaire = erreur30j
     const now = new Date()
     if (new Date(`${dateOffre}T${heureDebut}:00`) < now) errs.dateDebut = "L'heure de début ne peut pas être dans le passé"
-    if (new Date(`${dateOffre}T${heureFin}:00`) <= now)  errs.dateFin   = "L'heure de fin ne peut pas être dans le passé"
+    if (new Date(`${dateFinPour}T${heureFin}:00`) <= now)  errs.dateFin   = "L'heure de fin ne peut pas être dans le passé"
     if (estRecurrente && joursRecurrence.length === 0) errs.jours = 'Sélectionne au moins un jour.'
     return errs
   }
@@ -328,12 +345,13 @@ function NouvelleOffrePageInner() {
           type_remise:       typeRemise,
           valeur:            (typeRemise === 'pourcentage' || typeRemise === 'montant_fixe') ? Number(valeur) : null,
           titre:             titre.trim(),
-          nb_bons_total:     nbTotal,
-          nb_bons_restants:  illimite ? 9999 : nbBons,
+          nb_bons_total:     avecBon ? nbTotal : null,
+          nb_bons_restants:  avecBon ? (illimite ? 9999 : nbBons) : null,
           date_debut:        buildISO(dateOffre, heureDebut),
-          date_fin:          buildISO(dateOffre, heureFin),
+          date_fin:          buildISO(dateFinPour, heureFin),
           est_recurrente:    estRecurrente,
           jours_recurrence:  estRecurrente ? joursRecurrence : null,
+          avec_bon:          avecBon,
         }),
       })
       const result = await res.json()
@@ -597,8 +615,35 @@ function NouvelleOffrePageInner() {
           )}
         </section>
 
+        {/* ══ SANS BON — toggle mairie_asso + atelier uniquement ════════ */}
+        {showSansBonToggle && (
+          <section className="bg-white rounded-2xl px-5 py-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold text-[#0A0A0A]">Événement sans bon</p>
+                <p className="text-[11px] text-[#3D3D3D]/50">
+                  Les participants verront l&apos;événement sans pouvoir réserver de bon.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={!avecBon}
+                onClick={() => setAvecBon(v => !v)}
+                className={`relative w-12 h-6 rounded-full transition-colors shrink-0 ${
+                  !avecBon ? 'bg-[#FF6B00]' : 'bg-[#E0E0E0]'
+                }`}
+              >
+                <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${
+                  !avecBon ? 'left-6' : 'left-0.5'
+                }`} />
+              </button>
+            </div>
+          </section>
+        )}
+
         {/* ══ 4. NOMBRE DE BONS ══════════════════════════════════════════ */}
-        <section id="tut-nb-bons" className="bg-white rounded-2xl px-5 py-4 shadow-sm">
+        {avecBon && <section id="tut-nb-bons" className="bg-white rounded-2xl px-5 py-4 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-widest text-[#3D3D3D]/50 mb-3">
             Nombre de bons
           </p>
@@ -647,7 +692,7 @@ function NouvelleOffrePageInner() {
           {errors.nbBons && (
             <p className="text-xs text-red-500 mt-2 font-semibold">⚠ {errors.nbBons}</p>
           )}
-        </section>
+        </section>}
 
         {/* ══ 5. PLAGE HORAIRE ═══════════════════════════════════════════ */}
         <section id="tut-horaire" className="bg-white rounded-2xl px-5 py-4 shadow-sm">
@@ -658,7 +703,7 @@ function NouvelleOffrePageInner() {
           <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[2fr_1fr_1fr] sm:gap-2">
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
-                📅 Date
+                📅 {avecBon ? 'Date' : 'Début'}
               </label>
               <input
                 type="date"
@@ -695,6 +740,26 @@ function NouvelleOffrePageInner() {
               </div>
             </div>
           </div>
+
+          {/* Date de fin séparée pour événement sans bon (multi-jours) */}
+          {!avecBon && (
+            <div className="flex flex-col gap-1.5 mt-3">
+              <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
+                📅 Fin (date de clôture de l&apos;événement)
+              </label>
+              <input
+                type="date"
+                value={dateFinEvent}
+                min={dateOffre}
+                max={(() => {
+                  const d = new Date(dateOffre); d.setDate(d.getDate() + 30)
+                  return d.toISOString().split('T')[0]
+                })()}
+                onChange={e => setDateFinEvent(e.target.value)}
+                className={inputBase}
+              />
+            </div>
+          )}
 
           {dureeLabel && !erreurHoraire && (
             <p className="text-[11px] text-[#3D3D3D]/50 mt-2 font-medium">

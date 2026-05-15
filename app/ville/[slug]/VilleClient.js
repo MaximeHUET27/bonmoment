@@ -20,12 +20,13 @@ const ORANGE = '#FF6B00'
 /* ── Filtres ─────────────────────────────────────────────────────────────── */
 
 const FILTERS_CATEGORIE = [
-  { id: 'tous',     label: '🔥 Tous' },
-  { id: 'resto',    label: '🍽️ Alimentaire' },
-  { id: 'beaute',   label: '💇 Beauté' },
-  { id: 'shopping', label: '🛍️ Shopping' },
-  { id: 'loisirs',  label: '🎮 Loisirs' },
-  { id: 'autres',   label: '🏪 Autres' },
+  { id: 'tous',        label: '🔥 Tous' },
+  { id: 'resto',       label: '🍽️ Alimentaire' },
+  { id: 'beaute',      label: '💇 Beauté' },
+  { id: 'shopping',    label: '🛍️ Shopping' },
+  { id: 'loisirs',     label: '🎮 Loisirs' },
+  { id: 'autres',      label: '🏪 Autres' },
+  { id: 'mairie_asso', label: '🏛️ Mairie/Asso' },
 ]
 
 const FILTERS_TYPE = [

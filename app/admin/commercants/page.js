@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useToast } from '@/app/components/Toast'
+import { isMairieAssoEnabled } from '@/lib/featureFlags'
 
 const PALIER_PRIX  = { essentiel: 29, pro: 49 }
 const PALIER_LABEL = { essentiel: 'Essentiel', pro: 'Pro' }
@@ -331,20 +332,21 @@ function FicheCommercant({ id, onClose, onRefresh }) {
 
 /* ── Page principale ── */
 export default function AdminCommercants() {
-  const [rows,     setRows]     = useState([])
-  const [total,    setTotal]    = useState(0)
-  const [page,     setPage]     = useState(0)
-  const [loading,  setLoading]  = useState(true)
-  const [search,   setSearch]   = useState('')
-  const [ville,    setVille]    = useState('')
-  const [palier,   setPalier]   = useState('')
-  const [statut,   setStatut]   = useState('')
-  const [selected, setSelected] = useState(null)
+  const [rows,       setRows]       = useState([])
+  const [total,      setTotal]      = useState(0)
+  const [page,       setPage]       = useState(0)
+  const [loading,    setLoading]    = useState(true)
+  const [search,     setSearch]     = useState('')
+  const [ville,      setVille]      = useState('')
+  const [palier,     setPalier]     = useState('')
+  const [statut,     setStatut]     = useState('')
+  const [typeCompte, setTypeCompte] = useState('')
+  const [selected,   setSelected]   = useState(null)
   const debounceRef = useRef(null)
 
-  function load(p = 0, s = search, v = ville, pal = palier, stat = statut) {
+  function load(p = 0, s = search, v = ville, pal = palier, stat = statut, tc = typeCompte) {
     setLoading(true)
-    const q = new URLSearchParams({ page: p, ...(s && { search: s }), ...(v && { ville: v }), ...(pal && { palier: pal }), ...(stat && { statut: stat }) })
+    const q = new URLSearchParams({ page: p, ...(s && { search: s }), ...(v && { ville: v }), ...(pal && { palier: pal }), ...(stat && { statut: stat }), ...(tc && { type_compte: tc }) })
     fetch(`/api/admin/commercants?${q}`)
       .then(r => r.json())
       .then(d => { setRows(d.commercants || []); setTotal(d.total || 0); setLoading(false) })
@@ -361,9 +363,10 @@ export default function AdminCommercants() {
   }
 
   function handleFilter(type, val) {
-    if (type === 'ville')   { setVille(val);   setPage(0); load(0, search, val, palier, statut) }
-    if (type === 'palier')  { setPalier(val);  setPage(0); load(0, search, ville, val, statut) }
-    if (type === 'statut')  { setStatut(val);  setPage(0); load(0, search, ville, palier, val) }
+    if (type === 'ville')       { setVille(val);       setPage(0); load(0, search, val, palier, statut, typeCompte) }
+    if (type === 'palier')      { setPalier(val);      setPage(0); load(0, search, ville, val, statut, typeCompte) }
+    if (type === 'statut')      { setStatut(val);      setPage(0); load(0, search, ville, palier, val, typeCompte) }
+    if (type === 'typeCompte')  { setTypeCompte(val);  setPage(0); load(0, search, ville, palier, statut, val) }
   }
 
   function handlePage(p) { setPage(p); load(p) }
@@ -387,9 +390,10 @@ export default function AdminCommercants() {
           className="flex-1 min-w-[200px] border-2 border-[#E0E0E0] rounded-xl px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none"
         />
         {[
-          { key: 'ville',  val: ville,  opts: [['', 'Toutes villes']], extra: [] },
+          { key: 'ville',  val: ville,  opts: [['', 'Toutes villes']] },
           { key: 'palier', val: palier, opts: [['', 'Tous paliers'], ['essentiel', 'Essentiel'], ['pro', 'Pro']] },
           { key: 'statut', val: statut, opts: [['', 'Tous statuts'], ['actif', 'Actif'], ['inactif', 'Inactif']] },
+          ...(isMairieAssoEnabled() ? [{ key: 'typeCompte', val: typeCompte, opts: [['', 'Tous types'], ['commerce', 'Commerce'], ['mairie_asso', 'Mairie/Asso']] }] : []),
         ].map(({ key, val, opts }) => (
           <select key={key} value={val} onChange={e => handleFilter(key, e.target.value)}
             className="border-2 border-[#E0E0E0] rounded-xl px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none bg-white">

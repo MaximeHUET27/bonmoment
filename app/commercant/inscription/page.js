@@ -9,6 +9,7 @@ import { useAuth } from '@/app/context/AuthContext'
 import AuthBottomSheet from '@/app/components/AuthBottomSheet'
 import { getCategorieFiltre } from '@/app/ville/[slug]/OffreCard'
 import { formatHoraire } from '@/lib/formatHoraires'
+import { isMairieAssoEnabled } from '@/lib/featureFlags'
 
 const LIBRARIES = ['places']
 
@@ -201,8 +202,10 @@ export default function InscriptionCommercant() {
           longitude:   place.geometry?.location?.lng() ?? null,
         })
         // Auto-détection catégorie BONMOMENT depuis les types Google
+        // mairie_asso n'est proposée que si le feature flag est activé
         const detected = (place.types || []).reduce((acc, t) => acc || getCategorieFiltre(t), null)
-        setCategorieBonmoment(detected || 'autres')
+        const effectiveDetected = (detected === 'mairie_asso' && !isMairieAssoEnabled()) ? 'autres' : detected
+        setCategorieBonmoment(effectiveDetected || 'autres')
       }
     )
   }
@@ -532,6 +535,7 @@ export default function InscriptionCommercant() {
                     { id: 'shopping', label: '🛍️ Shopping' },
                     { id: 'loisirs',  label: '🎮 Loisirs' },
                     { id: 'autres',   label: '🏪 Autre' },
+                    ...(isMairieAssoEnabled() ? [{ id: 'mairie_asso', label: '🏛️ Mairie / Association' }] : []),
                   ].map(c => (
                     <button
                       key={c.id}

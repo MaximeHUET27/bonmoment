@@ -494,6 +494,9 @@ function ResultScreen({ result, onBack }) {
               {labelRemise(result.data.offre.type_remise, result.data.offre.valeur)}
             </p>
           )}
+          {result.data.asso_nom && (
+            <p className="text-sm opacity-80 font-semibold">🏛️ Bon de {result.data.asso_nom}</p>
+          )}
           <p className="text-sm opacity-70 mt-2">💡 Ton client va recevoir une invitation à noter son expérience</p>
         </div>
       )}

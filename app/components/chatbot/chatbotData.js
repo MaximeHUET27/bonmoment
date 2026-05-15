@@ -14,6 +14,8 @@
 
 /* ── Nœuds ───────────────────────────────────────────────────────────────── */
 
+import { isMairieAssoEnabled } from '@/lib/featureFlags'
+
 export const NODES = {
 
   /* ── Racine ── */
@@ -23,6 +25,7 @@ export const NODES = {
     options: [
       { label: '🏠 Je suis habitant',     nodeId: 'h-cat' },
       { label: '🏪 Je suis commerçant',   nodeId: 'c-cat' },
+      ...(isMairieAssoEnabled() ? [{ label: '🏛️ Tu représentes une mairie ou une association ?', nodeId: 'm-cat' }] : []),
     ],
   },
 
@@ -778,6 +781,89 @@ export const NODES = {
     response: `Les mentions légales de BONMOMENT sont disponibles sur la page dédiée.`,
     actions: [
       { label: '📄 Mentions légales', type: 'redirect', path: '/mentions-legales' },
+    ],
+  },
+
+  /* ════════════════════════════════════════════════════════════════════════
+     MAIRIE / ASSOCIATION — Catégories  (flag : NEXT_PUBLIC_MAIRIE_ASSO_ENABLED)
+  ════════════════════════════════════════════════════════════════════════ */
+
+  'm-cat': {
+    type: 'menu',
+    message: "Dans quelle catégorie se trouve ta question ?",
+    options: [
+      { label: "Comment créer un compte mairie / association ?",       nodeId: 'm-q-1' },
+      { label: "Comment inviter des commerçants à rejoindre mon réseau ?", nodeId: 'm-q-2' },
+      { label: "Comment publier une offre collective ?",               nodeId: 'm-q-3' },
+      { label: "Où voir les statistiques de mes adhérents ?",          nodeId: 'm-q-4' },
+      { label: "Comment gérer le logo de mon compte ?",               nodeId: 'm-q-5' },
+      { label: "Comment fonctionne l'adhésion côté commerçant ?",     nodeId: 'm-q-6' },
+      { label: "Comment résilier ou mettre mon compte en pause ?",    nodeId: 'm-q-7' },
+    ],
+  },
+
+  'm-q-1': {
+    type: 'answer',
+    question: "Comment créer un compte mairie / association ?",
+    response: `Pour créer un compte Mairie / Association :\n\n1. Clique sur **Connexion** dans le menu puis **"Créer un compte"**\n2. Renseigne ton email et choisis un mot de passe\n3. Dans le formulaire d'inscription, sélectionne **"Mairie / Association"** comme type de compte\n4. Confirme ton adresse email\n\nUne fois connecté, ton tableau de bord te permettra d'inviter des commerçants, publier des offres collectives et consulter les statistiques agrégées de ton réseau. 🏛️`,
+    actions: [
+      { label: '👤 Créer un compte', type: 'event', payload: 'bonmoment:open-auth' },
+      { label: '📧 Contacter l\'équipe', type: 'redirect', path: '/aide/contact' },
+    ],
+  },
+
+  'm-q-2': {
+    type: 'answer',
+    question: "Comment inviter des commerçants à rejoindre mon réseau ?",
+    response: `Pour inviter un commerçant à rejoindre ton réseau :\n\n1. Depuis ton **Dashboard → Mes membres**\n2. Clique sur **"Inviter un commerçant"**\n3. Recherche le commerce par nom ou ville\n4. Envoie l'invitation 📨\n\nLe commerçant reçoit une notification et peut accepter ou refuser librement. Tu suis l'état de chaque invitation (en attente / acceptée / refusée) depuis ton tableau de bord.\n\nUn commerçant peut se désaffilier à tout moment, sans impact sur son abonnement individuel. ✅`,
+    actions: [
+      { label: '📊 Mon dashboard', type: 'redirect', path: '/commercant/dashboard' },
+    ],
+  },
+
+  'm-q-3': {
+    type: 'answer',
+    question: "Comment publier une offre collective ?",
+    response: `Une offre collective est visible par tous les habitants des villes de tes commerçants membres.\n\nPour en publier une :\n\n1. Va dans **Dashboard → Nouvelle offre**\n2. Choisis le type d'offre (remise, cadeau, évènement, concours)\n3. L'offre sera diffusée à travers le réseau de tes commerçants adhérents\n4. Publie ! 🚀\n\nLes commerçants non membres ne verront pas cette offre dans leur liste.`,
+    actions: [
+      { label: '📊 Mon dashboard', type: 'redirect', path: '/commercant/dashboard' },
+    ],
+  },
+
+  'm-q-4': {
+    type: 'answer',
+    question: "Où voir les statistiques de mes adhérents ?",
+    response: `Les statistiques agrégées de ton réseau sont dans **Dashboard → Statistiques de tes adhérents**.\n\nTu y trouves 6 indicateurs clés :\n\n🎟️ **Bons réservés** — par les habitants via ton réseau\n✅ **Bons validés** — en caisse chez tes membres\n📊 **Taux de validation** — efficacité globale du réseau\n👥 **Membres actifs** — commerçants avec au moins une offre\n📢 **Offres publiées** — total des offres actives\n⭐ **Avis Google cumulés** — générés par les passages en boutique\n\nFiltres disponibles : 7 jours, 30 jours, ou depuis le début.`,
+    actions: [
+      { label: '📊 Mon dashboard', type: 'redirect', path: '/commercant/dashboard' },
+    ],
+  },
+
+  'm-q-5': {
+    type: 'answer',
+    question: "Comment gérer le logo de mon compte ?",
+    response: `Pour ajouter ou modifier le logo de ton compte Mairie / Association :\n\n1. Va dans **Dashboard → Logo personnalisé**\n2. Clique sur **"Choisir un fichier"** (PNG, JPG ou WEBP — max 2 Mo)\n3. Confirme l'upload ✅\n\nTon logo apparaît sur l'affiche vitrine des commerçants qui ont activé le logo de ton association.\n\nLes commerçants membres peuvent choisir d'afficher ton logo sur leur QR code vitrine depuis leur propre tableau de bord.`,
+    actions: [
+      { label: '📊 Mon dashboard', type: 'redirect', path: '/commercant/dashboard' },
+    ],
+  },
+
+  'm-q-6': {
+    type: 'answer',
+    question: "Comment fonctionne l'adhésion côté commerçant ?",
+    response: `Quand tu invites un commerçant :\n\n1. Il reçoit une **notification** dans son dashboard\n2. Il peut **accepter ou refuser** librement\n3. S'il accepte, il rejoint ton réseau — ses statistiques sont agrégées dans les tiennes\n4. Il peut **se désaffilier à tout moment** depuis son tableau de bord, sans frais\n\n🔒 Le commerçant garde le contrôle total :\n• Son abonnement individuel n'est pas affecté\n• Tu ne vois jamais ses données nominatives (identité, finances)\n• Seules les statistiques agrégées anonymisées te sont accessibles`,
+    actions: [
+      { label: '📧 Contacter l\'équipe', type: 'redirect', path: '/aide/contact' },
+    ],
+  },
+
+  'm-q-7': {
+    type: 'answer',
+    question: "Comment résilier ou mettre mon compte en pause ?",
+    response: `Tu gères ton abonnement depuis ton dashboard :\n\n**Résilier :** Mon commerce → Abonnement → Résilier\n→ La résiliation prend effet à la **fin du mois en cours**. Tes données et statistiques sont conservées.\n\n**Mettre en pause :** Mon commerce → Abonnement → Mettre en pause\n→ Ton réseau est suspendu temporairement. Tes membres ne reçoivent plus d'invitations.\n\nPas d'engagement, pas de pénalité. 👍\n\nPour toute question spécifique à ton compte Mairie / Association, l'équipe BONMOMENT est disponible.`,
+    actions: [
+      { label: '📊 Gérer mon abonnement', type: 'redirect', path: '/commercant/dashboard' },
+      { label: '📧 Contacter l\'équipe', type: 'redirect', path: '/aide/contact' },
     ],
   },
 

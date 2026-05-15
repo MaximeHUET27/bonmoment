@@ -467,3 +467,239 @@ ACTIVATION PROGRESSIVE
 3. Activer sur Preview Vercel → tester sur l'URL preview
 4. Activer sur Production uniquement après validation complète
 5. Passer un commerce pilote en palier 'pro' + configurer son programme
+
+---
+
+FEATURE : MODULE MAIRIE / ASSOCIATION
+=====================================
+Branche Git : feat/mairie-asso-lot1-fondations (Lot 1 sur 4)
+État        : Lot 1 terminé — fondations en place, aucune UI fonctionnelle visible
+Feature flag: NEXT_PUBLIC_MAIRIE_ASSO_ENABLED (false par défaut partout)
+
+PRINCIPE DE SÉCURITÉ
+--------------------
+Double garde-fou avant tout affichage ou exécution :
+  1. NEXT_PUBLIC_MAIRIE_ASSO_ENABLED === 'true' (variable d'environnement)
+  2. commerce.categorie_bonmoment === 'mairie_asso' (côté BDD)
+Si l'un est false → aucune UI mairie_asso visible, aucun endpoint actif.
+
+COLONNES AJOUTÉES SUR TABLES EXISTANTES
+----------------------------------------
+commerces.logo_url (TEXT, NULLABLE)
+  → Logo personnalisé pour les comptes mairie_asso uniquement
+commerces.affiche_logo_mairie_asso_id (UUID, NULLABLE, FK→commerces)
+  → Choix du commerçant pour son affiche vitrine PDF
+offres.avec_bon (BOOLEAN, NOT NULL, DEFAULT TRUE)
+  → FALSE = offre d'information (réservé aux mairie_asso, lot 3)
+
+NOUVELLE TABLE
+--------------
+mairie_asso_membres
+  → Liens N-N entre comptes mairie_asso et commerces
+  → Statuts : pending / accepted / declined / removed
+  → 2 triggers de cohérence + 4 policies RLS
+
+CATÉGORIE AJOUTÉE
+-----------------
+'mairie_asso' devient la 6ème valeur acceptée pour commerces.categorie_bonmoment
+(categorie_bonmoment est TEXT sans CHECK constraint — validation applicative uniquement)
+Filtre client correspondant : 🏛️ Mairie / Association (à venir lot 3)
+Détection auto Google Places : local_government_office, city_hall, town_hall
+
+FICHIERS SQL
+------------
+sql/add_mairie_asso.sql              → Migration (à exécuter manuellement)
+sql/rollback_mairie_asso.sql         → Rollback complet
+sql/test_post_migration_mairie_asso.sql → Tests post-migration (8 tests)
+
+TESTS AUTOMATISÉS
+-----------------
+Framework : Vitest (unitaires) + Playwright (E2E)
+Commandes :
+  npm test                 → Vitest run
+  npm run test:e2e         → Playwright
+  npm run test:non-regression → Tests de non-régression uniquement
+Objectif unique : si flag OFF, aucun test commerce existant ne doit échouer.
+
+PROCÉDURE DE ROLLBACK (3 niveaux)
+----------------------------------
+Niveau 0 — Désactiver le flag (INSTANTANÉ, données conservées) :
+  Vercel → Environment Variables → NEXT_PUBLIC_MAIRIE_ASSO_ENABLED = false → redeploy
+
+Niveau 1 — Désactiver côté serveur (1s, données conservées) :
+  SQL : UPDATE commerces SET categorie_bonmoment = 'autres' WHERE categorie_bonmoment = 'mairie_asso';
+  (à n'exécuter qu'en dernier recours, casse les liens existants)
+
+Niveau 2 — Revert Git (code retiré, tables conservées) :
+  git revert <hash_commit_lot1> && git push
+
+Niveau 3 — Rollback DB complet (données mairie_asso perdues) :
+  Exécuter sql/rollback_mairie_asso.sql dans Supabase SQL Editor
+
+LOTS RESTANTS
+-------------
+  Aucun — module Mairie / Association complet (Lots 1, 2, 3, 4A, 4B livrés)
+
+LOT 2 — INVITATIONS (terminé)
+------------------------------
+État : code livré sur la branche feat/mairie-asso-lot1-fondations, non mergé sur master
+
+API Routes ajoutées :
+  GET    /api/mairie-asso/commercants-invitables  → recherche commerces invitables (par ville + nom)
+  POST   /api/mairie-asso/invitations              → créer invitation (rate limit 20/min)
+  PATCH  /api/mairie-asso/invitations/[id]         → accept/decline/remove/leave
+
+Composants ajoutés :
+  app/components/ConfirmModal.js                       → modale réutilisable charte BONMOMENT
+  app/components/mairie-asso/GestionAdherents.js       → section dashboard mairie/asso
+  app/components/mairie-asso/BandeauInvitations.js     → bandeau dashboard commerçant
+  app/components/mairie-asso/MesAdhesions.js           → section dashboard commerçant
+
+Helpers ajoutés :
+  lib/brevo/sendInvitationEmail.js  → envoi email invitation Brevo
+
+Modifications :
+  app/commercant/dashboard/page.js  → ajout categorie_bonmoment au select, intégration des 3 composants sous flag
+
+Décisions produit appliquées :
+  - Recherche par nom uniquement (pas de filtre catégorie ni pagination)
+  - Bandeau orange + modale au clic (pas de toast permanent)
+  - Ré-invitation immédiate possible après refus ou retrait (pas de délai)
+  - Aucune notification à l'asso quand le commerçant agit (visible dans dashboard)
+  - Confirmation : pas pour Accepter, modale pour Décliner / Retirer / Quitter
+  - Rate limit : 20 invitations/minute par IP (pattern existant lib/rate-limit.js)
+  - useState(() => createClient()) pour stabilité de la ref Supabase dans useCallback
+
+Tests ajoutés :
+  tests/unit/mairie-asso/invitations-logic.test.js  → logique transitions + permissions + removed_by
+  tests/e2e/mairie-asso/invitations-flow.spec.js     → non-régression UI avec flag OFF
+  tests/non-regression/feature-flag.test.js          → enrichi (bloc API routes)
+
+LOT 3 — OFFRES ET VALIDATION (terminé)
+---------------------------------------
+État : code livré sur la branche feat/mairie-asso-lot1-fondations, non mergé sur master
+
+SQL ajouté (add_mairie_asso_lot3.sql) :
+  - Table participations_offres  → inscriptions aux événements sans bon, 4 policies RLS
+  - RPC get_offres_collectives_commerce(p_commerce_id) → offres actives des assos parentes
+  - RPC get_participants_offre(p_offre_id) → participants d'une offre sans bon
+
+API Routes ajoutées :
+  GET/POST /api/offres/[id]/participants     → liste/inscription participants sans bon
+  GET      /api/commercant/offres-collectives → offres actives de l'asso (RPC)
+
+Modifications formulaire offre (nouvelle/page.js) :
+  - Ajout categorie_bonmoment au select commerce
+  - Toggle "Événement sans bon" visible si typeRemise=atelier + compte mairie_asso
+  - Champ date fin séparé (multi-jours jusqu'à 30j) pour événements sans bon
+  - Validation : skip nbBons si avecBon=false, max 30j pour mairie_asso
+
+Modifications API offres (route.js) :
+  - categorie_bonmoment dans le select commerce
+  - Validation durée : max 30j si mairie_asso, max 1j sinon
+  - Insertion du champ avec_bon dans offres
+
+Modifications côté client :
+  - VilleClient.js : filtre 🏛️ Mairie/Asso ajouté aux FILTERS_CATEGORIE
+  - OffreCard.js : gestion avec_bon=false (plage dates, "📍 En savoir plus", pas de timer/stock)
+  - offre/[id]/page.js : fetch participants, bloc "sans bon" (dates + participants), mention asso
+  - valider-bon/route.js : validation multi-point (membres asso peuvent valider bons de l'asso)
+  - commercant/valider/page.js ResultScreen : mention "🏛️ Bon de [Asso]" si validation croisée
+
+Composant ajouté :
+  app/components/mairie-asso/OffresCollectives.js  → liste des offres collectives dans dashboard membre
+
+Modification dashboard :
+  app/commercant/dashboard/page.js → ajout <OffresCollectives> pour les membres non-mairie_asso
+
+LOT 4A — DASHBOARD STATS CUMULÉES + UPLOAD LOGO + AFFICHE ENRICHIE (terminé)
+------------------------------------------------------------------------------
+État : code livré sur la branche feat/mairie-asso-lot1-fondations, non mergé sur master
+
+SQL ajouté :
+  sql/add_mairie_asso_lot4a.sql        → RPC get_stats_cumulees_mairie_asso + colonne nb_avis_google
+  sql/update_rpc_lot4a.sql             → mise à jour get_invitations_et_adhesions_commerce (ajout logo_url)
+  sql/setup_storage_lot4a.md           → instructions bucket Supabase Storage logos-mairie-asso
+  sql/test_post_migration_mairie_asso_lot4a.sql → 5 tests post-migration
+  sql/rollback_mairie_asso_lot4a.sql   → rollback
+
+ROUTES API LOT 4A
+-----------------
+  POST   /api/mairie-asso/logo             → upload logo (PNG/JPG/WEBP, max 2 MB)
+  DELETE /api/mairie-asso/logo             → suppression logo + reset logo_url
+  GET    /api/mairie-asso/stats-cumulees   → 6 KPIs cumulés avec filtre 7j/30j/total
+  PATCH  /api/commercant/logo-affiche      → choix du logo à afficher sur l'affiche vitrine
+
+RPC SQL
+-------
+  get_stats_cumulees_mairie_asso(asso_id, periode)   SECURITY DEFINER
+  get_invitations_et_adhesions_commerce (mise à jour, ajout colonne mairie_asso_logo_url)
+
+NOUVEAU CHAMP
+-------------
+  commerces.nb_avis_google INTEGER DEFAULT 0   (pour cumul avis Google des membres)
+
+SUPABASE STORAGE
+----------------
+  Bucket public : logos-mairie-asso
+  Structure des chemins : {mairie_asso_id}/logo.{ext}
+  Policies RLS : lecture publique, upload/update/delete uniquement par l'owner mairie_asso
+
+COMPOSANTS AJOUTÉS
+------------------
+  app/components/mairie-asso/StatsCumuleesMairieAsso.js  → 6 KPIs + filtre temporel
+  app/components/mairie-asso/UploadLogoMairieAsso.js     → upload/suppression logo
+  app/components/mairie-asso/SelecteurLogoAffiche.js     → choix logo pour commerçants membres
+
+HELPERS AJOUTÉS
+---------------
+  lib/supabase/storage-logos.js   → uploadLogoMairieAsso / deleteLogosMairieAsso
+
+MODIFICATIONS
+-------------
+  app/commercant/dashboard/page.js :
+    - Select commerce enrichi : logo_url, affiche_logo_mairie_asso_id
+    - Intégration StatsCumuleesMairieAsso (mairie_asso uniquement)
+    - Intégration UploadLogoMairieAsso (mairie_asso uniquement)
+    - Intégration SelecteurLogoAffiche (commerçants non-mairie_asso)
+    - QRVitrine : fetch logo asso + passage logoAssoUrl à AfficheContent
+  app/commercant/components/AfficheContent.js :
+    - Prop logoAssoUrl ajoutée (optionnelle)
+    - Logo positionné en haut à droite : top:15px, right:15px, 80×80px
+    - Marges : 272px du bord droit du nom (top 28.5%), 225px au-dessus du nom
+
+TESTS AJOUTÉS
+-------------
+  tests/unit/mairie-asso/stats-cumulees.test.js     → validation paramètres + KPIs
+  tests/non-regression/lot4a-isolation.test.js      → 404 avec flag OFF
+  tests/e2e/mairie-asso/lot4a-affiche.spec.js        → absences UI avec flag OFF
+
+LOT 4B — TEXTES LÉGAUX, CHATBOT, FAQ, ADMIN (terminé)
+------------------------------------------------------
+État : code livré sur la branche feat/mairie-asso-lot1-fondations, non mergé sur master
+
+Fichiers modifiés :
+  app/cgv/page.js                              → section 3.3 "Cas particulier Mairie/Asso" (flag-gated)
+  app/confidentialite/page.js                  → section 5.3 "Partage données Mairie/Asso" (flag-gated)
+  app/registre-cnil/page.js                    → suppression définitive section "Obligations" (sans flag)
+  app/components/chatbot/chatbotData.js        → 3e branche racine + 7 nœuds m-q-* (flag-gated)
+  data/faq-data.js                             → catégorie "Associations et mairies" 7 Q&As (flag-gated)
+  app/admin/page.js                            → KPI "Mairies/Assos actives" (flag-gated)
+  app/admin/commercants/page.js                → filtre "Type de compte" (flag-gated)
+  app/api/admin/commercants/route.js           → paramètre type_compte dans le GET
+  app/api/admin/dashboard/route.js             → KPI mairie_asso_actifs dans la réponse
+
+Fichiers créés :
+  tests/non-regression/lot4b-isolation.test.js  → tests flag OFF/ON FAQ + chatbot + admin
+  tests/e2e/lot4b-non-regression.spec.js         → non-régression UI (CGV, confidentialité, CNIL, FAQ)
+  docs/banc-test-V3-mairie-asso.md               → 67 cas de test en 6 phases
+
+Décisions produit :
+  - section 3.3 CGV : consentement explicite, désaffiliation sans frais, données agrégées uniquement
+  - section 5.3 Confidentialité : base légale 6.1.b + 6.1.f, historique conservé anonymisé
+  - Registre CNIL : section "Obligations à remplir" retirée définitivement (checklist obsolète)
+  - Chatbot : nœuds m-cat + m-q-1 à m-q-7, option racine avec spread conditionnel
+  - FAQ : spread conditionnel en fin de tableau avec isMairieAssoEnabled via process.env
+  - Admin : KPI mairie_asso_actifs comptabilisé à partir du champ type_compte dans commerces
+
+Module Mairie / Association : COMPLET
