@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
+import { isMairieAssoEnabled } from '@/lib/featureFlags'
 const AreaChart        = dynamic(() => import('recharts').then(m => m.AreaChart),        { ssr: false })
 const Area             = dynamic(() => import('recharts').then(m => m.Area),             { ssr: false })
 const BarChart         = dynamic(() => import('recharts').then(m => m.BarChart),         { ssr: false })
@@ -141,6 +142,9 @@ export default function AdminDashboard() {
           <KpiCard icon="⚡" label="Taux activation"      value={fmtPct(kpis.taux_activ)} />
           <KpiCard icon="✅" label="Taux utilisation bons" value={fmtPct(kpis.taux_util)} evol={kpis.taux_util_evol} />
           <KpiCard icon="📍" label="Villes actives"       value={fmt(kpis.villes_actives)} />
+          {isMairieAssoEnabled() && (
+            <KpiCard icon="🏛️" label="Mairies/Assos actives" value={fmt(kpis.mairie_asso_actifs)} />
+          )}
         </div>
       </section>
 

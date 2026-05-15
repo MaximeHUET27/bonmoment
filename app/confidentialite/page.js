@@ -205,6 +205,24 @@ export default function Confidentialite() {
           <p className="mt-2">
             Certains sous-traitants (Vercel, Stripe, Google, Meta, Apple, Microsoft) sont établis aux États-Unis. Ces transferts sont encadrés par les Clauses Contractuelles Types (CCT) de la Commission Européenne et/ou par les mécanismes de conformité appropriés conformément au chapitre V du RGPD.
           </p>
+
+          {process.env.NEXT_PUBLIC_MAIRIE_ASSO_ENABLED === 'true' && (
+            <>
+              <SubTitle className="mt-5">5.3 Partage de données entre comptes Mairie / Association et commerçants adhérents</SubTitle>
+              <p className="mt-2">
+                Lorsqu&apos;un commerçant accepte une invitation d&apos;un compte Mairie / Association, les données statistiques agrégées suivantes sont partagées avec ce compte : nombre de bons réservés et validés, taux de validation, nombre d&apos;avis Google cumulés et nombre de membres actifs. Ces données sont présentées sous forme agrégée, sans attribution individuelle.
+              </p>
+              <p className="mt-3">
+                Les données nominatives du commerçant (identité, coordonnées, informations bancaires) ne sont jamais transmises au compte Mairie / Association.
+              </p>
+              <p className="mt-3">
+                Le commerçant peut mettre fin à son adhésion à tout moment depuis son tableau de bord, ce qui entraîne l&apos;arrêt immédiat du partage de données. Les données historiques déjà agrégées dans les statistiques de la mairie/association sont conservées sous forme anonymisée.
+              </p>
+              <p className="mt-3">
+                Base légale : exécution du contrat (article 6.1.b du RGPD) pour le commerçant adhérent, et intérêt légitime (article 6.1.f) pour le compte Mairie / Association dans la stricte limite des données agrégées.
+              </p>
+            </>
+          )}
         </div>
 
         {/* 6. Droits */}

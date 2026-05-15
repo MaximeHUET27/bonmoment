@@ -55,7 +55,7 @@ export async function GET() {
     { data: offresRec14j },
     { data: usersMoisPre },
   ] = await Promise.all([
-    admin.from('commerces').select('id, nom, email, abonnement_actif, palier, ville, created_at, date_fin_essai, resiliation_prevue'),
+    admin.from('commerces').select('id, nom, email, abonnement_actif, palier, ville, created_at, date_fin_essai, resiliation_prevue, type_compte'),
     admin.from('users').select('id, created_at'),
     admin.from('offres').select('id, commerce_id, created_at, statut, date_debut, date_fin'),
     admin.from('reservations').select('id, offre_id, statut, created_at, utilise_at').gte('created_at', debutMois),
@@ -126,7 +126,8 @@ export async function GET() {
   const villesActives = new Set(comm.filter(c => c.abonnement_actif && c.ville).map(c => c.ville)).size
 
   /* ── KPIs opérationnels ── */
-  const nonAbonnes       = comm.filter(c => c.abonnement_actif && !c.palier).length
+  const nonAbonnes         = comm.filter(c => c.abonnement_actif && !c.palier).length
+  const mairieAssoActifs   = comm.filter(c => c.abonnement_actif && c.type_compte === 'mairie_asso').length
   const resiliationsPrev = comm.filter(c => c.resiliation_prevue).length
   const bonsReservesMois = rMois.length
   const bonsUtilisesMois = utilisesMois
@@ -230,6 +231,7 @@ export async function GET() {
       resiliations_prev:   resiliationsPrev,
       bons_reserves_mois:  bonsReservesMois,
       bons_utilises_mois:  bonsUtilisesMois,
+      mairie_asso_actifs:  mairieAssoActifs,
     },
     graphiques: { mrr: graphMRR, inscriptions: graphInscriptions, util: graphUtil },
     cohorte,

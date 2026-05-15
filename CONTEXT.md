@@ -538,8 +538,7 @@ Niveau 3 — Rollback DB complet (données mairie_asso perdues) :
 
 LOTS RESTANTS
 -------------
-Lot 4B — Textes légaux (CGV, Confidentialité, retrait section RGPD), Chatbot,
-         FAQ, filtres admin, banc de test V3
+  Aucun — module Mairie / Association complet (Lots 1, 2, 3, 4A, 4B livrés)
 
 LOT 2 — INVITATIONS (terminé)
 ------------------------------
@@ -675,6 +674,32 @@ TESTS AJOUTÉS
   tests/non-regression/lot4a-isolation.test.js      → 404 avec flag OFF
   tests/e2e/mairie-asso/lot4a-affiche.spec.js        → absences UI avec flag OFF
 
-Lots restants :
-  Lot 4B — Textes légaux (CGV, Confidentialité, retrait RGPD), Chatbot,
-           FAQ, filtres admin, banc de test V3
+LOT 4B — TEXTES LÉGAUX, CHATBOT, FAQ, ADMIN (terminé)
+------------------------------------------------------
+État : code livré sur la branche feat/mairie-asso-lot1-fondations, non mergé sur master
+
+Fichiers modifiés :
+  app/cgv/page.js                              → section 3.3 "Cas particulier Mairie/Asso" (flag-gated)
+  app/confidentialite/page.js                  → section 5.3 "Partage données Mairie/Asso" (flag-gated)
+  app/registre-cnil/page.js                    → suppression définitive section "Obligations" (sans flag)
+  app/components/chatbot/chatbotData.js        → 3e branche racine + 7 nœuds m-q-* (flag-gated)
+  data/faq-data.js                             → catégorie "Associations et mairies" 7 Q&As (flag-gated)
+  app/admin/page.js                            → KPI "Mairies/Assos actives" (flag-gated)
+  app/admin/commercants/page.js                → filtre "Type de compte" (flag-gated)
+  app/api/admin/commercants/route.js           → paramètre type_compte dans le GET
+  app/api/admin/dashboard/route.js             → KPI mairie_asso_actifs dans la réponse
+
+Fichiers créés :
+  tests/non-regression/lot4b-isolation.test.js  → tests flag OFF/ON FAQ + chatbot + admin
+  tests/e2e/lot4b-non-regression.spec.js         → non-régression UI (CGV, confidentialité, CNIL, FAQ)
+  docs/banc-test-V3-mairie-asso.md               → 67 cas de test en 6 phases
+
+Décisions produit :
+  - section 3.3 CGV : consentement explicite, désaffiliation sans frais, données agrégées uniquement
+  - section 5.3 Confidentialité : base légale 6.1.b + 6.1.f, historique conservé anonymisé
+  - Registre CNIL : section "Obligations à remplir" retirée définitivement (checklist obsolète)
+  - Chatbot : nœuds m-cat + m-q-1 à m-q-7, option racine avec spread conditionnel
+  - FAQ : spread conditionnel en fin de tableau avec isMairieAssoEnabled via process.env
+  - Admin : KPI mairie_asso_actifs comptabilisé à partir du champ type_compte dans commerces
+
+Module Mairie / Association : COMPLET

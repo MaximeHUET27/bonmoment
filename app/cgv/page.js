@@ -103,6 +103,24 @@ export default function CGV() {
               <li>BONMOMENT se réserve le droit de suspendre le bénéfice du parrainage en cas d&apos;usage frauduleux détecté (auto-parrainage, faux comptes, tentatives de contournement des limites mensuelles)</li>
             </ul>
           </div>
+
+          {process.env.NEXT_PUBLIC_MAIRIE_ASSO_ENABLED === 'true' && (
+            <>
+              <SubTitle className="mt-6">3.3 Cas particulier des comptes Mairie / Association</SubTitle>
+              <p className="mt-2">
+                BONMOMENT propose un type de compte spécifique destiné aux mairies et associations souhaitant animer un réseau de commerçants partenaires. Ce compte permet de constituer un réseau d&apos;adhérents, de publier des offres collectives et d&apos;accéder à des statistiques agrégées sur l&apos;ensemble des membres.
+              </p>
+              <p className="mt-3">
+                Les comptes Mairie / Association sont soumis aux mêmes conditions tarifaires que les comptes commerçants standards (article 3.1), sauf dispositions particulières convenues par écrit avec BONMOMENT.
+              </p>
+              <p className="mt-3">
+                L&apos;adhésion d&apos;un commerçant à un réseau Mairie / Association est soumise à son consentement explicite. Le commerçant peut accepter ou refuser toute invitation, et se désaffilier à tout moment sans frais ni préavis, sans impact sur son abonnement individuel.
+              </p>
+              <p className="mt-3">
+                Les données statistiques visibles par le compte Mairie / Association (bons réservés, bons validés, taux de validation, nombre d&apos;avis Google cumulés) sont agrégées au niveau de l&apos;ensemble du réseau. Aucune donnée nominative d&apos;un commerçant adhérent n&apos;est accessible par ce biais.
+              </p>
+            </>
+          )}
         </div>
 
         {/* 4. Paiement */}

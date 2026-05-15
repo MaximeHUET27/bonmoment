@@ -1,5 +1,5 @@
 /**
- * Données FAQ BONMOMENT — 27 questions réparties en 5 catégories.
+ * Données FAQ BONMOMENT — catégories et questions fréquentes.
  */
 const FAQ = [
   {
@@ -235,6 +235,41 @@ const FAQ = [
       },
     ],
   },
+  ...(process.env.NEXT_PUBLIC_MAIRIE_ASSO_ENABLED === 'true' ? [{
+    id: 'mairie-asso',
+    icon: '🏛️',
+    titre: 'Associations et mairies',
+    questions: [
+      {
+        q: "Qu'est-ce qu'un compte Mairie / Association sur BONMOMENT ?",
+        r: "C'est un type de compte dédié aux mairies et associations qui souhaitent animer un réseau de commerçants partenaires. Il permet d'inviter des commerçants à adhérer, de publier des offres collectives pour le réseau et de consulter des statistiques agrégées anonymisées sur l'ensemble des membres.",
+      },
+      {
+        q: "Comment inviter des commerçants à rejoindre mon réseau ?",
+        r: "Depuis ton tableau de bord → Mes membres → \"Inviter un commerçant\". Tu recherches le commerce par nom ou ville, puis envoies l'invitation. Le commerçant reçoit une notification et peut accepter ou refuser librement. Tu suis l'état de chaque invitation en temps réel.",
+      },
+      {
+        q: "Comment publier une offre collective pour mes membres ?",
+        r: "Depuis Dashboard → Nouvelle offre. L'offre est diffusée à travers le réseau de tes commerçants adhérents actifs. Le processus est identique à une offre individuelle : tu choisis le type, fixes les dates et le nombre de bons, puis tu publies.",
+      },
+      {
+        q: "Que contiennent les statistiques agrégées ?",
+        r: "Le tableau de bord affiche 6 indicateurs clés pour l'ensemble du réseau : bons réservés, bons validés, taux de validation, nombre de membres actifs, nombre d'offres publiées et avis Google cumulés. Tu peux filtrer par période : 7 jours, 30 jours ou depuis le début. Aucune donnée nominative d'un commerçant individuel n'est accessible.",
+      },
+      {
+        q: "Comment ajouter ou modifier le logo de mon compte ?",
+        r: "Dans ton dashboard → Logo personnalisé → Choisir un fichier (PNG, JPG ou WEBP, max 2 Mo). Une fois uploadé, le logo peut être affiché sur l'affiche vitrine des commerçants membres qui l'ont activé depuis leur propre tableau de bord.",
+      },
+      {
+        q: "Un commerçant peut-il refuser une invitation ou quitter le réseau ?",
+        r: "Oui. L'adhésion est entièrement basée sur le consentement du commerçant. Il peut refuser une invitation, ou se désaffilier à tout moment depuis son tableau de bord, sans frais ni préavis. Son abonnement individuel BONMOMENT n'est pas affecté.",
+      },
+      {
+        q: "Comment résilier ou mettre en pause mon compte Mairie / Association ?",
+        r: "Comme pour tout compte BONMOMENT : Mon commerce → Abonnement → Résilier ou Mettre en pause. La résiliation prend effet fin du mois en cours. Tes données et historiques sont conservés. Pas d'engagement ni de pénalité.",
+      },
+    ],
+  }] : []),
 ]
 
 export default FAQ

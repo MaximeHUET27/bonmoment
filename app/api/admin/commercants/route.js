@@ -24,22 +24,24 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
 
   const { searchParams } = new URL(request.url)
-  const page      = parseInt(searchParams.get('page') || '0')
-  const search    = searchParams.get('search') || ''
-  const ville     = searchParams.get('ville') || ''
-  const palier    = searchParams.get('palier') || ''
-  const statut    = searchParams.get('statut') || ''
+  const page        = parseInt(searchParams.get('page') || '0')
+  const search      = searchParams.get('search') || ''
+  const ville       = searchParams.get('ville') || ''
+  const palier      = searchParams.get('palier') || ''
+  const statut      = searchParams.get('statut') || ''
+  const typeCompte  = searchParams.get('type_compte') || ''
 
   let query = admin.from('commerces')
-    .select('id, nom, email, ville, palier, abonnement_actif, date_fin_essai, created_at, last_login_at, photo_url, adresse, telephone, note_google, categorie, stripe_customer_id, notes_admin', { count: 'exact' })
+    .select('id, nom, email, ville, palier, abonnement_actif, date_fin_essai, created_at, last_login_at, photo_url, adresse, telephone, note_google, categorie, stripe_customer_id, notes_admin, type_compte', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(page * LIMIT, (page + 1) * LIMIT - 1)
 
-  if (search) query = query.or(`nom.ilike.%${search}%,email.ilike.%${search}%`)
-  if (ville)  query = query.eq('ville', ville)
-  if (palier) query = query.eq('palier', palier)
+  if (search)     query = query.or(`nom.ilike.%${search}%,email.ilike.%${search}%`)
+  if (ville)      query = query.eq('ville', ville)
+  if (palier)     query = query.eq('palier', palier)
   if (statut === 'actif')   query = query.eq('abonnement_actif', true)
   if (statut === 'inactif') query = query.eq('abonnement_actif', false)
+  if (typeCompte) query = query.eq('type_compte', typeCompte)
 
   const { data: commerces, count } = await query
 
