@@ -7,6 +7,11 @@
 
 BEGIN;
 
+-- DROP obligatoire : impossible de modifier le type de retour d'une fonction existante
+-- avec CREATE OR REPLACE seul. La suppression est sans perte car la fonction est recréée
+-- immédiatement ci-dessous avec la même logique + le champ mairie_asso_logo_url.
+DROP FUNCTION IF EXISTS get_invitations_et_adhesions_commerce(UUID);
+
 CREATE OR REPLACE FUNCTION get_invitations_et_adhesions_commerce(p_commerce_id UUID)
 RETURNS TABLE (
   id UUID,
