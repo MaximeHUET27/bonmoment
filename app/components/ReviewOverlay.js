@@ -28,7 +28,7 @@ export default function ReviewOverlay({ reservationId, commerceId, commerceNom, 
     } else {
       setStep('feedback')
     }
-  }, [reservationId, commerceId, placeId, onClose, showToast])
+  }, [reservationId, commerceId, placeId, onClose, showToast, source])
 
   const handleFeedbackSend = useCallback(async () => {
     setSending(true)
@@ -41,7 +41,7 @@ export default function ReviewOverlay({ reservationId, commerceId, commerceNom, 
     setSending(false)
     setToast(true)
     setTimeout(onClose, 1800)
-  }, [reservationId, commerceId, note, commentaire, onClose])
+  }, [reservationId, commerceId, note, commentaire, onClose, source])
 
   const activeStars = hover || note
   const starStyle = (i) => ({

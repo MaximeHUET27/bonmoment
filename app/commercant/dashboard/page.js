@@ -708,13 +708,11 @@ function StatsSection({ commerce, supabase }) {
         supabase.from('avis_google_clics').select('id', { count: 'exact', head: true }).eq('commerce_id', commerce.id).gte('created_at', debutMois.toISOString()),
         supabase.from('feedbacks_commerce').select('id', { count: 'exact', head: true }).eq('commerce_id', commerce.id).eq('lu', false),
       ])
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAvisCount(google ?? 0)
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFeedbackCount(nonLus ?? 0)
     }
     loadAvis()
-  }, [commerce, supabase]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [commerce, supabase])
 
   async function loadFeedbacks() {
     const { data } = await supabase

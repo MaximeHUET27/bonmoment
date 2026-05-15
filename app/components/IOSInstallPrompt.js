@@ -80,6 +80,7 @@ export default function IOSInstallPrompt({ forceOpen, onForceClose }) {
   /* Mode contrôlé */
   useEffect(() => {
     if (forceOpen === undefined) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync intentionnelle prop→state
     setOpen(!!forceOpen)
   }, [forceOpen])
 

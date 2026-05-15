@@ -72,6 +72,7 @@ export default function CarteVille({ villeNom, villeLat, villeLng }) {
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 640px)')
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- lecture initiale du viewport
     setIsMobile(mq.matches)
     const handler = (e) => setIsMobile(e.matches)
     mq.addEventListener('change', handler)
@@ -107,7 +108,7 @@ export default function CarteVille({ villeNom, villeLat, villeLng }) {
         }).catch(() => {})
       })
     })
-  }, [isLoaded, commerces.length])
+  }, [isLoaded, commerces.length]) // eslint-disable-line react-hooks/exhaustive-deps -- commerces.length évite boucle infinie de géocodage
 
   const handleMarkerClick = useCallback((commerce) => {
     setSelected(prev => prev?.id === commerce.id ? null : commerce)

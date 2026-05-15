@@ -19,6 +19,7 @@ import { triggerConfetti } from '@/lib/confetti'
 
 function ModalPortal({ children }) {
   const [mounted, setMounted] = useState(false)
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- portal mount, exécuté une seule fois
   useEffect(() => { setMounted(true) }, [])
   if (!mounted) return null
   return createPortal(children, document.body)

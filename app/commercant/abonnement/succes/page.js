@@ -7,7 +7,6 @@ import { useSearchParams } from 'next/navigation'
 
 function SuccesContent() {
   // session_id disponible pour vérifications futures si besoin
-  // eslint-disable-next-line no-unused-vars
   const searchParams = useSearchParams()
 
   return (

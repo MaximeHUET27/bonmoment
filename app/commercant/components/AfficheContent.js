@@ -30,6 +30,7 @@ function AutoFitLine({ text, style }) {
 export default function AfficheContent({ commerce, logoAssoUrl }) {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', background: 'white' }}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- rendu pour html2canvas, contexte hors Next.js */}
       <img
         src="/affiche-bonmoment.png"
         alt="Affiche BONMOMENT"
@@ -45,6 +46,7 @@ export default function AfficheContent({ commerce, logoAssoUrl }) {
           Validation visuelle requise par Maxime : vérifier que l'image /affiche-bonmoment.png
           n'a pas d'élément dans ce coin. */}
       {logoAssoUrl && (
+        // eslint-disable-next-line @next/next/no-img-element -- rendu pour html2canvas, contexte hors Next.js
         <img
           src={logoAssoUrl}
           alt="Logo partenaire"

@@ -167,6 +167,7 @@ function AbonnementContent() {
       })
       const data = await res.json()
       if (data.url) {
+        // eslint-disable-next-line react-hooks/immutability -- redirect vers Stripe Checkout externe
         window.location.href = data.url
       } else {
         setError(data.error || 'Erreur lors de la création de la session Stripe')

@@ -9,6 +9,7 @@ export default function JaugeRecompense({ nbPassages, seuil, description, animat
 
   useEffect(() => {
     if (!animated) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- animation au montage
       setWidth(cible)
       return
     }

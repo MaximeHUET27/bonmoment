@@ -139,7 +139,7 @@ export default function ReviewPolling() {
       stopped = true
       if (pollingRef.current) clearInterval(pollingRef.current)
     }
-  }, [user, supabase]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, supabase])
 
   if (!reviewData) return null
 

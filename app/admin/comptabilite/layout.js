@@ -24,7 +24,6 @@ export default function ComptabiliteLayout({ children }) {
   useEffect(() => {
     fetch('/api/admin/comptabilite/parametres')
       .then(r => r.json())
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       .then(d => { if (d?.regime) setRegime(d.regime) })
   }, [])
 
