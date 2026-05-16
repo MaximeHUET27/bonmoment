@@ -60,6 +60,10 @@ export async function POST(request) {
   const path = `${mairieAssoId}/logo.${ext}`;
   const arrayBuffer = await file.arrayBuffer();
 
+  // Nettoyage : supprimer toutes les variantes existantes pour garantir un seul fichier
+  const oldPaths = ['png', 'jpg', 'jpeg', 'webp'].map(e => `${mairieAssoId}/logo.${e}`);
+  await supabase.storage.from('logos-mairie-asso').remove(oldPaths);
+
   const { error: uploadError } = await supabase.storage
     .from('logos-mairie-asso')
     .upload(path, arrayBuffer, {
