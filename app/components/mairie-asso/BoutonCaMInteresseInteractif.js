@@ -60,7 +60,7 @@ export default function BoutonCaMInteresseInteractif({
           disabled
             ? 'bg-[#D0D0D0] cursor-not-allowed'
             : interested
-            ? 'bg-[#10B981] hover:bg-[#059669]'
+            ? 'bg-green-500 hover:bg-green-600'
             : 'bg-[#FF6B00] hover:bg-[#CC5500]'
         }`}
       >
