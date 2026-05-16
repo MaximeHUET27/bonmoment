@@ -38,13 +38,10 @@ export default function AfficheContent({ commerce, logoAssoUrl }) {
         style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }}
       />
 
-      {/* Logo mairie/asso : haut à droite, dans la zone libre (aucun élément overlay ici)
-          Position : 15px du bord supérieur, 15px du bord droit.
-          Marges par rapport aux éléments overlay les plus proches :
-          - Commerce nom (top 28.5% = ~320px, droite ~427px) : 272px de distance horizontale ✓
-          - Le logo ne dépasse pas le bas de la zone haute (top 15 → 95px vs nom à 320px) ✓
-          Validation visuelle requise par Maxime : vérifier que l'image /affiche-bonmoment.png
-          n'a pas d'élément dans ce coin. */}
+      {/* Logo mairie/asso : zone safe sous le titre BONMOMENT, à droite,
+          au-dessus de la zone orange centrale (~top 140px, right 40px).
+          maxWidth/maxHeight + objectFit:contain garantissent la non-déformation
+          quelle que soit la proportion du logo. */}
       {logoAssoUrl && (
         // eslint-disable-next-line @next/next/no-img-element -- rendu pour html2canvas, contexte hors Next.js
         <img
@@ -53,10 +50,10 @@ export default function AfficheContent({ commerce, logoAssoUrl }) {
           crossOrigin="anonymous"
           style={{
             position: 'absolute',
-            top: '15px',
-            right: '15px',
-            width: '80px',
-            height: '80px',
+            top: '140px',
+            right: '40px',
+            maxWidth: '150px',
+            maxHeight: '140px',
             objectFit: 'contain',
             zIndex: 10,
           }}

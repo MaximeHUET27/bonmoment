@@ -24,9 +24,9 @@ export default function StatsCumuleesMairieAsso({ commerceId }) {
 
   if (loading) {
     return (
-      <section className="rounded-2xl bg-white border border-[#F5F5F5] p-6 shadow-sm">
-        <p className="text-[#3D3D3D]">Chargement des statistiques…</p>
-      </section>
+      <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
+        <p className="text-[11px] text-gray-400">Chargement des statistiques…</p>
+      </div>
     );
   }
 
@@ -39,16 +39,13 @@ export default function StatsCumuleesMairieAsso({ commerceId }) {
   ];
 
   return (
-    <section className="rounded-2xl bg-white border border-[#F5F5F5] p-6 shadow-sm">
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+    <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2
-            className="text-xl font-bold text-[#0A0A0A]"
-            style={{ fontFamily: 'Montserrat, sans-serif' }}
-          >
+          <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">
             Statistiques de tes adhérents
           </h2>
-          <p className="text-sm text-[#3D3D3D] mt-1">
+          <p className="text-[11px] text-gray-400 leading-tight mt-1">
             Vue d&apos;ensemble cumulée — aucune donnée individuelle par commerçant.
           </p>
         </div>
@@ -70,7 +67,7 @@ export default function StatsCumuleesMairieAsso({ commerceId }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         <StatCard icon="🎟️" label="Bons réservés"          value={stats.bons_reserves} />
         <StatCard icon="✅" label="Bons validés"            value={stats.bons_valides} />
         <StatCard icon="📈" label="Taux de validation"      value={`${stats.taux_validation}%`} />
@@ -78,21 +75,15 @@ export default function StatsCumuleesMairieAsso({ commerceId }) {
         <StatCard icon="📰" label="Offres publiées"         value={stats.nb_offres_publiees} />
         <StatCard icon="⭐" label="Avis Google cumulés"     value={stats.nb_avis_google_cumules} />
       </div>
-    </section>
+    </div>
   );
 }
 
 function StatCard({ icon, label, value }) {
   return (
-    <div className="rounded-lg bg-[#F5F5F5] p-4">
-      <div className="text-2xl mb-1">{icon}</div>
-      <div
-        className="text-2xl font-black text-[#0A0A0A]"
-        style={{ fontFamily: 'Montserrat, sans-serif' }}
-      >
-        {value}
-      </div>
-      <div className="text-xs text-[#3D3D3D] mt-1">{label}</div>
+    <div className="bg-white rounded-2xl px-3 py-4 shadow-sm border border-[#F0F0F0] flex flex-col gap-0.5">
+      <p className="text-2xl font-black leading-none text-[#0A0A0A]">{value}</p>
+      <p className="text-[11px] text-gray-400 leading-tight mt-1">{icon} {label}</p>
     </div>
   );
 }

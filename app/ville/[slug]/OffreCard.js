@@ -414,7 +414,7 @@ export default function OffreCard({ offre, userReservation }) {
                 href={`/offre/${offre.id}`}
                 className={`w-full text-white font-bold text-[11px] h-[30px] rounded-full flex items-center justify-center gap-1 transition duration-150 ${expired ? 'bg-[#D0D0D0] cursor-not-allowed pointer-events-none' : 'bg-[#FF6B00] hover:bg-[#CC5500]'}`}
               >
-                📍 En savoir plus
+                Ça m&apos;intéresse
               </Link>
             ) : fini ? (
               <button

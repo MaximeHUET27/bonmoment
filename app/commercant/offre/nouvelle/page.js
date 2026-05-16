@@ -294,6 +294,7 @@ function NouvelleOffrePageInner() {
     nb_bons_total:    illimite ? null : nbBons,
     date_debut:       buildISO(dateOffre, heureDebut),
     date_fin:         buildISO(dateOffre, heureFin),
+    avec_bon:         avecBon,
     commerces: {
       nom:         commerce?.nom         || 'Mon commerce',
       categorie:   commerce?.categorie   || null,
@@ -615,45 +616,18 @@ function NouvelleOffrePageInner() {
           )}
         </section>
 
-        {/* ══ SANS BON — toggle mairie_asso + atelier uniquement ════════ */}
-        {showSansBonToggle && (
-          <section className="bg-white rounded-2xl px-5 py-4 shadow-sm">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-bold text-[#0A0A0A]">Événement sans bon</p>
-                <p className="text-[11px] text-[#3D3D3D]/50">
-                  Les participants verront l&apos;événement sans pouvoir réserver de bon.
-                </p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={!avecBon}
-                onClick={() => setAvecBon(v => !v)}
-                className={`relative w-12 h-6 rounded-full transition-colors shrink-0 ${
-                  !avecBon ? 'bg-[#FF6B00]' : 'bg-[#E0E0E0]'
-                }`}
-              >
-                <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${
-                  !avecBon ? 'left-6' : 'left-0.5'
-                }`} />
-              </button>
-            </div>
-          </section>
-        )}
-
         {/* ══ 4. NOMBRE DE BONS ══════════════════════════════════════════ */}
-        {avecBon && <section id="tut-nb-bons" className="bg-white rounded-2xl px-5 py-4 shadow-sm">
+        <section id="tut-nb-bons" className="bg-white rounded-2xl px-5 py-4 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-widest text-[#3D3D3D]/50 mb-3">
             Nombre de bons
           </p>
           <div className="flex items-center gap-3">
             {/* Stepper − / valeur / + */}
-            <div className={`flex items-center gap-3 ${illimite ? 'opacity-40 pointer-events-none' : ''}`}>
+            <div className={`flex items-center gap-3 ${(illimite || !avecBon) ? 'opacity-40 pointer-events-none' : ''}`}>
               <button
                 type="button"
                 onClick={() => setNbBons(v => Math.max(1, v - 1))}
-                disabled={illimite}
+                disabled={illimite || !avecBon}
                 className="w-11 h-11 flex items-center justify-center bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-xl rounded-lg transition-colors shrink-0"
               >
                 −
@@ -663,13 +637,13 @@ function NouvelleOffrePageInner() {
                 min={1}
                 value={nbBons}
                 onChange={e => setNbBons(Math.max(1, parseInt(e.target.value) || 1))}
-                disabled={illimite}
+                disabled={illimite || !avecBon}
                 className="w-16 text-2xl font-black text-[#0A0A0A] text-center border-2 border-[#E0E0E0] rounded-xl py-2 focus:border-[#FF6B00] focus:outline-none transition-colors min-h-[44px]"
               />
               <button
                 type="button"
                 onClick={() => setNbBons(v => v + 1)}
-                disabled={illimite}
+                disabled={illimite || !avecBon}
                 className="w-11 h-11 flex items-center justify-center bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-xl rounded-lg transition-colors shrink-0"
               >
                 +
@@ -679,20 +653,35 @@ function NouvelleOffrePageInner() {
             {/* Toggle illimité */}
             <button
               type="button"
-              onClick={() => setIllimite(v => !v)}
-              className={`ml-auto px-4 h-11 rounded-xl border-2 font-bold text-sm transition-all whitespace-nowrap ${
-                illimite
+              onClick={() => { setAvecBon(true); setIllimite(v => !v) }}
+              className={`${showSansBonToggle ? '' : 'ml-auto '}px-4 h-11 rounded-xl border-2 font-bold text-sm transition-all whitespace-nowrap ${
+                illimite && avecBon
                   ? 'bg-[#FF6B00] border-[#FF6B00] text-white shadow-md shadow-orange-200'
                   : 'border-[#E0E0E0] text-[#3D3D3D] hover:border-[#FF6B00] hover:text-[#FF6B00]'
               }`}
             >
               ♾️ Illimité
             </button>
+
+            {/* Bouton Sans bon — mairie_asso + atelier uniquement */}
+            {showSansBonToggle && (
+              <button
+                type="button"
+                onClick={() => { setAvecBon(false); setIllimite(false) }}
+                className={`ml-auto px-4 h-11 rounded-xl border-2 font-bold text-sm transition-all whitespace-nowrap ${
+                  !avecBon
+                    ? 'bg-[#FF6B00] border-[#FF6B00] text-white shadow-md shadow-orange-200'
+                    : 'border-[#E0E0E0] text-[#3D3D3D] hover:border-[#FF6B00] hover:text-[#FF6B00]'
+                }`}
+              >
+                🚫 Sans bon
+              </button>
+            )}
           </div>
           {errors.nbBons && (
             <p className="text-xs text-red-500 mt-2 font-semibold">⚠ {errors.nbBons}</p>
           )}
-        </section>}
+        </section>
 
         {/* ══ 5. PLAGE HORAIRE ═══════════════════════════════════════════ */}
         <section id="tut-horaire" className="bg-white rounded-2xl px-5 py-4 shadow-sm">

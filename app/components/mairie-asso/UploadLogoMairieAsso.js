@@ -69,14 +69,11 @@ export default function UploadLogoMairieAsso({ commerceId, currentLogoUrl, onUpd
   }
 
   return (
-    <section className="rounded-2xl bg-white border border-[#F5F5F5] p-6 shadow-sm">
-      <h2
-        className="text-xl font-bold text-[#0A0A0A] mb-2"
-        style={{ fontFamily: 'Montserrat, sans-serif' }}
-      >
+    <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
+      <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">
         Logo personnalisé
       </h2>
-      <p className="text-sm text-[#3D3D3D] mb-4">
+      <p className="text-[11px] text-gray-400 -mt-2">
         Ce logo s&apos;affichera en haut à droite des affiches vitrine de tes adhérents qui choisiront de le mettre en avant.
       </p>
 
@@ -137,6 +134,6 @@ export default function UploadLogoMairieAsso({ commerceId, currentLogoUrl, onUpd
         onConfirm={handleDelete}
         onCancel={() => setConfirmDelete(false)}
       />
-    </section>
+    </div>
   );
 }

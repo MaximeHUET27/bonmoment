@@ -387,16 +387,7 @@ export default function DashboardPage() {
 
         {/* 8. QR CODE ─────────────────────────────────────────────────────── */}
         {commerce && (
-          <QRVitrine commerce={commerce} />
-        )}
-
-        {/* SÉLECTEUR LOGO AFFICHE — flag ON, commerçant membre avec asso ayant un logo ── */}
-        {commerce && isMairieAssoEnabled() && commerce.categorie_bonmoment !== 'mairie_asso' && (
-          <SelecteurLogoAffiche
-            commerceId={commerce.id}
-            currentAfficheLogoId={commerce.affiche_logo_mairie_asso_id}
-            onUpdate={handleAfficheLogoUpdate}
-          />
+          <QRVitrine commerce={commerce} onAfficheLogoUpdate={handleAfficheLogoUpdate} />
         )}
 
         {/* 8. Supprimer ce commerce ───────────────────────────────────────── */}
@@ -1535,7 +1526,7 @@ function OffreExpireCard({ offre, commerce, stats, nbParticipants, gagnantUser, 
 
 /* ── Section QR code vitrine ─────────────────────────────────────────────── */
 
-function QRVitrine({ commerce }) {
+function QRVitrine({ commerce, onAfficheLogoUpdate }) {
   const [isGenerating, setIsGenerating] = useState(false)
 
   const downloadPDF = async () => {
@@ -1663,6 +1654,13 @@ function QRVitrine({ commerce }) {
       >
         {isGenerating ? '⏳ Génération...' : '📥 Télécharger l\'affiche'}
       </button>
+      {isMairieAssoEnabled() && commerce.categorie_bonmoment !== 'mairie_asso' && (
+        <SelecteurLogoAffiche
+          commerceId={commerce.id}
+          currentAfficheLogoId={commerce.affiche_logo_mairie_asso_id}
+          onUpdate={onAfficheLogoUpdate}
+        />
+      )}
     </div>
   )
 }
