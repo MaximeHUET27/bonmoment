@@ -4,9 +4,10 @@ import { useState, useRef } from 'react';
 import ConfirmModal from '@/app/components/ConfirmModal';
 
 export default function UploadLogoMairieAsso({ commerceId, currentLogoUrl, onUpdate }) {
-  const [uploading,      setUploading]      = useState(false);
-  const [error,          setError]          = useState('');
-  const [confirmDelete,  setConfirmDelete]  = useState(false);
+  const [uploading,         setUploading]         = useState(false);
+  const [error,             setError]             = useState('');
+  const [confirmDelete,     setConfirmDelete]     = useState(false);
+  const [displayedLogoUrl,  setDisplayedLogoUrl]  = useState(currentLogoUrl);
   const fileInput = useRef(null);
 
   async function handleUpload(e) {
@@ -41,6 +42,7 @@ export default function UploadLogoMairieAsso({ commerceId, currentLogoUrl, onUpd
       }
 
       const { logo_url } = await res.json();
+      setDisplayedLogoUrl(logo_url);
       onUpdate?.(logo_url);
     } catch (err) {
       setError(err.message);
@@ -59,6 +61,7 @@ export default function UploadLogoMairieAsso({ commerceId, currentLogoUrl, onUpd
         { method: 'DELETE' }
       );
       if (!res.ok) throw new Error('Erreur suppression');
+      setDisplayedLogoUrl(null);
       onUpdate?.(null);
     } catch (err) {
       setError(err.message);
@@ -77,11 +80,11 @@ export default function UploadLogoMairieAsso({ commerceId, currentLogoUrl, onUpd
         Ce logo s&apos;affichera en haut à droite des affiches vitrine de tes adhérents qui choisiront de le mettre en avant.
       </p>
 
-      {currentLogoUrl && (
+      {displayedLogoUrl && (
         <div className="mb-4 flex items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={currentLogoUrl}
+            src={displayedLogoUrl}
             alt="Logo actuel"
             className="w-24 h-24 rounded-lg object-contain bg-[#F5F5F5] p-2"
           />
@@ -112,7 +115,7 @@ export default function UploadLogoMairieAsso({ commerceId, currentLogoUrl, onUpd
         >
           {uploading
             ? 'Téléversement…'
-            : currentLogoUrl ? '📤 Remplacer le logo' : '📤 Téléverser un logo'}
+            : displayedLogoUrl ? '📤 Remplacer le logo' : '📤 Téléverser un logo'}
         </label>
         <p className="text-xs text-[#3D3D3D]">
           Format : PNG, JPG ou WEBP · Carré conseillé (idéalement 512×512 px) · Taille max : 2 MB

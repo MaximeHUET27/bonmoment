@@ -83,12 +83,14 @@ export async function POST(request) {
     .from('logos-mairie-asso')
     .getPublicUrl(path);
 
+  const cacheBustedUrl = `${publicUrl}?v=${Date.now()}`;
+
   await supabase
     .from('commerces')
-    .update({ logo_url: publicUrl })
+    .update({ logo_url: cacheBustedUrl })
     .eq('id', mairieAssoId);
 
-  return NextResponse.json({ logo_url: publicUrl }, { status: 200 });
+  return NextResponse.json({ logo_url: cacheBustedUrl }, { status: 200 });
 }
 
 export async function DELETE(request) {
