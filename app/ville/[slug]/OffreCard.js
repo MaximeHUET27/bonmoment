@@ -413,6 +413,7 @@ export default function OffreCard({ offre, userReservation }) {
             {sansBon ? (
               <BoutonCaMInteresseInteractif
                 offreId={offre.id}
+                initialInterested={offre.is_current_user_participating || false}
                 disabled={expired}
                 className={`w-full text-white font-bold text-[11px] h-[30px] rounded-full flex items-center justify-center gap-1 transition duration-150`}
               />

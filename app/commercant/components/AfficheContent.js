@@ -50,8 +50,8 @@ export default function AfficheContent({ commerce, logoAssoUrl }) {
           crossOrigin="anonymous"
           style={{
             position: 'absolute',
-            top: '200px',
-            right: '40px',
+            top: '230px',
+            right: '75px',
             maxWidth: '150px',
             maxHeight: '140px',
             objectFit: 'contain',
