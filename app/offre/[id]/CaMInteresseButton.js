@@ -53,8 +53,8 @@ export default function CaMInteresseButton({ offreId, initialIsParticipating, in
       <div className="flex items-center gap-2">
         {isParticipating ? (
           <>
-            <div className="flex-1 px-5 py-3 rounded-2xl font-bold text-center text-sm border border-[#FF6B00] bg-[#FFF0E0] text-[#CC5500]">
-              ✓ Ça t&apos;intéresse
+            <div className="flex-1 px-5 py-3 rounded-2xl font-bold text-center text-sm bg-[#10B981] text-white">
+              Intéressé(e)
             </div>
             <button
               onClick={handleDesinscription}

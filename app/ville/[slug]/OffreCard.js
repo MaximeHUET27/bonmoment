@@ -13,6 +13,7 @@ import FavoriButton from '@/app/components/FavoriButton'
 import ShareButton from '@/app/components/ShareButton'
 import { useReservation } from '@/app/hooks/useReservation'
 import { getFullOffreTitle } from '@/lib/offreTitle'
+import BoutonCaMInteresseInteractif from '@/app/components/mairie-asso/BoutonCaMInteresseInteractif'
 import { useFavoris } from '@/app/context/FavorisContext'
 import { useToast } from '@/app/components/Toast'
 import { triggerConfetti } from '@/lib/confetti'
@@ -410,12 +411,11 @@ export default function OffreCard({ offre, userReservation }) {
           {/* Ligne 5 : CTA */}
           <div className="mt-auto">
             {sansBon ? (
-              <Link
-                href={`/offre/${offre.id}`}
-                className={`w-full text-white font-bold text-[11px] h-[30px] rounded-full flex items-center justify-center gap-1 transition duration-150 ${expired ? 'bg-[#D0D0D0] cursor-not-allowed pointer-events-none' : 'bg-[#FF6B00] hover:bg-[#CC5500]'}`}
-              >
-                Ça m&apos;intéresse
-              </Link>
+              <BoutonCaMInteresseInteractif
+                offreId={offre.id}
+                disabled={expired}
+                className={`w-full text-white font-bold text-[11px] h-[30px] rounded-full flex items-center justify-center gap-1 transition duration-150`}
+              />
             ) : fini ? (
               <button
                 onClick={handleAbonnerComm}

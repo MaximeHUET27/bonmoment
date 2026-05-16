@@ -249,7 +249,7 @@ function NouvelleOffrePageInner() {
   const showSansBonToggle = isMairieAsso && typeRemise === 'atelier'
 
   /* ── Validation plage horaire (temps réel) ── */
-  const dateFinPour = avecBon ? dateOffre : dateFinEvent
+  const dateFinPour = (isMairieAsso || !avecBon) ? dateFinEvent : dateOffre
   const diff = (() => {
     const start = new Date(`${dateOffre}T${heureDebut}:00`)
     const end   = new Date(`${dateFinPour}T${heureFin}:00`)
@@ -257,11 +257,11 @@ function NouvelleOffrePageInner() {
   })()
   const erreurHoraire = diff <= 0 ? "La date/heure de fin doit être après le début." : null
 
-  const erreur30j = !avecBon && (() => {
+  const erreur30j = (isMairieAsso || !avecBon) && (() => {
     const start = new Date(`${dateOffre}T${heureDebut}:00`)
     const end   = new Date(`${dateFinPour}T${heureFin}:00`)
     return (end - start) / (1000 * 60 * 60 * 24) > 30
-  })() ? "Durée maximale : 30 jours pour un événement." : null
+  })() ? "Durée maximale : 30 jours." : null
 
   /* ── Validation dates passées (temps réel) ── */
   const erreurDateDebut = new Date(`${dateOffre}T${heureDebut}:00`) < new Date()
@@ -293,7 +293,7 @@ function NouvelleOffrePageInner() {
     nb_bons_restants: illimite ? 9999 : (nbBons || 0),
     nb_bons_total:    illimite ? null : nbBons,
     date_debut:       buildISO(dateOffre, heureDebut),
-    date_fin:         buildISO(dateOffre, heureFin),
+    date_fin:         buildISO(dateFinPour, heureFin),
     avec_bon:         avecBon,
     commerces: {
       nom:         commerce?.nom         || 'Mon commerce',
@@ -688,66 +688,132 @@ function NouvelleOffrePageInner() {
           <p className="text-[11px] font-bold uppercase tracking-widest text-[#3D3D3D]/50 mb-3">
             Plage horaire
           </p>
-          {/* Mobile : DATE pleine largeur, puis DE + À côte à côte — Desktop : 3 colonnes */}
-          <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[2fr_1fr_1fr] sm:gap-2">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
-                📅 {avecBon ? 'Date' : 'Début'}
-              </label>
-              <input
-                type="date"
-                value={dateOffre}
-                min={today}
-                onChange={e => setDateOffre(e.target.value)}
-                className={inputBase}
-              />
-            </div>
-            <div className="flex gap-2 w-full sm:contents">
-              <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
-                  ⏰ De
-                </label>
-                <input
-                  type="time"
-                  value={heureDebut}
-                  step="900"
-                  onChange={e => setHeureDebut(e.target.value)}
-                  className={`${inputBase} min-w-0`}
-                />
+          {isMairieAsso ? (
+            /* ── Layout mairie/asso : 2 lignes (début + fin), durée max 30j ── */
+            <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-[2fr_1fr] gap-2">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
+                    📅 Date de début
+                  </label>
+                  <input
+                    type="date"
+                    value={dateOffre}
+                    min={today}
+                    onChange={e => setDateOffre(e.target.value)}
+                    className={inputBase}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
+                    ⏰ Début
+                  </label>
+                  <input
+                    type="time"
+                    value={heureDebut}
+                    step="900"
+                    onChange={e => setHeureDebut(e.target.value)}
+                    className={inputBase}
+                  />
+                </div>
               </div>
-              <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
-                  ⏰ À
-                </label>
-                <input
-                  type="time"
-                  value={heureFin}
-                  step="900"
-                  onChange={e => setHeureFin(e.target.value)}
-                  className={`${inputBase} min-w-0`}
-                />
+              <div className="grid grid-cols-[2fr_1fr] gap-2">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
+                    📅 Date de fin
+                  </label>
+                  <input
+                    type="date"
+                    value={dateFinEvent}
+                    min={dateOffre}
+                    max={(() => {
+                      const d = new Date(dateOffre); d.setDate(d.getDate() + 30)
+                      return d.toISOString().split('T')[0]
+                    })()}
+                    onChange={e => setDateFinEvent(e.target.value)}
+                    className={inputBase}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
+                    ⏰ Fin
+                  </label>
+                  <input
+                    type="time"
+                    value={heureFin}
+                    step="900"
+                    onChange={e => setHeureFin(e.target.value)}
+                    className={inputBase}
+                  />
+                </div>
               </div>
+              <p className="text-[10px] text-[#FF6B00]/80 font-semibold">
+                Durée max : 30 jours pour les mairies / associations
+              </p>
             </div>
-          </div>
-
-          {/* Date de fin séparée pour événement sans bon (multi-jours) */}
-          {!avecBon && (
-            <div className="flex flex-col gap-1.5 mt-3">
-              <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
-                📅 Fin (date de clôture de l&apos;événement)
-              </label>
-              <input
-                type="date"
-                value={dateFinEvent}
-                min={dateOffre}
-                max={(() => {
-                  const d = new Date(dateOffre); d.setDate(d.getDate() + 30)
-                  return d.toISOString().split('T')[0]
-                })()}
-                onChange={e => setDateFinEvent(e.target.value)}
-                className={inputBase}
-              />
-            </div>
+          ) : (
+            <>
+              {/* Mobile : DATE pleine largeur, puis DE + À côte à côte — Desktop : 3 colonnes */}
+              <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[2fr_1fr_1fr] sm:gap-2">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
+                    📅 {avecBon ? 'Date' : 'Début'}
+                  </label>
+                  <input
+                    type="date"
+                    value={dateOffre}
+                    min={today}
+                    onChange={e => setDateOffre(e.target.value)}
+                    className={inputBase}
+                  />
+                </div>
+                <div className="flex gap-2 w-full sm:contents">
+                  <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
+                      ⏰ De
+                    </label>
+                    <input
+                      type="time"
+                      value={heureDebut}
+                      step="900"
+                      onChange={e => setHeureDebut(e.target.value)}
+                      className={`${inputBase} min-w-0`}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
+                      ⏰ À
+                    </label>
+                    <input
+                      type="time"
+                      value={heureFin}
+                      step="900"
+                      onChange={e => setHeureFin(e.target.value)}
+                      className={`${inputBase} min-w-0`}
+                    />
+                  </div>
+                </div>
+              </div>
+              {/* Date de fin séparée pour événement sans bon (multi-jours) */}
+              {!avecBon && (
+                <div className="flex flex-col gap-1.5 mt-3">
+                  <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
+                    📅 Fin (date de clôture de l&apos;événement)
+                  </label>
+                  <input
+                    type="date"
+                    value={dateFinEvent}
+                    min={dateOffre}
+                    max={(() => {
+                      const d = new Date(dateOffre); d.setDate(d.getDate() + 30)
+                      return d.toISOString().split('T')[0]
+                    })()}
+                    onChange={e => setDateFinEvent(e.target.value)}
+                    className={inputBase}
+                  />
+                </div>
+              )}
+            </>
           )}
 
           {dureeLabel && !erreurHoraire && (

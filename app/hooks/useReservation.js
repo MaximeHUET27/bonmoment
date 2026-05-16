@@ -16,6 +16,11 @@ export function useReservation() {
   const [errorMsg,    setErrorMsg]    = useState(null)
 
   const reserver = useCallback(async (offre) => {
+    if (offre?.avec_bon === false) {
+      setStatus('error')
+      setErrorMsg('Cette offre ne propose pas de réservation.')
+      return false
+    }
     setStatus('loading')
     setErrorMsg(null)
 
