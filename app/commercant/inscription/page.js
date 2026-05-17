@@ -5,13 +5,12 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useJsApiLoader } from '@react-google-maps/api'
+import { GOOGLE_MAPS_LOADER_CONFIG } from '@/lib/googleMapsConfig'
 import { useAuth } from '@/app/context/AuthContext'
 import AuthBottomSheet from '@/app/components/AuthBottomSheet'
 import { getCategorieFiltre } from '@/app/ville/[slug]/OffreCard'
 import { formatHoraire } from '@/lib/formatHoraires'
 import { isMairieAssoEnabled } from '@/lib/featureFlags'
-
-const LIBRARIES = ['places']
 
 /* ── Constantes ─────────────────────────────────────────────────────────── */
 
@@ -70,12 +69,7 @@ export default function InscriptionCommercant() {
   const router = useRouter()
 
   // Google Maps
-  const { isLoaded: mapsReady } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY,
-    libraries: LIBRARIES,
-    version: 'weekly',
-    language: 'fr',
-  })
+  const { isLoaded: mapsReady } = useJsApiLoader(GOOGLE_MAPS_LOADER_CONFIG)
   const debounceRef = useRef(null)
 
   // Formulaire

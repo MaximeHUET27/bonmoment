@@ -4,8 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { GoogleMap, useJsApiLoader, InfoWindowF } from '@react-google-maps/api'
 import Image from 'next/image'
 import Link from 'next/link'
-
-const LIBRARIES = ['places', 'marker']
+import { GOOGLE_MAPS_LOADER_CONFIG } from '@/lib/googleMapsConfig'
 
 const ORANGE = '#FF6B00'
 const GRAY   = '#9CA3AF'
@@ -63,11 +62,7 @@ export default function CarteVille({ villeNom, villeLat, villeLng }) {
   const [isMobile,    setIsMobile]    = useState(false)
   const markersRef = useRef([])
 
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY,
-    libraries: LIBRARIES,
-    version: 'weekly',
-  })
+  const { isLoaded } = useJsApiLoader(GOOGLE_MAPS_LOADER_CONFIG)
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 640px)')
