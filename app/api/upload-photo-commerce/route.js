@@ -22,7 +22,9 @@ export async function POST(request) {
   // Fetch de l'image depuis Google
   let imageRes
   try {
-    imageRes = await fetch(photo_url_google)
+    imageRes = await fetch(photo_url_google, {
+      headers: { Referer: 'https://bonmoment.app' },
+    })
   } catch (err) {
     return Response.json({ error: `Fetch Google échoué : ${err.message}` }, { status: 502 })
   }

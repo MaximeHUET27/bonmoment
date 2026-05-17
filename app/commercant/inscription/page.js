@@ -15,12 +15,6 @@ const LIBRARIES = ['places']
 
 /* ── Constantes ─────────────────────────────────────────────────────────── */
 
-const MAPS_FIELDS = [
-  'place_id', 'name', 'formatted_address', 'address_components',
-  'types', 'photos', 'opening_hours', 'rating', 'formatted_phone_number',
-  'geometry',
-]
-
 const TYPE_MAP = {
   bakery:            'Boulangerie / Pâtisserie',
   bar:               'Bar',
@@ -79,12 +73,10 @@ export default function InscriptionCommercant() {
   const { isLoaded: mapsReady } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY,
     libraries: LIBRARIES,
+    version: 'weekly',
     language: 'fr',
   })
-  const autocompleteRef             = useRef(null)
-  const placesServiceRef            = useRef(null)
-  const mapDivRef                   = useRef(null)
-  const debounceRef                 = useRef(null)
+  const debounceRef = useRef(null)
 
   // Formulaire
   const [query, setQuery]               = useState('')
@@ -131,31 +123,22 @@ export default function InscriptionCommercant() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
-  // Initialise les services Google Maps quand le loader est prêt
-  useEffect(() => {
-    if (!mapsReady || !mapDivRef.current) return
-    if (!window.google?.maps?.places) return
-    autocompleteRef.current = new window.google.maps.places.AutocompleteService()
-    placesServiceRef.current = new window.google.maps.places.PlacesService(mapDivRef.current)
-  }, [mapsReady])
-
-  // Recherche avec debounce
-  const fetchPredictions = useCallback((value) => {
-    if (!autocompleteRef.current || value.length < 2) {
+  // Recherche avec debounce — Places New API (AutocompleteSuggestion)
+  const fetchPredictions = useCallback(async (value) => {
+    if (!window.google?.maps?.places || value.length < 2) {
       setPredictions([])
       return
     }
-    autocompleteRef.current.getPlacePredictions(
-      {
+    try {
+      const { suggestions } = await window.google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
         input: value,
-        types: ['establishment'],
-        componentRestrictions: { country: 'fr' },
-      },
-      (results, status) => {
-        const ok = window.google.maps.places.PlacesServiceStatus.OK
-        setPredictions(status === ok ? (results || []) : [])
-      }
-    )
+        includedPrimaryTypes: ['establishment'],
+        includedRegionCodes: ['fr'],
+      })
+      setPredictions(suggestions || [])
+    } catch {
+      setPredictions([])
+    }
   }, [])
 
   function handleQueryChange(value) {
@@ -168,46 +151,54 @@ export default function InscriptionCommercant() {
     setShowPredictions(true)
   }
 
-  // Sélection d'une suggestion
-  function selectPrediction(prediction) {
-    setQuery(prediction.structured_formatting.main_text)
+  // Sélection d'une suggestion — Places New API (Place.fetchFields)
+  async function selectPrediction(suggestion) {
+    const pred = suggestion.placePrediction
+    setQuery(pred.mainText.text)
     setPredictions([])
     setShowPredictions(false)
     setDuplicate(false)
 
-    placesServiceRef.current.getDetails(
-      { placeId: prediction.place_id, fields: MAPS_FIELDS },
-      (place, status) => {
-        if (status !== window.google.maps.places.PlacesServiceStatus.OK || !place) return
+    try {
+      const place = new window.google.maps.places.Place({ id: pred.placeId })
+      await place.fetchFields({
+        fields: [
+          'displayName', 'formattedAddress', 'addressComponents',
+          'location', 'photos', 'types', 'rating',
+          'regularOpeningHours', 'nationalPhoneNumber',
+        ],
+      })
 
-        const locality =
-          place.address_components?.find(c => c.types.includes('locality'))?.long_name ||
-          place.address_components?.find(c => c.types.includes('administrative_area_level_2'))?.long_name ||
-          ''
+      const locality =
+        place.addressComponents?.find(c => c.types.includes('locality'))?.longText ||
+        place.addressComponents?.find(c => c.types.includes('administrative_area_level_2'))?.longText ||
+        ''
 
-        const photoUrl = place.photos?.[0]?.getUrl({ maxWidth: 900, maxHeight: 600 }) ?? null
+      const photoUrl = place.photos?.[0]?.getURI({ maxWidth: 900 }) ?? null
+      const categGoogle = mapPlaceType(place.types || [])
 
-        const categGoogle = mapPlaceType(place.types || [])
-        setSelectedPlace({
-          place_id:    place.place_id,
-          nom:         place.name,
-          adresse:     place.formatted_address,
-          ville:       locality,
-          categorie:   categGoogle,
-          photo_url:   photoUrl,
-          telephone:   place.formatted_phone_number ?? null,
-          note_google: place.rating ?? null,
-          horaires:    place.opening_hours?.weekday_text ?? null,
-          latitude:    place.geometry?.location?.lat() ?? null,
-          longitude:   place.geometry?.location?.lng() ?? null,
-        })
-        // Auto-détection catégorie BONMOMENT depuis les types Google
-        // mairie_asso n'est proposée que si le feature flag est activé
-        const detected = (place.types || []).reduce((acc, t) => acc || getCategorieFiltre(t), null)
-        const effectiveDetected = (detected === 'mairie_asso' && !isMairieAssoEnabled()) ? 'autres' : detected
-        setCategorieBonmoment(effectiveDetected || 'autres')
-      }
-    )
+      setSelectedPlace({
+        place_id:    pred.placeId,
+        nom:         place.displayName,
+        adresse:     place.formattedAddress,
+        ville:       locality,
+        categorie:   categGoogle,
+        photo_url:   photoUrl,
+        telephone:   place.nationalPhoneNumber ?? null,
+        note_google: place.rating ?? null,
+        horaires:    place.regularOpeningHours?.weekdayDescriptions ?? null,
+        latitude:    place.location?.lat() ?? null,
+        longitude:   place.location?.lng() ?? null,
+      })
+
+      // Auto-détection catégorie BONMOMENT depuis les types Google
+      // mairie_asso n'est proposée que si le feature flag est activé
+      const detected = (place.types || []).reduce((acc, t) => acc || getCategorieFiltre(t), null)
+      const effectiveDetected = (detected === 'mairie_asso' && !isMairieAssoEnabled()) ? 'autres' : detected
+      setCategorieBonmoment(effectiveDetected || 'autres')
+    } catch (e) {
+      console.error('[inscription] fetchFields error:', e)
+    }
   }
 
   // Soumission du formulaire
@@ -310,9 +301,6 @@ export default function InscriptionCommercant() {
 
   return (
     <>
-      {/* Div cachée requise par PlacesService */}
-      <div ref={mapDivRef} style={{ display: 'none' }} />
-
       <main className="min-h-screen bg-white flex flex-col">
 
         {/* ── Avertissement multi-commerce ────────────────────────────────── */}
@@ -399,17 +387,17 @@ export default function InscriptionCommercant() {
               {/* Dropdown autocomplétion */}
               {showPredictions && predictions.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-2xl shadow-xl border border-[#F0F0F0] z-50 overflow-hidden">
-                  {predictions.map((p, i) => (
+                  {predictions.map((s, i) => (
                     <button
-                      key={p.place_id}
-                      onClick={() => selectPrediction(p)}
+                      key={s.placePrediction.placeId}
+                      onClick={() => selectPrediction(s)}
                       className={`w-full text-left px-4 py-3 hover:bg-[#FFF0E0] transition-colors ${i < predictions.length - 1 ? 'border-b border-[#F5F5F5]' : ''}`}
                     >
                       <p className="text-sm font-bold text-[#0A0A0A] leading-tight">
-                        {p.structured_formatting.main_text}
+                        {s.placePrediction.mainText.text}
                       </p>
                       <p className="text-xs text-[#3D3D3D]/60 mt-0.5">
-                        {p.structured_formatting.secondary_text}
+                        {s.placePrediction.secondaryText?.text}
                       </p>
                     </button>
                   ))}
@@ -450,11 +438,9 @@ export default function InscriptionCommercant() {
                 {/* Photo */}
                 {selectedPlace.photo_url ? (
                   <div className="w-full h-40 bg-[#FFF0E0] overflow-hidden">
-                    <Image
+                    <img
                       src={selectedPlace.photo_url}
                       alt={selectedPlace.nom}
-                      width={500}
-                      height={160}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -580,7 +566,7 @@ export default function InscriptionCommercant() {
               )}
 
               <button
-               
+
                 onClick={handleSubmit}
                 disabled={submitting}
                 className="w-full bg-[#FF6B00] hover:bg-[#CC5500] disabled:opacity-60 disabled:cursor-not-allowed text-white font-black text-base py-4 rounded-2xl transition-colors shadow-lg shadow-orange-200 min-h-[56px] flex items-center justify-center gap-2"

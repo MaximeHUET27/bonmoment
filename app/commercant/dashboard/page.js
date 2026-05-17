@@ -38,6 +38,9 @@ export default function DashboardPage() {
   const [offres,         setOffres]         = useState([])
   const [nbParticipants, setNbParticipants] = useState({})
   const [gagnantUsers,   setGagnantUsers]   = useState({})
+  const [showRefreshModal, setShowRefreshModal] = useState(false)
+  const [refreshing,       setRefreshing]       = useState(false)
+  const [toast,            setToast]            = useState(null)
 
   /* ── Auth guard ─────────────────────────────────────────────────────────── */
   useEffect(() => {
@@ -140,6 +143,34 @@ export default function DashboardPage() {
     setAllCommerces(prev => prev.map(c =>
       c.id === commerce?.id ? { ...c, affiche_logo_mairie_asso_id: newId || null } : c
     ))
+  }
+
+  async function handleRefreshFromGoogle() {
+    setShowRefreshModal(false)
+    setRefreshing(true)
+    try {
+      const res = await fetch('/api/commerce/refresh-from-google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commerce_id: commerce.id }),
+      })
+      const data = await res.json()
+      if (res.status === 429) {
+        setToast({ type: 'warning', message: data.error })
+      } else if (!res.ok) {
+        setToast({ type: 'error', message: 'Erreur, réessaie dans un instant' })
+      } else {
+        const updated = data.commerce
+        setCommerce(prev => ({ ...prev, ...updated }))
+        setAllCommerces(prev => prev.map(c => c.id === commerce.id ? { ...c, ...updated } : c))
+        setToast({ type: 'success', message: '✅ Tes infos ont été mises à jour depuis Google' })
+      }
+    } catch {
+      setToast({ type: 'error', message: 'Erreur, réessaie dans un instant' })
+    } finally {
+      setRefreshing(false)
+      setTimeout(() => setToast(null), 4000)
+    }
   }
 
   if (loading || fetching) {
@@ -280,7 +311,18 @@ export default function DashboardPage() {
               </div>
             )}
             <div className="px-6 pb-6 flex flex-col gap-4">
-            <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">Ton établissement</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">Ton établissement</h2>
+              <button
+                onClick={() => setShowRefreshModal(true)}
+                disabled={refreshing}
+                className="flex items-center gap-1.5 text-xs font-semibold text-[#FF6B00] border border-[#FF6B00] px-3 py-1 rounded-full hover:bg-[#FFF0E0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {refreshing
+                  ? <span className="w-3 h-3 border-[1.5px] border-[#FF6B00] border-t-transparent rounded-full animate-spin inline-block" />
+                  : '🔄 Actualiser'}
+              </button>
+            </div>
             <div className="flex flex-col gap-2">
               {commerce.categorie && (
                 <div className="flex items-center gap-3">
@@ -396,6 +438,43 @@ export default function DashboardPage() {
         )}
 
       </div>
+
+      {/* ── Modale confirmation actualisation Google ─────────────────────── */}
+      {showRefreshModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-3xl px-6 py-7 max-w-sm w-full flex flex-col gap-4 shadow-2xl">
+            <p className="text-lg font-black text-[#0A0A0A]">Actualiser depuis Google ?</p>
+            <p className="text-sm text-[#3D3D3D]/70 leading-relaxed">
+              Mettre à jour les infos de ton commerce depuis Google ?
+            </p>
+            <p className="text-xs text-[#3D3D3D]/50 -mt-2">photo, horaires, note, téléphone, adresse</p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={handleRefreshFromGoogle}
+                className="w-full bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-sm py-3.5 rounded-2xl transition-colors"
+              >
+                Oui, actualiser
+              </button>
+              <button
+                onClick={() => setShowRefreshModal(false)}
+                className="w-full border border-[#E0E0E0] text-sm font-semibold text-[#3D3D3D] py-3 rounded-2xl hover:border-[#FF6B00] hover:text-[#FF6B00] transition-colors"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Toast feedback ───────────────────────────────────────────────── */}
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl shadow-lg text-sm font-bold text-white max-w-sm w-[calc(100%-2rem)] text-center pointer-events-none ${
+          toast.type === 'success' ? 'bg-green-500' :
+          toast.type === 'warning' ? 'bg-[#FF6B00]' : 'bg-red-500'
+        }`}>
+          {toast.message}
+        </div>
+      )}
 
     </main>
   )
