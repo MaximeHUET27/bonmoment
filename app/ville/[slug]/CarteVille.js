@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF } from '@react-google-maps/api'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { GoogleMap, useJsApiLoader, InfoWindowF } from '@react-google-maps/api'
 import Image from 'next/image'
 import Link from 'next/link'
 
-const LIBRARIES = ['places']
+const LIBRARIES = ['places', 'marker']
 
 const ORANGE = '#FF6B00'
 const GRAY   = '#9CA3AF'
@@ -38,36 +38,35 @@ function Timer({ dateFin }) {
   return <span style={{ fontWeight: 700, color: ORANGE }}>{label}</span>
 }
 
-/* ── Icône marker SVG (orange = offre active, gris = inactif) ─────────────── */
-function getMarkerIcon(hasOffre, isSelected) {
+/* ── Contenu DOM du marker (AdvancedMarkerElement) ───────────────────────── */
+function buildMarkerEl(hasOffre, isSelected) {
   const color = hasOffre ? ORANGE : GRAY
   const size  = hasOffre ? 32 : 22
   const ring  = isSelected ? 4 : 3
-  const svg = encodeURIComponent(
+  const el = document.createElement('div')
+  el.style.cssText = 'display:block;cursor:pointer;line-height:0;'
+  el.innerHTML =
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">` +
     `<circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - ring}" fill="${color}" stroke="white" stroke-width="${ring}"/>` +
     (hasOffre
       ? `<circle cx="${size - 5}" cy="5" r="4" fill="${RED}" stroke="white" stroke-width="1.5"/>`
       : '') +
     `</svg>`
-  )
-  return {
-    url: `data:image/svg+xml;charset=UTF-8,${svg}`,
-    scaledSize: new window.google.maps.Size(size, size),
-    anchor:     new window.google.maps.Point(size / 2, size / 2),
-  }
+  return el
 }
 
 /* ── Composant principal ─────────────────────────────────────────────────── */
 export default function CarteVille({ villeNom, villeLat, villeLng }) {
-  const [commerces,  setCommerces]  = useState([])
-  const [selected,   setSelected]   = useState(null)
-  const [mapReady,   setMapReady]   = useState(false)
-  const [isMobile,   setIsMobile]   = useState(false)
+  const [commerces,   setCommerces]   = useState([])
+  const [selected,    setSelected]    = useState(null)
+  const [mapInstance, setMapInstance] = useState(null)
+  const [isMobile,    setIsMobile]    = useState(false)
+  const markersRef = useRef([])
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY,
     libraries: LIBRARIES,
+    version: 'weekly',
   })
 
   useEffect(() => {
@@ -86,7 +85,7 @@ export default function CarteVille({ villeNom, villeLat, villeLng }) {
       .catch(() => {})
   }, [villeNom])
 
-  // Géocode côté client les commerces sans coords (clé Maps déjà chargée dans le navigateur)
+  // Géocode côté client les commerces sans coords
   useEffect(() => {
     if (!isLoaded || commerces.length === 0) return
     const sansCoords = commerces.filter(c => !c.latitude && c.place_id)
@@ -114,6 +113,37 @@ export default function CarteVille({ villeNom, villeLat, villeLng }) {
     setSelected(prev => prev?.id === commerce.id ? null : commerce)
   }, [])
 
+  // Créer les AdvancedMarkerElement de façon impérative
+  useEffect(() => {
+    if (!mapInstance) return
+
+    // Nettoyer les anciens markers
+    markersRef.current.forEach(m => { m.map = null })
+    markersRef.current = []
+
+    commerces
+      .filter(c => typeof c.latitude === 'number' && typeof c.longitude === 'number')
+      .forEach(c => {
+        const content = buildMarkerEl(!!c.offre_active, selected?.id === c.id)
+        content.addEventListener('click', (e) => {
+          e.stopPropagation()
+          handleMarkerClick(c)
+        })
+        const marker = new window.google.maps.marker.AdvancedMarkerElement({
+          map:      mapInstance,
+          position: { lat: c.latitude, lng: c.longitude },
+          content,
+          title:    c.nom,
+        })
+        markersRef.current.push(marker)
+      })
+
+    return () => {
+      markersRef.current.forEach(m => { m.map = null })
+      markersRef.current = []
+    }
+  }, [mapInstance, commerces, selected, handleMarkerClick])
+
   if (!isLoaded) {
     return (
       <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -130,32 +160,18 @@ export default function CarteVille({ villeNom, villeLat, villeLng }) {
         mapContainerStyle={{ width: '100%', height: '100%' }}
         center={{ lat: villeLat, lng: villeLng }}
         zoom={14}
-        onLoad={() => setMapReady(true)}
+        onLoad={(map) => setMapInstance(map)}
         onClick={() => setSelected(null)}
         options={{
-          clickableIcons:      false,
-          zoomControl:         true,
-          streetViewControl:   false,
-          mapTypeControl:      false,
-          fullscreenControl:   false,
-          styles: [
-            { featureType: 'poi',          elementType: 'labels', stylers: [{ visibility: 'off' }] },
-            { featureType: 'poi.business',                         stylers: [{ visibility: 'off' }] },
-          ],
+          mapId:             process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID,
+          clickableIcons:    false,
+          zoomControl:       true,
+          streetViewControl: false,
+          mapTypeControl:    false,
+          fullscreenControl: false,
         }}
       >
-        {mapReady && commerces
-          .filter(c => typeof c.latitude === 'number' && typeof c.longitude === 'number')
-          .map(c => (
-            <MarkerF
-              key={c.id}
-              position={{ lat: c.latitude, lng: c.longitude }}
-              onClick={() => handleMarkerClick(c)}
-              icon={getMarkerIcon(!!c.offre_active, selected?.id === c.id)}
-            />
-          ))}
-
-        {mapReady && selected && (
+        {mapInstance && selected && (
           <InfoWindowF
             position={{ lat: selected.latitude, lng: selected.longitude }}
             onCloseClick={() => setSelected(null)}
