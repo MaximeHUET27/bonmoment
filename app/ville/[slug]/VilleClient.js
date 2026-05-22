@@ -30,11 +30,12 @@ const FILTERS_CATEGORIE = [
 ]
 
 const FILTERS_TYPE = [
-  { id: 'remise',   label: '💰 Remise' },
-  { id: 'offerts',  label: '🎁 Offert' },
-  { id: 'atelier',  label: '🎉 Évènement' },
-  { id: 'concours', label: '🎰 Concours' },
-  { id: 'fidelite', label: '⭐ Fidélité' },
+  { id: 'remise',     label: '💰 Remise' },
+  { id: 'offerts',    label: '🎁 Offert' },
+  { id: 'atelier',    label: '🎉 Évènement' },
+  { id: 'concours',   label: '🎰 Concours' },
+  { id: 'fidelite',   label: '⭐ Fidélité' },
+  { id: 'anti_gaspi', label: '🥗 Anti-gaspi' },
 ]
 
 function getOffreFiltre(offre) {
@@ -50,6 +51,7 @@ function getTypeFiltre(offre) {
   if (t === 'atelier')                                                  return 'atelier'
   if (t === 'concours')                                                 return 'concours'
   if (t === 'fidelite')                                                 return 'fidelite'
+  if (t === 'anti_gaspi')                                               return 'anti_gaspi'
   return null
 }
 

@@ -23,21 +23,22 @@ function writeTutState(state) {
 /* ── Constantes ─────────────────────────────────────────────────────────── */
 
 const TYPES = [
-  { id: 'cadeau',       label: 'Cadeau offert', icon: '🎁' },
-  { id: 'atelier',      label: 'Évènement',     icon: '🎉' },
-  { id: 'concours',     label: 'Concours',      icon: '🎰' },
-  { id: 'pourcentage',  label: 'Remise %',      icon: '%'  },
-  { id: 'montant_fixe', label: 'Remise €',      icon: '€'  },
-  { id: 'fidelite',     label: 'Fidélité',      icon: '⭐' },
+  { id: 'cadeau',     label: 'Cadeau offert', icon: '🎁' },
+  { id: 'atelier',    label: 'Évènement',     icon: '🎉' },
+  { id: 'concours',   label: 'Concours',      icon: '🎰' },
+  { id: 'remise',     label: 'Remise',        icon: '🏷️' },
+  { id: 'anti_gaspi', label: 'Anti-gaspi',    icon: '🥗' },
+  { id: 'fidelite',   label: 'Fidélité',      icon: '⭐' },
 ]
 
 const PLACEHOLDERS = {
-  pourcentage:    "Ex : Sur toutes les coupes aujourd'hui",
-  montant_fixe:   'Ex : Sur ton repas du soir',
-  cadeau:         'Ex : un café pour la commande d\'un menu plat/dessert',
-  concours:       "Ex : Gagnez un soin complet d'une valeur de 50€",
-  atelier:        'Ex : initiation à la pâtisserie — 50€ / 1h',
-  fidelite:       'Ex : vos points doublés',
+  pourcentage:  "Ex : Sur toutes les coupes aujourd'hui",
+  montant_fixe: 'Ex : Sur ton repas du soir',
+  cadeau:       'Ex : un café pour la commande d\'un menu plat/dessert',
+  concours:     "Ex : Gagnez un soin complet d'une valeur de 50€",
+  atelier:      'Ex : initiation à la pâtisserie — 50€ / 1h',
+  fidelite:     'Ex : vos points doublés',
+  anti_gaspi:   'Ex : invendus du jour — viens profiter de nos plats à petits prix !',
 }
 
 const JOURS = [
@@ -546,21 +547,36 @@ function NouvelleOffrePageInner() {
             Type d&apos;offre
           </p>
           <div className="grid grid-cols-3 gap-2">
-            {TYPES.map(t => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setTypeRemise(t.id)}
-                className={`flex flex-col items-center justify-center gap-1.5 py-3 px-1 rounded-xl border-2 transition-all min-h-[68px] ${
-                  typeRemise === t.id
-                    ? 'bg-[#FF6B00] border-[#FF6B00] text-white shadow-md shadow-orange-200'
-                    : 'bg-white border-[#E0E0E0] text-[#3D3D3D] hover:border-[#FF6B00] hover:text-[#FF6B00]'
-                }`}
-              >
-                <span className="text-xl leading-none">{t.icon}</span>
-                <span className="text-[9px] font-bold leading-tight text-center">{t.label}</span>
-              </button>
-            ))}
+            {TYPES.map(t => {
+              const isActive = t.id === 'remise'
+                ? (typeRemise === 'pourcentage' || typeRemise === 'montant_fixe')
+                : typeRemise === t.id
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => {
+                    if (t.id === 'remise') {
+                      setTypeRemise('pourcentage')
+                    } else if (t.id === 'anti_gaspi') {
+                      setTypeRemise('anti_gaspi')
+                      setEstRecurrente(true)
+                      setJoursRecurrence(JOURS.map(j => j.id))
+                    } else {
+                      setTypeRemise(t.id)
+                    }
+                  }}
+                  className={`flex flex-col items-center justify-center gap-1.5 py-3 px-1 rounded-xl border-2 transition-all min-h-[68px] ${
+                    isActive
+                      ? 'bg-[#FF6B00] border-[#FF6B00] text-white shadow-md shadow-orange-200'
+                      : 'bg-white border-[#E0E0E0] text-[#3D3D3D] hover:border-[#FF6B00] hover:text-[#FF6B00]'
+                  }`}
+                >
+                  <span className="text-xl leading-none">{t.icon}</span>
+                  <span className="text-[9px] font-bold leading-tight text-center">{t.label}</span>
+                </button>
+              )
+            })}
           </div>
         </section>
 
@@ -568,8 +584,36 @@ function NouvelleOffrePageInner() {
         {(typeRemise === 'pourcentage' || typeRemise === 'montant_fixe') && (
           <section className="bg-white rounded-2xl px-5 py-4 shadow-sm">
             <p className="text-[11px] font-bold uppercase tracking-widest text-[#3D3D3D]/50 mb-3">
-              {typeRemise === 'pourcentage' ? 'Remise en %' : 'Montant de la remise'}
+              Montant de la remise
             </p>
+            {/* Switch %/€ */}
+            <div className="flex gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => {
+                  if (valeur && Number(valeur) > 100) setValeur('100')
+                  setTypeRemise('pourcentage')
+                }}
+                className={`flex-1 h-11 rounded-xl font-bold text-sm transition-all ${
+                  typeRemise === 'pourcentage'
+                    ? 'bg-[#FF6B00] text-white'
+                    : 'bg-gray-100 text-[#3D3D3D] hover:bg-[#FFF0E0] hover:text-[#FF6B00]'
+                }`}
+              >
+                %
+              </button>
+              <button
+                type="button"
+                onClick={() => setTypeRemise('montant_fixe')}
+                className={`flex-1 h-11 rounded-xl font-bold text-sm transition-all ${
+                  typeRemise === 'montant_fixe'
+                    ? 'bg-[#FF6B00] text-white'
+                    : 'bg-gray-100 text-[#3D3D3D] hover:bg-[#FFF0E0] hover:text-[#FF6B00]'
+                }`}
+              >
+                €
+              </button>
+            </div>
             <div className="flex items-center justify-center gap-3">
               <span className="text-4xl font-black text-[#FF6B00] select-none">−</span>
               <input

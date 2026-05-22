@@ -64,6 +64,7 @@ function formatBadge(offre) {
   if (offre.type_remise === 'concours')       return '🎰 Concours'
   if (offre.type_remise === 'atelier')        return '🎉 Évènement'
   if (offre.type_remise === 'fidelite')       return '⭐ Fidélité'
+  if (offre.type_remise === 'anti_gaspi')     return '🥗 Anti-gaspi'
   return offre.type_remise || 'Offre'
 }
 
