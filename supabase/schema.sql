@@ -123,7 +123,7 @@ create table public.offres (
   commerce_id        uuid not null references public.commerces(id) on delete cascade,
   titre              text not null,
   description        text,
-  type_remise        text,
+  type_remise        text constraint offres_type_remise_check check (type_remise = any (array['pourcentage', 'montant_fixe', 'montant', 'cadeau', 'produit_offert', 'service_offert', 'concours', 'atelier', 'fidelite', 'offert', 'anti_gaspi'])),
   valeur             numeric,
   date_debut         timestamp with time zone,
   date_fin           timestamp with time zone,

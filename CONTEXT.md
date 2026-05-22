@@ -34,7 +34,7 @@ Premier mois offert avec CB enregistrée
 Parrainage : code unique permanent par commerçant, remise selon palier filleul (Découverte 10€, Essentiel 15€, Pro 20€) pour parrain ET filleul. Max 3/mois. Code valable 3 mois puis auto-régénéré.
 
 Types d'offres (prédéfinis)
-pourcentage, montant_fixe, cadeau, produit_offert, service_offert, concours, atelier
+pourcentage, montant_fixe, montant, cadeau, produit_offert, service_offert, concours, atelier, fidelite, offert, anti_gaspi
 
 Max 24h. Bons non utilisés = périmés auto. Concours : validation physique obligatoire + tirage au sort après expiration.
 
@@ -245,7 +245,8 @@ Table offres :
   id (UUID PK), commerce_id (UUID FK commerces),
   titre, description,
   type_remise ('pourcentage'|'montant_fixe'|'montant'|'cadeau'|
-               'produit_offert'|'service_offert'|'concours'|'atelier'),
+               'produit_offert'|'service_offert'|'concours'|'atelier'|
+               'fidelite'|'offert'|'anti_gaspi'),  ← CHECK constraint BDD
   valeur (numeric), date_debut (timestamp), date_fin (timestamp),
   nb_bons_total (int), nb_bons_restants (int, null/9999=illimité),
   statut ('active'|'expiree'|'programmee'),
@@ -292,7 +293,7 @@ CÔTÉ COMMERÇANT :
 - Validation code parrainage à l'inscription (remise parrain + filleul)
 - Premier mois gratuit avec CB enregistrée
 - Création d'offres avec vérification quota selon palier (4/8/16 offres/mois)
-- Types offres : pourcentage, montant_fixe, cadeau, produit_offert, service_offert, concours, atelier
+- Types offres : pourcentage, montant_fixe, montant, cadeau, produit_offert, service_offert, concours, atelier, fidelite, offert, anti_gaspi
 - Offres récurrentes (auto-renouvellement après expiration)
 - Dashboard : switch entre commerces, aperçu offres actives/expirées, stock, expiration
 - QR code profil commerce (téléchargeable, partage l'URL du profil)
@@ -701,5 +702,23 @@ Décisions produit :
   - Chatbot : nœuds m-cat + m-q-1 à m-q-7, option racine avec spread conditionnel
   - FAQ : spread conditionnel en fin de tableau avec isMairieAssoEnabled via process.env
   - Admin : KPI mairie_asso_actifs comptabilisé à partir du champ type_compte dans commerces
+
+---
+
+MIGRATIONS CORRECTIVES
+======================
+
+sql/add_anti_gaspi_type_check.sql      → Ajout 'anti_gaspi' au CHECK constraint
+sql/rollback_anti_gaspi_type_check.sql → Rollback associé (⚠ voir avertissement dans le fichier)
+sql/test_post_migration_anti_gaspi.sql → Tests post-migration (3 tests)
+
+Contexte : La feature anti-gaspi (commits 8e9c3f6, 5a26419, ad2ce8d) ajoutait
+type_remise='anti_gaspi' côté applicatif sans mettre à jour le CHECK constraint BDD.
+Migration exécutée manuellement en prod le 2026-05-23. Le commit qui synchronise
+ce fichier (fix(db): alignement code source) ne modifie pas la BDD.
+
+Point d'attention : Les valeurs 'fidelite' et 'offert' existaient déjà dans le
+CHECK constraint prod mais n'étaient pas documentées dans CONTEXT.md (lacune
+comblée par cette mise à jour).
 
 Module Mairie / Association : COMPLET
