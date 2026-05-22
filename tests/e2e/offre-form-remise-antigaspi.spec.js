@@ -65,7 +65,7 @@ test.describe('Formulaire création offre — structure grille', () => {
   // 1. Se connecter en tant que commerçant
   // 2. Aller sur /commercant/offre/nouvelle
   // 3. Vérifier que la grille a 6 boutons dans l'ordre :
-  //    [Cadeau offert][Évènement][Concours][Remise][Anti-gaspi][Fidélité]
+  //    [Cadeau][Évènement][Concours][Remise][Anti-gaspi][Fidélité]
   // 4. Cliquer "Remise" → switch %/€ visible, bouton % actif par défaut
   // 5. Cliquer "€" dans le switch → label sufixe change en €
   // 6. Cliquer "Anti-gaspi" → pas de section valeur, récurrence pré-cochée

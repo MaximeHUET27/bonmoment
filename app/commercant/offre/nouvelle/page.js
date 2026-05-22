@@ -23,7 +23,7 @@ function writeTutState(state) {
 /* ── Constantes ─────────────────────────────────────────────────────────── */
 
 const TYPES = [
-  { id: 'cadeau',     label: 'Cadeau offert', icon: '🎁' },
+  { id: 'cadeau',     label: 'Cadeau',        icon: '🎁' },
   { id: 'atelier',    label: 'Évènement',     icon: '🎉' },
   { id: 'concours',   label: 'Concours',      icon: '🎰' },
   { id: 'remise',     label: 'Remise',        icon: '🏷️' },
@@ -31,14 +31,14 @@ const TYPES = [
   { id: 'fidelite',   label: 'Fidélité',      icon: '⭐' },
 ]
 
-const PLACEHOLDERS = {
+const PLACEHOLDERS_DESCRIPTION = {
   pourcentage:  "Ex : Sur toutes les coupes aujourd'hui",
   montant_fixe: 'Ex : Sur ton repas du soir',
-  cadeau:       'Ex : un café pour la commande d\'un menu plat/dessert',
+  cadeau:       "Ex : Un croissant à l'achat d'une baguette",
   concours:     "Ex : Gagnez un soin complet d'une valeur de 50€",
-  atelier:      'Ex : initiation à la pâtisserie — 50€ / 1h',
+  atelier:      'Ex : Initiation à la pâtisserie — places limitées',
   fidelite:     'Ex : vos points doublés',
-  anti_gaspi:   'Ex : invendus du jour — viens profiter de nos plats à petits prix !',
+  anti_gaspi:   'Ex : 4 viennoiseries pour 2€',
 }
 
 const JOURS = [
@@ -645,7 +645,7 @@ function NouvelleOffrePageInner() {
             <textarea
               value={titre}
               onChange={e => setTitre(e.target.value.slice(0, 150))}
-              placeholder={PLACEHOLDERS[typeRemise]}
+              placeholder={PLACEHOLDERS_DESCRIPTION[typeRemise] || ''}
               rows={2}
               className="w-full border-2 border-[#E0E0E0] rounded-2xl px-4 py-3 text-sm font-semibold text-[#0A0A0A] placeholder:text-[#3D3D3D]/30 placeholder:font-normal focus:border-[#FF6B00] focus:outline-none transition-colors resize-none pr-16"
             />

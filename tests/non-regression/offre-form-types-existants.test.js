@@ -216,3 +216,51 @@ describe('Non-régression toggle mairie/asso', () => {
     expect(showSansBonToggle(true, 'pourcentage')).toBe(false)
   })
 })
+
+/* ── Non-régression libellé "Cadeau" (renommage "Cadeau offert") ─────────── */
+
+describe('Non-régression badge cadeau — libellé "Cadeau" sans "offert"', () => {
+  it('formatBadge cadeau → "🎁 Cadeau" (pas "Cadeau offert")', () => {
+    const badge = formatBadge({ type_remise: 'cadeau' })
+    expect(badge).toBe('🎁 Cadeau')
+    expect(badge.toLowerCase()).not.toContain('offert')
+  })
+
+  it('getOffreTitle cadeau → titre brut (pas de doublon emoji)', () => {
+    const offre = { type_remise: 'cadeau', titre: 'un café' }
+    expect(getOffreTitle(offre)).toBe('un café')
+    expect(getOffreTitle(offre)).not.toContain('Cadeau')
+  })
+
+  it('getFullOffreTitle cadeau → préfixe emoji conservé pour partage social', () => {
+    const offre = { type_remise: 'cadeau', titre: 'un café' }
+    expect(getFullOffreTitle(offre)).toBe('🎁 un café')
+  })
+})
+
+/* ── Non-régression placeholder cadeau post-restauration ─────────────────── */
+
+describe('Non-régression placeholder cadeau — valeur historique restaurée', () => {
+  const PLACEHOLDERS_DESCRIPTION = {
+    pourcentage:  "Ex : Sur toutes les coupes aujourd'hui",
+    montant_fixe: 'Ex : Sur ton repas du soir',
+    cadeau:       "Ex : Un croissant à l'achat d'une baguette",
+    concours:     "Ex : Gagnez un soin complet d'une valeur de 50€",
+    atelier:      'Ex : Initiation à la pâtisserie — places limitées',
+    fidelite:     'Ex : vos points doublés',
+    anti_gaspi:   'Ex : 4 viennoiseries pour 2€',
+  }
+
+  it('placeholder cadeau restauré à la valeur historique (bb5d5dc)', () => {
+    expect(PLACEHOLDERS_DESCRIPTION.cadeau).toBe("Ex : Un croissant à l'achat d'une baguette")
+  })
+
+  it('placeholder atelier restauré à la valeur historique (bb5d5dc)', () => {
+    expect(PLACEHOLDERS_DESCRIPTION.atelier).toBe('Ex : Initiation à la pâtisserie — places limitées')
+  })
+
+  it('placeholder anti_gaspi mis à jour', () => {
+    expect(PLACEHOLDERS_DESCRIPTION.anti_gaspi).toBe('Ex : 4 viennoiseries pour 2€')
+    expect(PLACEHOLDERS_DESCRIPTION.anti_gaspi).not.toContain('invendus du jour')
+  })
+})

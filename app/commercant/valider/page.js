@@ -28,7 +28,7 @@ function labelRemise(type_remise, valeur) {
   switch (type_remise) {
     case 'pourcentage':    return `${valeur}% de remise`
     case 'montant_fixe':   return `${valeur}€ de remise`
-    case 'cadeau':         return 'Cadeau offert'
+    case 'cadeau':         return 'Cadeau'
     case 'produit_offert': return 'Produit offert'
     case 'service_offert': return 'Service offert'
     case 'concours':       return 'Concours'
