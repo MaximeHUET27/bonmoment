@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getFullOffreTitle } from '../../lib/offreTitle.js'
+import { getOffreTitle, getFullOffreTitle } from '../../lib/offreTitle.js'
 
 /* ── Logique partagée (extraite des composants) ─────────────────────────── */
 
@@ -118,6 +118,78 @@ describe('Non-régression filtres types existants', () => {
   it('anti_gaspi → filtre anti_gaspi (pas remise)', () => {
     expect(getTypeFiltre('anti_gaspi')).toBe('anti_gaspi')
     expect(getTypeFiltre('anti_gaspi')).not.toBe('remise')
+  })
+})
+
+/* ── Pas de doublon emoji : getOffreTitle retourne le titre brut ─────────── */
+
+describe('Non-régression : getOffreTitle — aucun doublon emoji dans l\'UI', () => {
+  const CAS = [
+    { type: 'cadeau',       titre: 'un café offert' },
+    { type: 'atelier',      titre: 'initiation pâtisserie' },
+    { type: 'concours',     titre: 'gagnez un soin' },
+    { type: 'fidelite',     titre: 'points doublés' },
+    { type: 'anti_gaspi',   titre: 'panier surprise du soir' },
+    { type: 'pourcentage',  titre: 'coupes homme' },
+    { type: 'montant_fixe', titre: 'repas du midi' },
+  ]
+
+  for (const { type, titre } of CAS) {
+    it(`${type} → getOffreTitle retourne le titre brut sans emoji`, () => {
+      const offre = { type_remise: type, valeur: 10, titre }
+      expect(getOffreTitle(offre)).toBe(titre)
+      expect(getOffreTitle(offre)).not.toMatch(/^[🎁🎨🎉🎰⭐🥗−]/)
+    })
+  }
+
+  it('offre null → chaîne vide (pas de crash)', () => {
+    expect(getOffreTitle(null)).toBe('')
+    expect(getOffreTitle(undefined)).toBe('')
+  })
+})
+
+/* ── Partage social conserve le préfixe emoji ───────────────────────────── */
+
+describe('Non-régression : getFullOffreTitle — préfixe emoji conservé pour le partage social', () => {
+  it('cadeau → préfixe 🎁', () => {
+    const r = getFullOffreTitle({ type_remise: 'cadeau', titre: 'un café' })
+    expect(r).toMatch(/^🎁/)
+    expect(r).toContain('un café')
+  })
+
+  it('atelier → préfixe 🎨', () => {
+    const r = getFullOffreTitle({ type_remise: 'atelier', titre: 'initiation' })
+    expect(r).toMatch(/^🎨/)
+  })
+
+  it('concours → préfixe 🎰', () => {
+    expect(getFullOffreTitle({ type_remise: 'concours', titre: 'soin' })).toMatch(/^🎰/)
+  })
+
+  it('fidelite → préfixe ⭐', () => {
+    expect(getFullOffreTitle({ type_remise: 'fidelite', titre: 'points' })).toMatch(/^⭐/)
+  })
+
+  it('anti_gaspi → préfixe 🥗', () => {
+    expect(getFullOffreTitle({ type_remise: 'anti_gaspi', titre: 'panier' })).toMatch(/^🥗/)
+  })
+
+  it('pourcentage → préfixe -X%', () => {
+    expect(getFullOffreTitle({ type_remise: 'pourcentage', valeur: 15, titre: 'coupe' })).toMatch(/^-15%/)
+  })
+
+  it('montant_fixe → préfixe -X€', () => {
+    expect(getFullOffreTitle({ type_remise: 'montant_fixe', valeur: 5, titre: 'repas' })).toMatch(/^-5€/)
+  })
+
+  it('getOffreTitle ≠ getFullOffreTitle pour tous les types préfixés', () => {
+    const types = ['cadeau', 'atelier', 'concours', 'fidelite', 'anti_gaspi']
+    for (const type of types) {
+      const offre = { type_remise: type, titre: 'mon titre' }
+      expect(getOffreTitle(offre)).toBe('mon titre')
+      expect(getFullOffreTitle(offre)).not.toBe('mon titre')
+      expect(getFullOffreTitle(offre)).toContain('mon titre')
+    }
   })
 })
 

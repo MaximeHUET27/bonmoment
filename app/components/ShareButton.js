@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useToast } from './Toast'
-import { getFullOffreTitle } from '@/lib/offreTitle'
 
 const BASE_URL = 'https://bonmoment.app'
 
@@ -17,6 +16,8 @@ function formatBadge(offre) {
   if (offre.type_remise === 'service_offert') return '✂️ Offert'
   if (offre.type_remise === 'concours')       return '🎰 Concours'
   if (offre.type_remise === 'atelier')        return '🎉 Évènement'
+  if (offre.type_remise === 'fidelite')       return '⭐ Fidélité'
+  if (offre.type_remise === 'anti_gaspi')     return '🥗 Anti-gaspi'
   return 'Offre'
 }
 

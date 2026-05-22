@@ -7,7 +7,7 @@ import CaMInteresseButton from './CaMInteresseButton'
 import ShareButton from '@/app/components/ShareButton'
 import FavoriButton from '@/app/components/FavoriButton'
 import CommerceInfoCard from '@/app/components/CommerceInfoCard'
-import { getFullOffreTitle } from '@/lib/offreTitle'
+import { getOffreTitle, getFullOffreTitle } from '@/lib/offreTitle'
 import { isMairieAssoEnabled } from '@/lib/featureFlags'
 
 const OG_DEFAULT_IMAGE = 'https://bonmoment.app/og-default.jpg'
@@ -182,7 +182,7 @@ export default async function OffrePage({ params }) {
 
         {/* 2. Titre */}
         <h1 className="text-xl sm:text-2xl font-black text-[#0A0A0A] text-center leading-tight px-2">
-          {getFullOffreTitle(offre)}
+          {getOffreTitle(offre)}
         </h1>
 
         {/* 3. CTA / Info événement */}

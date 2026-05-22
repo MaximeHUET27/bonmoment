@@ -30,7 +30,7 @@ const FILTERS_CATEGORIE = [
 ]
 
 const FILTERS_TYPE = [
-  { id: 'remise',     label: '💰 Remise' },
+  { id: 'remise',     label: '🏷️ Remise' },
   { id: 'offerts',    label: '🎁 Offert' },
   { id: 'atelier',    label: '🎉 Évènement' },
   { id: 'concours',   label: '🎰 Concours' },

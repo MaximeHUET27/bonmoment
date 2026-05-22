@@ -12,7 +12,7 @@ import FullScreenBon from '@/app/components/FullScreenBon'
 import FavoriButton from '@/app/components/FavoriButton'
 import ShareButton from '@/app/components/ShareButton'
 import { useReservation } from '@/app/hooks/useReservation'
-import { getFullOffreTitle } from '@/lib/offreTitle'
+import { getOffreTitle, getFullOffreTitle } from '@/lib/offreTitle'
 import BoutonCaMInteresseInteractif from '@/app/components/mairie-asso/BoutonCaMInteresseInteractif'
 import { useFavoris } from '@/app/context/FavorisContext'
 import { useToast } from '@/app/components/Toast'
@@ -303,7 +303,7 @@ export default function OffreCard({ offre, userReservation }) {
                   nbBons <= 5
 
   /* ── Font-size adaptatif (titre + commerce) ── */
-  const titreFontSize    = getFullOffreTitle(offre).length > 30 ? '11px' : '13px'
+  const titreFontSize    = getOffreTitle(offre).length > 30 ? '11px' : '13px'
   const commerceFontSize = (commerce?.nom || '').length > 25    ? '10px' : '12px'
 
   return (
@@ -387,7 +387,7 @@ export default function OffreCard({ offre, userReservation }) {
               {formatBadge(offre)}
             </span>
             <span className="font-bold text-[#0A0A0A] leading-snug line-clamp-2" style={{ fontSize: titreFontSize }}>
-              {getFullOffreTitle(offre)}
+              {getOffreTitle(offre)}
             </span>
           </Link>
 

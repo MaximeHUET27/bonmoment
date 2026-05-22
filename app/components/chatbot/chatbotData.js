@@ -106,6 +106,7 @@ export const NODES = {
       { label: "Mon bon a expiré, que faire ?",                   nodeId: 'h-res-4' },
       { label: "Puis-je réserver plusieurs fois la même offre ?", nodeId: 'h-res-5' },
       { label: "Comment laisser un avis sur un commerce ?",       nodeId: 'h-res-6' },
+      { label: "C'est quoi les offres Anti-gaspi ? 🥗",           nodeId: 'h-q-antigaspi' },
     ],
   },
 
@@ -146,6 +147,15 @@ export const NODES = {
     type: 'answer',
     question: "Comment laisser un avis sur un commerce ?",
     response: `Pour laisser un avis sur un commerce :\n\n1. Ouvre la **fiche du commerce** sur BONMOMENT\n2. Appuie sur le bouton **⭐ Laisser un avis**\n3. Note ton expérience de 1 à 5 étoiles\n4. Pour les super expériences, tu peux aussi partager ton retour en ligne 🌟\n\nTon avis aide le commerce à se développer et la communauté à faire de bons choix.`,
+  },
+
+  'h-q-antigaspi': {
+    type: 'answer',
+    question: "C'est quoi les offres Anti-gaspi ?",
+    response: `Les offres **🥗 Anti-gaspi** te permettent de récupérer des invendus du jour directement chez un commerçant. 🌍\n\nComment ça marche :\n\n1. Tu réserves ton bon gratuitement sur BONMOMENT\n2. Tu te rends au commerce à l'heure indiquée\n3. Tu repars avec ton panier surprise, en payant directement en magasin\n\nIdéal pour faire de bonnes affaires tout en aidant tes commerçants à limiter le gaspillage ! ♻️`,
+    actions: [
+      { label: '🔥 Voir les offres', type: 'event', payload: 'bonmoment:openvilles' },
+    ],
   },
 
   /* ── Carte de fidélité (habitant) ── */
@@ -413,6 +423,7 @@ export const NODES = {
       { label: "Comment supprimer une offre active ?",     nodeId: 'c-off-3' },
       { label: "Comment recréer une offre expirée ?",      nodeId: 'c-off-4' },
       { label: "Comment programmer une offre récurrente ?",nodeId: 'c-off-5' },
+      { label: "Comment proposer des produits anti-gaspi ?", nodeId: 'c-q-antigaspi' },
     ],
   },
 
@@ -460,6 +471,16 @@ export const NODES = {
       { label: '➕ Nouvelle offre', type: 'redirect', path: '/commercant/offre/nouvelle' },
     ],
   },
+
+  'c-q-antigaspi': {
+    type: 'answer',
+    question: "Comment proposer des produits anti-gaspi ?",
+    response: `Pour créer une offre **🥗 Anti-gaspi** :\n\n1. Dans le formulaire de création, sélectionne **"🥗 Anti-gaspi"**\n2. Remplis le titre (ex. "Panier surprise du soir") et la description (contenu, prix, heure de retrait)\n3. La récurrence quotidienne est pré-cochée — ton offre se renouvelle automatiquement chaque jour 🔄\n4. Publie normalement\n\nInclus dans ton abonnement, sans commission supplémentaire. ✅`,
+    actions: [
+      { label: '➕ Créer une offre anti-gaspi', type: 'redirect', path: '/commercant/offre/nouvelle' },
+    ],
+  },
+
 
   /* ── Valider un bon en caisse ── */
 

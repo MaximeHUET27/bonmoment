@@ -98,6 +98,10 @@ const FAQ = [
         r: "L'offre est terminée. Abonne-toi au commerce pour être prévenu de la prochaine !",
       },
       {
+        q: "C'est quoi une offre Anti-gaspi ?",
+        r: "Les offres Anti-gaspi te permettent de récupérer en magasin des produits que ton commerçant n'aurait pas vendus dans la journée (invendus du jour, paniers surprise, fins de série). Le bon est gratuit à réserver sur BONMOMENT, tu règles directement en magasin lors du retrait. Idéal pour faire de bonnes affaires tout en aidant tes commerçants à limiter le gaspillage !",
+      },
+      {
         q: "C'est quoi les badges ?",
         r: "Habitant = compte créé. Bon habitant = 3 bons validés en 1 semaine. Habitant exemplaire = 3 bons/semaine pendant 1 mois. Plus ton niveau monte, plus tu reçois les alertes en avance !",
       },
@@ -186,6 +190,10 @@ const FAQ = [
       {
         q: 'Comment imprimer mon QR code vitrine ?',
         r: "Dashboard → Mon QR code → Télécharger (format A4 haute résolution). Imprime-le et affiche-le en vitrine pour que tes clients scannent directement ta page BONMOMENT.",
+      },
+      {
+        q: "Comment créer une offre Anti-gaspi ?",
+        r: "Dans le formulaire de création d'offre, sélectionne le bouton \"🥗 Anti-gaspi\", remplis le titre (ex. \"Panier surprise du soir\") et la description (contenu approximatif, heure de retrait, prix éventuel). L'offre se renouvelle automatiquement chaque jour — tu peux décocher cette option si tu préfères la créer ponctuellement. Inclus dans ton abonnement mensuel, sans commission supplémentaire.",
       },
     ],
   },
