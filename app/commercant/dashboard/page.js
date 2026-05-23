@@ -8,10 +8,11 @@ import { useAuth } from '@/app/context/AuthContext'
 import { toSlug } from '@/lib/utils'
 import TirageAuSort from '@/app/commercant/components/TirageAuSort'
 import ShareButton from '@/app/components/ShareButton'
+import PartagerOffreButton from '@/app/components/PartagerOffreButton'
 import AuthButton from '@/app/components/AuthButton'
 import DeleteCommerceButton from '@/app/commercant/[id]/DeleteCommerceButton'
 import DashboardFideliteSection from '@/app/components/fidelite/DashboardFideliteSection'
-import { getFullOffreTitle } from '@/lib/offreTitle'
+import { getOffreTitle, getFullOffreTitle } from '@/lib/offreTitle'
 import dynamic from 'next/dynamic'
 import { isMairieAssoEnabled } from '@/lib/featureFlags'
 import GestionAdherents from '@/app/components/mairie-asso/GestionAdherents'
@@ -1232,19 +1233,23 @@ function ParrainageSection({ commerce, supabase }) {
 
 function OffreRow({ offre, commerce, expired = false }) {
   const labels = {
-    pourcentage:    `${offre.valeur}%`,
-    montant_fixe:   `${offre.valeur}€`,
-    cadeau:         '🎁',
-    produit_offert: '📦',
-    service_offert: '✂️',
-    concours:       '🎰',
-    atelier:        '🎉',
+    pourcentage:    `−${offre.valeur}%`,
+    montant_fixe:   `−${offre.valeur}€`,
+    montant:        `−${offre.valeur}€`,
+    cadeau:         '🎁 Cadeau',
+    produit_offert: '📦 Offert',
+    service_offert: '✂️ Service',
+    offert:         '🎁 Offert',
+    concours:       '🎰 Concours',
+    atelier:        '🎉 Évènement',
+    fidelite:       '⭐ Fidélité',
+    anti_gaspi:     '🥗 Anti-gaspi',
   }
 
   return (
     <div className={`flex items-center justify-between gap-3 py-1 ${expired ? 'opacity-50' : ''}`}>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold text-[#0A0A0A] truncate">{getFullOffreTitle(offre)}</p>
+        <p className="text-sm font-bold text-[#0A0A0A] truncate">{getOffreTitle(offre)}</p>
         <p className="text-[11px] text-[#3D3D3D]/50">
           {expired ? 'Terminée' : (
             new Date(offre.date_fin) > new Date()
@@ -1278,12 +1283,15 @@ function OffreRow({ offre, commerce, expired = false }) {
 const TYPE_LABEL = {
   pourcentage:    o => `−${o.valeur}%`,
   montant_fixe:   o => `−${o.valeur}€`,
+  montant:        o => `−${o.valeur}€`,
   cadeau:         () => '🎁 Cadeau',
   produit_offert: () => '📦 Offert',
   service_offert: () => '✂️ Service',
+  offert:         () => '🎁 Offert',
   concours:       () => '🎰 Concours',
   atelier:        () => '🎉 Évènement',
   fidelite:       () => '⭐ Fidélité',
+  anti_gaspi:     () => '🥗 Anti-gaspi',
 }
 function typeLabel(offre) {
   return TYPE_LABEL[offre.type_remise]?.(offre) ?? offre.type_remise ?? 'Offre'
@@ -1474,7 +1482,7 @@ function OffreActiveCard({ offre, commerce, confirmId, deletingId, onConfirm, on
         <span className="shrink-0 bg-[#FFF0E0] text-[#FF6B00] font-black text-xs px-2.5 py-1 rounded-xl whitespace-nowrap">
           {typeLabel(offre)}
         </span>
-        <p className="text-sm font-bold text-[#0A0A0A] leading-tight">{getFullOffreTitle(offre)}</p>
+        <p className="text-sm font-bold text-[#0A0A0A] leading-tight">{getOffreTitle(offre)}</p>
       </div>
 
       {/* Détails */}
@@ -1491,15 +1499,17 @@ function OffreActiveCard({ offre, commerce, confirmId, deletingId, onConfirm, on
         )}
       </div>
 
-      {/* Supprimer */}
+      {/* Supprimer + Partager */}
       {!isConfirming ? (
-        <button
-         
-          onClick={onConfirm}
-          className="text-[11px] font-semibold text-red-400 hover:text-red-600 transition-colors self-start"
-        >
-          Supprimer cette offre
-        </button>
+        <div className="flex items-center justify-between">
+          <button
+            onClick={onConfirm}
+            className="text-[11px] font-semibold text-red-400 hover:text-red-600 transition-colors"
+          >
+            Supprimer cette offre
+          </button>
+          <PartagerOffreButton offre={offre} commerce={commerce} variant="icon" />
+        </div>
       ) : (
         <div className="bg-red-50 border border-red-100 rounded-xl px-3 py-3 flex flex-col gap-2">
           <p className="text-xs font-bold text-red-600">Es-tu sûr ? Cette action est irréversible.</p>
@@ -1555,7 +1565,7 @@ function OffreExpireCard({ offre, commerce, stats, nbParticipants, gagnantUser, 
         <span className="shrink-0 bg-[#F5F5F5] text-[#3D3D3D]/70 font-black text-xs px-2.5 py-1 rounded-xl whitespace-nowrap">
           {typeLabel(offre)}
         </span>
-        <p className="text-sm font-bold text-[#0A0A0A] leading-tight">{getFullOffreTitle(offre)}</p>
+        <p className="text-sm font-bold text-[#0A0A0A] leading-tight">{getOffreTitle(offre)}</p>
       </div>
 
       {/* Date de fin */}

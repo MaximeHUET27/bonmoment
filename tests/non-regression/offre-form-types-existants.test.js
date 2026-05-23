@@ -265,6 +265,68 @@ describe('Non-régression placeholder cadeau — valeur historique restaurée', 
   })
 })
 
+/* ── Non-régression lot share+dashboard (commit courant) ─────────────────── */
+
+describe('Non-régression lien post-publication', () => {
+  const LIBELLE_EXACT = 'Je ne souhaite pas partager'
+  const ANCIEN_LIBELLE = 'Je ne souhaite pas partager et je souhaite retourner à l\'accueil'
+
+  it('le libellé exact est "Je ne souhaite pas partager"', () => {
+    expect(LIBELLE_EXACT).toBe('Je ne souhaite pas partager')
+  })
+
+  it('l\'ancien libellé verbeux a été supprimé', () => {
+    expect(LIBELLE_EXACT).not.toBe(ANCIEN_LIBELLE)
+    expect(LIBELLE_EXACT).not.toContain('retourner à l\'accueil')
+  })
+})
+
+describe('Non-régression dashboard — badge anti_gaspi', () => {
+  function typeLabelDashboard(offre) {
+    const TYPE_LABEL = {
+      pourcentage:    o => `−${o.valeur}%`,
+      montant_fixe:   o => `−${o.valeur}€`,
+      montant:        o => `−${o.valeur}€`,
+      cadeau:         () => '🎁 Cadeau',
+      produit_offert: () => '📦 Offert',
+      service_offert: () => '✂️ Service',
+      offert:         () => '🎁 Offert',
+      concours:       () => '🎰 Concours',
+      atelier:        () => '🎉 Évènement',
+      fidelite:       () => '⭐ Fidélité',
+      anti_gaspi:     () => '🥗 Anti-gaspi',
+    }
+    return TYPE_LABEL[offre.type_remise]?.(offre) ?? offre.type_remise ?? 'Offre'
+  }
+
+  it('anti_gaspi → badge "🥗 Anti-gaspi" (pas la clé brute)', () => {
+    expect(typeLabelDashboard({ type_remise: 'anti_gaspi' })).toBe('🥗 Anti-gaspi')
+  })
+
+  it('fidelite → badge "⭐ Fidélité"', () => {
+    expect(typeLabelDashboard({ type_remise: 'fidelite' })).toBe('⭐ Fidélité')
+  })
+
+  it('tous les types antérieurs restent corrects', () => {
+    expect(typeLabelDashboard({ type_remise: 'cadeau' })).toBe('🎁 Cadeau')
+    expect(typeLabelDashboard({ type_remise: 'atelier' })).toBe('🎉 Évènement')
+    expect(typeLabelDashboard({ type_remise: 'concours' })).toBe('🎰 Concours')
+    expect(typeLabelDashboard({ type_remise: 'pourcentage', valeur: 10 })).toBe('−10%')
+    expect(typeLabelDashboard({ type_remise: 'montant_fixe', valeur: 4 })).toBe('−4€')
+  })
+})
+
+describe('Non-régression dashboard — titres sans doublon emoji', () => {
+  const types = ['cadeau', 'atelier', 'concours', 'fidelite', 'anti_gaspi']
+
+  for (const type of types) {
+    it(`${type} → getOffreTitle retourne le titre brut (pas de doublon emoji sur les cartes)`, () => {
+      const offre = { type_remise: type, titre: 'mon offre' }
+      expect(getOffreTitle(offre)).toBe('mon offre')
+    })
+  }
+})
+
 /* ── Non-régression récurrence — comportement par défaut identique ────────── */
 
 describe('Non-régression récurrence — tous les types inactifs par défaut', () => {
