@@ -80,7 +80,7 @@ Lexique corrigé : "Bons plans de ta ville" (pas "du quartier").
 
 ---
 
-ÉTAT D'IMPLÉMENTATION (mis à jour 2026-03-27)
+ÉTAT D'IMPLÉMENTATION (mis à jour 2026-05-23)
 ==============================================
 
 STACK TECHNIQUE
@@ -90,9 +90,13 @@ STACK TECHNIQUE
 - Supabase (PostgreSQL + Auth + RLS)
 - Hébergement : Vercel (EU West)
 - Librairies : @supabase/supabase-js v2.99.1, @supabase/ssr v0.9.0,
-  html5-qrcode v2.3.8, qrcode.react v4.2.0, jsonwebtoken v9.0.3
-- Services externes : Google Places API, Brevo (emails), Google Wallet API,
-  Web Push API (VAPID)
+  html5-qrcode v2.3.8, qrcode.react v4.2.0, jsonwebtoken v9.0.3,
+  stripe v21.0.1, web-push v3.6.7, recharts v3.8.1,
+  canvas-confetti v1.9.4, jspdf v4.2.1, html2canvas v1.4.1,
+  archiver v7.0.1, pdf-lib v1.17.1
+- Tests : Vitest v4.1.5 (unitaires + non-régression), Playwright v1.59.1 (E2E)
+- Services externes : Google Places API, Google Maps API (AdvancedMarkerElement),
+  Brevo (emails), Stripe (paiements), Google Wallet API, Web Push API (VAPID)
 
 ARCHITECTURE DES FICHIERS
 --------------------------
@@ -131,28 +135,40 @@ bonmoment/
 │   │   │   ├── page.js               # Profil public du commerce
 │   │   │   ├── DeleteCommerceButton.js  # Bouton suppression commerce (avec confirmation)
 │   │   │   └── loading.js            # Skeleton de chargement
+│   │   ├── abonnement/
+│   │   │   ├── page.js               # Page choix/upgrade abonnement (Stripe)
+│   │   │   └── succes/page.js        # Page confirmation paiement réussi
 │   │   ├── components/
+│   │   │   ├── AfficheContent.js     # Contenu affiche vitrine PDF (jsPDF + html2canvas)
 │   │   │   └── TirageAuSort.js       # Composant tirage au sort concours
 │   │   ├── dashboard/page.js         # Dashboard commerçant (multi-commerce)
 │   │   ├── inscription/page.js       # Inscription commerçant (Google Places)
 │   │   ├── offre/nouvelle/page.js    # Création nouvelle offre
+│   │   ├── resiliation/page.js       # Page résiliation abonnement
 │   │   └── valider/
 │   │       ├── page.js               # Page validation bons (QR ou code manuel)
 │   │       └── QrScanner.js          # Composant scanner QR (html5-qrcode)
 │   ├── components/                   # Composants partagés
+│   │   ├── AddToHomeScreen.js        # Prompt installation PWA (Android)
 │   │   ├── AdminFooterLink.js        # Lien caché vers admin dans le footer
 │   │   ├── AuthBottomSheet.js        # Bottom sheet connexion (OAuth providers)
 │   │   ├── AuthButton.js             # Bouton connexion/déconnexion header
 │   │   ├── ChatbotWidget.js          # Widget chatbot intégré
+│   │   ├── CommerceInfoCard.js       # Carte info commerce (photo, note, horaires)
+│   │   ├── ConfirmModal.js           # Modale confirmation réutilisable (charte BONMOMENT)
 │   │   ├── FavoriButton.js           # Bouton cœur favori commerçant
 │   │   ├── FloatingBonButton.js      # Bouton flottant accès rapide bons
 │   │   ├── FullScreenBon.js          # Affichage plein écran bon (wake lock)
 │   │   ├── HomeClient.js             # Page d'accueil côté client (filtres, catégories)
+│   │   ├── IOSInstallPrompt.js       # Prompt installation PWA (iOS Safari)
 │   │   ├── NotifBottomSheet.js       # Bottom sheet préférences notifications
+│   │   ├── ReviewOverlay.js          # Overlay demande d'avis post-validation bon
+│   │   ├── ReviewPolling.js          # Polling statut avis (post-validation)
 │   │   ├── ScrollingBanner.js        # Bandeau défilant
 │   │   ├── ShareButton.js            # Bouton partage bon/offre
 │   │   ├── SignInPanel.js            # Panel boutons OAuth (Google, Facebook, Apple, Microsoft)
 │   │   ├── SkeletonCard.js           # Skeleton loading card
+│   │   ├── Toast.js                  # Système de toasts (contexte + hook useToast)
 │   │   ├── tutorial/
 │   │   │   ├── TutorialDashboard.js  # Tutoriel onboarding dashboard commerçant
 │   │   │   ├── TutorialOffre.js      # Tutoriel création offre
@@ -174,7 +190,9 @@ bonmoment/
 │   ├── not-found.js                  # Page 404
 │   ├── offre/[id]/
 │   │   ├── page.js                   # Page détail offre (SSR)
-│   │   └── UrgencyAndCTA.js          # Countdown, barre urgence, bouton réservation
+│   │   ├── CaMInteresseButton.js     # Bouton "Ça m'intéresse" (partage social offre)
+│   │   ├── UrgencyAndCTA.js          # Countdown, barre urgence, bouton réservation
+│   │   └── error.js                  # Boundary d'erreur page offre
 │   ├── page.js                       # Page d'accueil (fetch SSR villes + offres)
 │   ├── profil/
 │   │   ├── page.js                   # Profil : badges, abonnements, favoris, notifs
@@ -188,15 +206,28 @@ bonmoment/
 │   ├── supabase/
 │   │   ├── client.js                 # Client navigateur (createBrowserClient)
 │   │   └── server.js                 # Client serveur (createServerClient + cookies)
+│   ├── confetti.js                   # triggerConfetti (canvas-confetti)
+│   ├── constants.js                  # TYPES_REMISE_AUTORISES (11 valeurs, aligné CHECK BDD)
+│   ├── featureFlags.js               # isMairieAssoEnabled(), isFideliteEnabled()
+│   ├── formatHoraires.js             # Formatage horaires commerce
+│   ├── googleMapsConfig.js           # Loader Google Maps partagé (useLoadScript config)
 │   ├── offreStatus.js                # Helpers statut offre (getOffreStatus, formatDebut)
+│   ├── offreTitle.js                 # getOffreTitle (titre brut UI) + getFullOffreTitle (préfixé partage social)
+│   ├── push.js                       # Helpers Web Push (VAPID)
 │   ├── rate-limit.js                 # Middleware rate limiting (30 req/60s)
+│   ├── stripe.js                     # Init SDK Stripe (server-side)
 │   └── utils.js                      # Utilitaires (toSlug, etc.)
 ├── supabase/
 │   ├── schema.sql                    # Schéma complet BDD avec policies RLS
 │   ├── seed.sql                      # Données initiales
 │   └── seed-test.sql                 # Données de test
-├── sql/
-│   └── migrations_abonnements_favoris.sql  # Migrations abonnements, favoris, notifs
+├── sql/                          # Migrations et corrections SQL (45 fichiers)
+│   ├── migrations_*.sql          # Migrations initiales (abonnements, admin, chatbot, etc.)
+│   ├── add_*.sql                 # Ajouts de features (fidelite, mairie_asso, anti_gaspi)
+│   ├── fix_*.sql                 # Corrections RLS, index, bugfixes prod
+│   ├── rollback_*.sql            # Rollbacks par feature
+│   ├── test_post_migration_*.sql # Tests de non-régression post-migration
+│   └── setup_storage_lot4a.md   # Instructions bucket Supabase Storage logos-mairie-asso
 ├── public/
 │   └── LOGO.png
 ├── scripts/                          # Scripts utilitaires
@@ -293,7 +324,9 @@ CÔTÉ COMMERÇANT :
 - Validation code parrainage à l'inscription (remise parrain + filleul)
 - Premier mois gratuit avec CB enregistrée
 - Création d'offres avec vérification quota selon palier (4/8/16 offres/mois)
-- Types offres : pourcentage, montant_fixe, montant, cadeau, produit_offert, service_offert, concours, atelier, fidelite, offert, anti_gaspi
+- Types offres : pourcentage, montant_fixe, montant, cadeau, produit_offert, service_offert, concours, atelier, fidelite, offert, anti_gaspi (11 types — CHECK constraint BDD aligné)
+- Remise %/€ fusionnée en un seul type "Remise" dans le formulaire (switch interne pourcentage/montant_fixe)
+- Type Anti-gaspi : formulaire, badges, filtres habitant (🥗), FAQ, chatbot
 - Offres récurrentes (auto-renouvellement après expiration)
 - Dashboard : switch entre commerces, aperçu offres actives/expirées, stock, expiration
 - QR code profil commerce (téléchargeable, partage l'URL du profil)
@@ -303,6 +336,9 @@ CÔTÉ COMMERÇANT :
 - Tirage au sort concours (POST /api/tirer-au-sort après expiration offre)
 - Tutoriel onboarding guidé (dashboard + création offre)
 - Page profil public du commerce
+- Abonnements Stripe : souscription, upgrade, résiliation
+- Affiche vitrine PDF téléchargeable (jsPDF + html2canvas + QR code)
+- Partage offre publiée : Web Share API / WhatsApp / Facebook / copie lien → redirect dashboard après partage
 
 CÔTÉ ADMIN (bonmomentapp@gmail.com uniquement) :
 - Dashboard stats : MRR, churn, DAU, MAU, villes actives, taux utilisation
@@ -328,11 +364,16 @@ NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY          (serveur uniquement, jamais exposé)
 NEXT_PUBLIC_GOOGLE_PLACES_API_KEY
+NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID     (requis par CarteVille.js — AdvancedMarkerElement)
 BREVO_API_KEY
 CRON_SECRET
 NEXT_PUBLIC_VAPID_PUBLIC_KEY
 VAPID_PRIVATE_KEY
+STRIPE_SECRET_KEY                  (serveur uniquement — paiements abonnements)
+STRIPE_WEBHOOK_SECRET              (serveur uniquement — vérification webhooks Stripe)
 ADMIN_EMAIL                        (= bonmomentapp@gmail.com)
+NEXT_PUBLIC_MAIRIE_ASSO_ENABLED    (false par défaut — feature flag module mairie/asso)
+NEXT_PUBLIC_FIDELITE_ENABLED       (false par défaut — feature flag carte fidélité)
 
 FLUX AUTHENTIFICATION
 ---------------------
@@ -349,16 +390,27 @@ useReservation : hook complet réservation (génération code, décrémentation 
 
 SCRIPTS DE DÉVELOPPEMENT
 ------------------------
-npm run dev    → serveur dev localhost:3000
-npm run build  → build production
-npm start      → serveur production
-npm run lint   → ESLint
+npm run dev              → serveur dev localhost:3000
+npm run build            → build production
+npm start                → serveur production
+npm run lint             → ESLint
+npm test                 → Vitest run (tous les tests unitaires + non-régression)
+npm run test:watch       → Vitest en mode watch
+npm run test:e2e         → Playwright (tests E2E)
+npm run test:e2e:ui      → Playwright avec UI interactif
+npm run test:non-regression → Vitest run tests/non-regression uniquement
 
 MIGRATIONS BASE DE DONNÉES
 --------------------------
-Schéma principal : supabase/schema.sql (à exécuter dans l'éditeur SQL Supabase)
-Migrations supplémentaires : sql/migrations_abonnements_favoris.sql
-Données de test : supabase/seed-test.sql
+Schéma principal   : supabase/schema.sql (schéma complet, état cible)
+Migrations sql/    : 45 fichiers groupés par feature (voir section ARCHITECTURE DES FICHIERS)
+  - Initiales      : migrations_abonnements_favoris.sql, migrations_admin.sql, etc.
+  - Features       : add_fidelite_universelle.sql, add_mairie_asso*.sql, add_anti_gaspi_type_check.sql
+  - Corrections    : fix_rls_*.sql, fix_indexes_*.sql, fix_parrainage.sql, etc.
+  - Rollbacks      : rollback_fidelite_universelle.sql, rollback_mairie_asso*.sql, rollback_anti_gaspi_type_check.sql
+  - Tests          : test_post_migration_*.sql (à exécuter après chaque migration)
+Données de test    : supabase/seed-test.sql
+Données initiales  : supabase/seed.sql
 
 ---
 
@@ -722,3 +774,47 @@ CHECK constraint prod mais n'étaient pas documentées dans CONTEXT.md (lacune
 comblée par cette mise à jour).
 
 Module Mairie / Association : COMPLET
+
+---
+
+FEATURE : OFFRES ANTI-GASPI
+============================
+État   : Livré sur master, en production depuis 2026-05-23
+Commits: 8e9c3f6 → e5f1a6b (anti-gaspi initial → redirect partage)
+
+PRINCIPE
+--------
+Nouveau type d'offre type_remise='anti_gaspi' permettant aux commerçants de
+proposer des invendus à prix réduit. Aucun feature flag — activé pour tous.
+
+CHANGEMENTS BASE DE DONNÉES
+----------------------------
+CHECK constraint offres_type_remise_check étendu à 11 valeurs (+anti_gaspi).
+Migration prod exécutée manuellement le 2026-05-23.
+Fichier : sql/add_anti_gaspi_type_check.sql (idempotent — DROP IF EXISTS + ADD)
+Rollback : sql/rollback_anti_gaspi_type_check.sql (⚠ voir avertissement fichier)
+Tests    : sql/test_post_migration_anti_gaspi.sql (3 tests)
+
+CHANGEMENTS APPLICATIFS
+------------------------
+lib/offreTitle.js     : case 'anti_gaspi' → '🥗 ' + titre dans getFullOffreTitle()
+lib/constants.js      : TYPES_REMISE_AUTORISES (11 valeurs, aligné CHECK BDD)
+app/ville/[slug]/
+  VilleClient.js      : filtre '🥗 Anti-gaspi' ajouté à FILTERS_TYPE ; '💰' → '🏷️' pour Remise
+  OffreCard.js        : getOffreTitle() (titre brut sans emoji) au lieu de getFullOffreTitle()
+app/offre/[id]/page.js: getOffreTitle() pour h1 UI ; getFullOffreTitle() conservé pour OG/partage
+app/components/ShareButton.js : formatBadge enrichi fidelite + anti_gaspi
+app/commercant/
+  offre/nouvelle/page.js : type Anti-gaspi ajouté au formulaire ; PLACEHOLDERS_DESCRIPTION
+                           mis à jour (anti_gaspi = 'Ex : 4 viennoiseries pour 2€') ;
+                           redirect dashboard après partage offre publiée (toutes les méthodes)
+  valider/page.js       : case 'anti_gaspi' → 'Anti-gaspi' dans formatTypeRemise()
+data/faq-data.js          : 2 Q&As Anti-gaspi (catégories habitant + commerçant)
+app/components/chatbot/chatbotData.js : 2 nœuds h-q-antigaspi + c-q-antigaspi
+
+TESTS AUTOMATISÉS AJOUTÉS
+--------------------------
+tests/unit/anti-gaspi-defaults.test.js           → récurrence état par défaut, parité types
+tests/unit/offres-type-remise-whitelist.test.js  → TYPES_REMISE_AUTORISES (11 valeurs)
+tests/unit/offre-published-share-redirect.test.js → redirect dashboard après partage (11 cas)
+tests/non-regression/offre-form-types-existants.test.js → types existants non-impactés
