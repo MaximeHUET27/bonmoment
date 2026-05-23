@@ -395,8 +395,11 @@ function NouvelleOffrePageInner() {
       if (navigator.share) {
         try {
           await navigator.share({ title: shareTitle, text: shareText, url: shareUrl })
-        } catch {
-          // user dismissed — no action needed
+          router.push('/commercant/dashboard')
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            // autre erreur — l'utilisateur peut réessayer ou utiliser le lien de secours
+          }
         }
       } else {
         setShareMenuOpen(m => !m)
@@ -406,7 +409,7 @@ function NouvelleOffrePageInner() {
     async function handleCopyLink() {
       try { await navigator.clipboard.writeText(shareUrl) } catch { }
       setShareCopied(true)
-      setTimeout(() => { setShareCopied(false); setShareMenuOpen(false) }, 2000)
+      setTimeout(() => { setShareCopied(false); setShareMenuOpen(false); router.push('/commercant/dashboard') }, 1500)
     }
 
     return (
@@ -460,7 +463,7 @@ function NouvelleOffrePageInner() {
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`}
                 target="_blank" rel="noopener noreferrer"
-                onClick={() => setShareMenuOpen(false)}
+                onClick={() => { setShareMenuOpen(false); setTimeout(() => router.push('/commercant/dashboard'), 500) }}
                 className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-[#0A0A0A] hover:bg-[#F5F5F5]"
               >
                 <span className="text-lg">💬</span> WhatsApp
@@ -468,7 +471,7 @@ function NouvelleOffrePageInner() {
               <a
                 href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
                 target="_blank" rel="noopener noreferrer"
-                onClick={() => setShareMenuOpen(false)}
+                onClick={() => { setShareMenuOpen(false); setTimeout(() => router.push('/commercant/dashboard'), 500) }}
                 className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-[#0A0A0A] hover:bg-[#F5F5F5] border-t border-[#F0F0F0]"
               >
                 <span className="text-lg">📘</span> Facebook
