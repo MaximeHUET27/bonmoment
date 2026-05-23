@@ -485,10 +485,10 @@ function NouvelleOffrePageInner() {
         </div>
 
         <button
-          onClick={() => router.push('/')}
+          onClick={() => router.push('/commercant/dashboard')}
           className="text-xs text-[#3D3D3D]/40 underline underline-offset-2 hover:text-[#3D3D3D]/60"
         >
-          Je ne souhaite pas partager
+          Je ne souhaite pas partager et je souhaite retourner à l&apos;accueil
         </button>
       </div>
     )
@@ -558,10 +558,6 @@ function NouvelleOffrePageInner() {
                   onClick={() => {
                     if (t.id === 'remise') {
                       setTypeRemise('pourcentage')
-                    } else if (t.id === 'anti_gaspi') {
-                      setTypeRemise('anti_gaspi')
-                      setEstRecurrente(true)
-                      setJoursRecurrence(JOURS.map(j => j.id))
                     } else {
                       setTypeRemise(t.id)
                     }

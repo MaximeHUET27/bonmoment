@@ -264,3 +264,39 @@ describe('Non-régression placeholder cadeau — valeur historique restaurée', 
     expect(PLACEHOLDERS_DESCRIPTION.anti_gaspi).not.toContain('invendus du jour')
   })
 })
+
+/* ── Non-régression récurrence — comportement par défaut identique ────────── */
+
+describe('Non-régression récurrence — tous les types inactifs par défaut', () => {
+  function defaultRecurrenceState() {
+    return { estRecurrente: false, joursRecurrence: [] }
+  }
+
+  function handleTypeSelection(typeId) {
+    const defaults = defaultRecurrenceState()
+    if (typeId === 'remise') return { typeRemise: 'pourcentage', ...defaults }
+    return { typeRemise: typeId, ...defaults }
+  }
+
+  const TOUS_LES_TYPES = ['cadeau', 'atelier', 'concours', 'fidelite', 'anti_gaspi', 'pourcentage', 'montant_fixe']
+
+  for (const type of TOUS_LES_TYPES) {
+    const typeId = (type === 'pourcentage' || type === 'montant_fixe') ? 'remise' : type
+    it(`${type} → estRecurrente false par défaut (pas de pré-coche)`, () => {
+      const result = handleTypeSelection(typeId)
+      expect(result.estRecurrente).toBe(false)
+    })
+
+    it(`${type} → joursRecurrence vide par défaut`, () => {
+      const result = handleTypeSelection(typeId)
+      expect(result.joursRecurrence).toHaveLength(0)
+    })
+  }
+
+  it('anti_gaspi et cadeau ont un état récurrence identique par défaut', () => {
+    const antiGaspi = handleTypeSelection('anti_gaspi')
+    const cadeau    = handleTypeSelection('cadeau')
+    expect(antiGaspi.estRecurrente).toBe(cadeau.estRecurrente)
+    expect(antiGaspi.joursRecurrence).toEqual(cadeau.joursRecurrence)
+  })
+})
