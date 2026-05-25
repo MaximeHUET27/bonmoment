@@ -42,7 +42,7 @@ export default function AdminLayout({ children }) {
       <header className="bg-white border-b border-[#EBEBEB] sticky top-0 z-40 shadow-sm">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 flex items-center gap-3 h-14">
           <Link href="/admin">
-            <Image src="/LOGO.png" alt="BONMOMENT" width={600} height={300} unoptimized priority className="w-[90px] h-auto" />
+            <Image src="/LOGO.png" alt="BONMOMENT" width={1425} height={157} priority sizes="180px" className="w-[90px] h-auto" />
           </Link>
           <span className="text-[10px] font-black text-white bg-[#FF6B00] px-2 py-0.5 rounded-full tracking-wider uppercase shrink-0">
             ADMIN

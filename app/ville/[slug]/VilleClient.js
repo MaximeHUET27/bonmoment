@@ -398,7 +398,7 @@ export default function VilleClient({
       </div>
 
       {/* ── Grille d'offres ── */}
-      <div className="px-3 sm:px-4 py-4 sm:py-6">
+      <div className="px-3 sm:px-4 py-4 sm:py-6 min-h-[400px]">
         {offresAffichees.length > 0 ? (
           <>
             {filtre !== 'tous' && activesDansFiltre.length === 0 && (

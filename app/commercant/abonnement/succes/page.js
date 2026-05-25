@@ -15,10 +15,10 @@ function SuccesContent() {
       <Image
         src="/LOGO.png"
         alt="Logo BONMOMENT"
-        width={600}
-        height={300}
-        unoptimized
+        width={1425}
+        height={157}
         priority
+        sizes="260px"
         className="w-[130px] h-auto"
       />
 

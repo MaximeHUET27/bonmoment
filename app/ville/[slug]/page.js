@@ -91,10 +91,10 @@ export default async function VillePage({ params }) {
           <Image
             src="/LOGO.png"
             alt="BONMOMENT"
-            width={600}
-            height={300}
-            unoptimized
+            width={1425}
+            height={157}
             priority
+            sizes="220px"
             className="w-[110px] h-auto"
           />
         </Link>

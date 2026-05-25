@@ -421,10 +421,10 @@ function NouvelleOffrePageInner() {
           <Image
             src="/LOGO.png"
             alt="BONMOMENT"
-            width={600}
-            height={300}
-            unoptimized
+            width={1425}
+            height={157}
             priority
+            sizes="200px"
             className="w-[100px] h-auto"
           />
         </Link>

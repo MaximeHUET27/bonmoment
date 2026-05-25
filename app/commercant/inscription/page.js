@@ -329,8 +329,8 @@ export default function InscriptionCommercant() {
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <header className="px-6 pt-8 pb-6 border-b border-[#F5F5F5]">
           <Link href="/" className="inline-block mb-5">
-            <Image src="/LOGO.png" alt="BONMOMENT" width={600} height={300}
-              unoptimized priority className="w-[110px] h-auto" />
+            <Image src="/LOGO.png" alt="BONMOMENT" width={1425} height={157}
+              priority sizes="220px" className="w-[110px] h-auto" />
           </Link>
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00] mb-1">

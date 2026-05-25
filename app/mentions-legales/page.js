@@ -12,7 +12,7 @@ export default function MentionsLegales() {
 
       <header className="px-6 pt-8 pb-6 border-b border-[#F5F5F5] text-center">
         <Link href="/" className="inline-block mb-4">
-          <Image src="/LOGO.png" alt="Logo BONMOMENT" width={600} height={300} unoptimized priority className="w-[110px] h-auto mx-auto" />
+          <Image src="/LOGO.png" alt="Logo BONMOMENT" width={1425} height={157} priority sizes="220px" className="w-[110px] h-auto mx-auto" />
         </Link>
         <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00] mb-1">bonmoment.app</p>
         <h1 className="text-2xl sm:text-3xl font-black text-[#0A0A0A]">Mentions légales</h1>

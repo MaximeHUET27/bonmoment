@@ -231,10 +231,10 @@ export default function DashboardPage() {
           <Image
             src="/LOGO.png"
             alt="BONMOMENT"
-            width={600}
-            height={300}
-            unoptimized
+            width={1425}
+            height={157}
             priority
+            sizes="240px"
             className="w-[120px] h-auto"
           />
         </Link>

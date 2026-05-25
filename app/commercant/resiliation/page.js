@@ -162,7 +162,7 @@ function ResiliationContent() {
   if (step === 'pause_done') {
     return (
       <main className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center gap-8">
-        <Image src="/LOGO.png" alt="Logo BONMOMENT" width={600} height={300} unoptimized priority className="w-[110px] h-auto" />
+        <Image src="/LOGO.png" alt="Logo BONMOMENT" width={1425} height={157} priority sizes="220px" className="w-[110px] h-auto" />
         <div className="flex flex-col gap-4 max-w-sm">
           <p className="text-5xl">⏸</p>
           <h1 className="text-2xl font-black text-[#0A0A0A]">Abonnement mis en pause</h1>
@@ -185,7 +185,7 @@ function ResiliationContent() {
 
     return (
       <main className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center gap-8">
-        <Image src="/LOGO.png" alt="Logo BONMOMENT" width={600} height={300} unoptimized priority className="w-[110px] h-auto" />
+        <Image src="/LOGO.png" alt="Logo BONMOMENT" width={1425} height={157} priority sizes="220px" className="w-[110px] h-auto" />
         <div className="flex flex-col gap-4 max-w-sm">
           <p className="text-5xl">👋</p>
           <h1 className="text-2xl font-black text-[#0A0A0A]">Résiliation prise en compte</h1>
@@ -220,7 +220,7 @@ function ResiliationContent() {
 
       <header className="px-6 pt-8 pb-6 border-b border-[#F5F5F5] text-center">
         <Link href="/" className="inline-block mb-4">
-          <Image src="/LOGO.png" alt="Logo BONMOMENT" width={600} height={300} unoptimized priority className="w-[110px] h-auto mx-auto" />
+          <Image src="/LOGO.png" alt="Logo BONMOMENT" width={1425} height={157} priority sizes="220px" className="w-[110px] h-auto mx-auto" />
         </Link>
         <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00] mb-1">Espace commerçant</p>
         <h1 className="text-2xl font-black text-[#0A0A0A]">Gérer mon abonnement</h1>

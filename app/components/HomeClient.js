@@ -139,10 +139,10 @@ export default function HomeClient({ villes, offres }) {
         <Image
           src="/LOGO.png"
           alt="Logo BONMOMENT"
-          width={900}
-          height={450}
+          width={1425}
+          height={157}
           priority
-          unoptimized
+          sizes="(max-width: 640px) 338px, 364px"
           className="w-[338px] sm:w-[364px] h-auto mb-8"
         />
 
@@ -173,7 +173,7 @@ export default function HomeClient({ villes, offres }) {
       </div>
 
       {/* ── Grille des offres (toutes villes actives) ── */}
-      <div className="px-4 pb-8">
+      <div className="px-4 pb-8 min-h-[400px]">
         {isLoading ? (
           <div className="flex flex-col gap-3 w-full max-w-[700px] mx-auto">
             {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}

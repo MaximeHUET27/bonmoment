@@ -285,7 +285,7 @@ export default function ValiderPage() {
       {/* ── Header ───────────────────────────────────────────────────────── */}
       <header className="bg-white border-b border-[#EBEBEB] px-5 py-3 flex items-center justify-between sticky top-0 z-20">
         <Link href="/">
-          <Image src="/LOGO.png" alt="BONMOMENT" width={600} height={300} unoptimized priority className="w-[100px] h-auto" />
+          <Image src="/LOGO.png" alt="BONMOMENT" width={1425} height={157} priority sizes="200px" className="w-[100px] h-auto" />
         </Link>
         <Link href="/commercant/dashboard" className="bg-[#FF6B00] hover:bg-[#CC5500] text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors min-h-[44px] flex items-center whitespace-nowrap">
           Mon commerce
