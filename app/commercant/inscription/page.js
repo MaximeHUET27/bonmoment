@@ -230,7 +230,6 @@ export default function InscriptionCommercant() {
       horaires:            selectedPlace.horaires,
       latitude:            selectedPlace.latitude,
       longitude:           selectedPlace.longitude,
-      abonnement_actif:    true,
     }).select('id').single()
 
     if (insertError) {
