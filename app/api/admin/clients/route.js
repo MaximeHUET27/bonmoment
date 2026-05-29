@@ -33,7 +33,11 @@ export async function GET(request) {
   if (badge)  query = query.eq('badge_niveau', badge)
   if (ville)  query = query.contains('villes_abonnees', [ville])
 
-  const { data: users, count } = await query
+  const { data: users, count, error } = await query
+  if (error) {
+    console.error('[admin/clients] query error:', error)
+    return NextResponse.json({ error: 'Erreur base de données', detail: error.message }, { status: 500 })
+  }
   const ids = (users || []).map(u => u.id)
 
   let resaMap = {}, utilMap = {}

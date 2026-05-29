@@ -32,18 +32,31 @@ export async function GET(request) {
   const typeCompte  = searchParams.get('type_compte') || ''
 
   let query = admin.from('commerces')
-    .select('id, nom, email, ville, palier, abonnement_actif, date_fin_essai, created_at, last_login_at, photo_url, adresse, telephone, note_google, categorie, stripe_customer_id, notes_admin, type_compte', { count: 'exact' })
+    .select('id, nom, owner_id, ville, palier, abonnement_actif, date_fin_essai, created_at, last_login_at, photo_url, adresse, telephone, note_google, categorie, categorie_bonmoment, stripe_customer_id, notes_admin', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(page * LIMIT, (page + 1) * LIMIT - 1)
 
-  if (search)     query = query.or(`nom.ilike.%${search}%,email.ilike.%${search}%`)
+  if (search)     query = query.ilike('nom', `%${search}%`)
   if (ville)      query = query.eq('ville', ville)
   if (palier)     query = query.eq('palier', palier)
   if (statut === 'actif')   query = query.eq('abonnement_actif', true)
   if (statut === 'inactif') query = query.eq('abonnement_actif', false)
-  if (typeCompte) query = query.eq('type_compte', typeCompte)
+  if (typeCompte === 'mairie_asso')  query = query.eq('categorie_bonmoment', 'mairie_asso')
+  else if (typeCompte === 'commerce') query = query.neq('categorie_bonmoment', 'mairie_asso')
 
-  const { data: commerces, count } = await query
+  const { data: commerces, count, error } = await query
+  if (error) {
+    console.error('[admin/commercants] query error:', error)
+    return NextResponse.json({ error: 'Erreur base de données', detail: error.message }, { status: 500 })
+  }
+
+  /* Email des gérants — stocké sur users via owner_id, pas sur commerces */
+  const ownerIds = (commerces || []).map(c => c.owner_id).filter(Boolean)
+  const emailMap = {}
+  if (ownerIds.length) {
+    const { data: owners } = await admin.from('users').select('id, email').in('id', ownerIds)
+    for (const u of owners || []) emailMap[u.id] = u.email
+  }
 
   /* Stats offres + bons ce mois */
   const debutMois = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
@@ -73,6 +86,7 @@ export async function GET(request) {
 
   const result = (commerces || []).map(c => ({
     ...c,
+    email:            emailMap[c.owner_id] || null,
     nb_offres_total:  offreMap[c.id]  || 0,
     offres_ce_mois:   offreMMap[c.id] || 0,
     nb_bons_utilises: 0, // computed in detail

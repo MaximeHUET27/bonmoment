@@ -58,7 +58,7 @@ export default function DashboardPage() {
       // Sélection complète avec les nouvelles colonnes
       let { data, error } = await supabase
         .from('commerces')
-        .select('id, nom, categorie, categorie_bonmoment, ville, adresse, note_google, palier, photo_url, telephone, horaires, maps_url, stripe_subscription_id, stripe_customer_id, abonnement_actif, resiliation_prevue, date_fin_abonnement, logo_url, affiche_logo_mairie_asso_id')
+        .select('id, nom, categorie, categorie_bonmoment, ville, adresse, note_google, palier, photo_url, telephone, horaires, maps_url, stripe_subscription_id, stripe_customer_id, abonnement_actif, resiliation_prevue, date_fin_abonnement, logo_url, affiche_logo_mairie_asso_id, est_ambassadeur, date_fin_ambassadeur')
         .eq('owner_id', user.id)
 
       // Fallback si les colonnes maps_url/palier n'existent pas encore en BDD
@@ -259,6 +259,18 @@ export default function DashboardPage() {
             >
               {commerce.stripe_customer_id ? 'Renouveler →' : 'Choisir mon palier →'}
             </Link>
+          </div>
+        )}
+
+        {/* Badge ambassadeur — affichage seul, aucune logique de gating */}
+        {commerce && commerce.est_ambassadeur && (
+          <div className="w-full bg-[#FFF0E0] border border-[#FFD0A0] rounded-xl px-4 py-2.5 flex items-center gap-2">
+            <span className="text-sm font-black text-[#FF6B00]">🧡 Compte fondateur offert</span>
+            {commerce.date_fin_ambassadeur && (
+              <span className="text-xs text-[#FF6B00]/70">
+                jusqu&apos;au {new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(commerce.date_fin_ambassadeur))}
+              </span>
+            )}
           </div>
         )}
 

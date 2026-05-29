@@ -77,6 +77,7 @@ function FicheCommercant({ id, onClose, onRefresh }) {
   const [emailForm, setEmailForm] = useState({ subject: '', body: '' })
   const [palierSelect, setPalierSelect] = useState('')
   const [joursEssai, setJoursEssai] = useState(7)
+  const [ambassadeurDateFin, setAmbassadeurDateFin] = useState('')
   const { showToast } = useToast()
 
   useEffect(() => {
@@ -155,6 +156,10 @@ function FicheCommercant({ id, onClose, onRefresh }) {
             <button onClick={() => { setPalierSelect(c.palier || 'essentiel'); setModal('palier') }} className="px-3 py-1.5 text-xs font-bold bg-[#FFF0E0] text-[#FF6B00] border border-[#FFD0A0] rounded-xl hover:bg-[#FFE0C0] transition-colors">Changer palier</button>
             <button onClick={() => setModal('essai')} className="px-3 py-1.5 text-xs font-bold bg-[#F5F5F5] text-[#0A0A0A] border border-[#E0E0E0] rounded-xl hover:bg-[#E8E8E8] transition-colors">Prolonger essai</button>
             <button onClick={() => { setEmailForm({ subject: '', body: '' }); setModal('email') }} className="px-3 py-1.5 text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 rounded-xl hover:bg-blue-100 transition-colors">✉️ Email</button>
+            {c.est_ambassadeur
+              ? <button onClick={() => setModal('unset_ambassadeur')} className="px-3 py-1.5 text-xs font-bold bg-orange-50 text-orange-700 border border-orange-200 rounded-xl hover:bg-orange-100 transition-colors">🧡 Retirer ambassadeur</button>
+              : <button onClick={() => { setAmbassadeurDateFin(''); setModal('ambassadeur') }} className="px-3 py-1.5 text-xs font-bold bg-orange-50 text-orange-700 border border-orange-200 rounded-xl hover:bg-orange-100 transition-colors">🧡 Ambassadeur</button>
+            }
             <button onClick={() => { setConfirmText(''); setModal('delete') }} className="px-3 py-1.5 text-xs font-bold bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors">Supprimer</button>
           </div>
 
@@ -174,6 +179,7 @@ function FicheCommercant({ id, onClose, onRefresh }) {
               ['Stripe customer',   c.stripe_customer_id],
               ['Stripe sub',        c.stripe_subscription_id],
               ['Résiliation prév.', c.resiliation_prevue ? `Oui — fin ${fmtDate(c.date_fin_abonnement)}` : null],
+              ['Ambassadeur',       c.est_ambassadeur ? `Oui${c.date_fin_ambassadeur ? ` — fin ${fmtDate(c.date_fin_ambassadeur)}` : ''}` : null],
             ].map(([k, v]) => v ? (
               <div key={k} className="flex justify-between py-1 border-b border-[#E8E8E8] last:border-0 text-sm">
                 <span className="text-[#3D3D3D]/60">{k}</span>
@@ -307,6 +313,39 @@ function FicheCommercant({ id, onClose, onRefresh }) {
           <button onClick={() => setModal(null)} className="flex-1 border border-[#E0E0E0] py-2.5 rounded-xl text-sm font-semibold">Annuler</button>
           <button onClick={() => doAction('send_email', emailForm)} disabled={acting || !emailForm.subject} className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-bold disabled:opacity-60">
             {acting ? '…' : 'Envoyer'}
+          </button>
+        </div>
+      </Modal>
+
+      {/* Modale activer ambassadeur */}
+      <Modal open={modal === 'ambassadeur'} onClose={() => setModal(null)} title="Activer le statut ambassadeur">
+        <p className="text-sm text-[#3D3D3D]/70">
+          Le commerçant pourra choisir son palier sans passer par Stripe. Son accès restera offert jusqu&apos;à désactivation manuelle.
+        </p>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-[#3D3D3D]/60">Date de fin (optionnelle)</label>
+          <input type="date" value={ambassadeurDateFin} onChange={e => setAmbassadeurDateFin(e.target.value)}
+            className="w-full border-2 border-[#E0E0E0] rounded-xl px-3 py-2.5 text-sm focus:border-[#FF6B00] focus:outline-none" />
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => setModal(null)} className="flex-1 border border-[#E0E0E0] py-2.5 rounded-xl text-sm font-semibold">Annuler</button>
+          <button onClick={() => doAction('set_ambassadeur', { date_fin: ambassadeurDateFin || null })} disabled={acting}
+            className="flex-1 bg-[#FF6B00] text-white py-2.5 rounded-xl text-sm font-bold disabled:opacity-60">
+            {acting ? '…' : 'Activer'}
+          </button>
+        </div>
+      </Modal>
+
+      {/* Modale retirer ambassadeur */}
+      <Modal open={modal === 'unset_ambassadeur'} onClose={() => setModal(null)} title="Retirer le statut ambassadeur ?">
+        <p className="text-sm text-[#3D3D3D]/70">
+          L&apos;accès offert sera révoqué. Le commerçant devra souscrire un abonnement Stripe pour continuer à publier des offres.
+        </p>
+        <div className="flex gap-2">
+          <button onClick={() => setModal(null)} className="flex-1 border border-[#E0E0E0] py-2.5 rounded-xl text-sm font-semibold">Annuler</button>
+          <button onClick={() => doAction('unset_ambassadeur')} disabled={acting}
+            className="flex-1 bg-red-500 text-white py-2.5 rounded-xl text-sm font-bold disabled:opacity-60">
+            {acting ? '…' : 'Retirer'}
           </button>
         </div>
       </Modal>

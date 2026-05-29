@@ -160,6 +160,25 @@ export async function POST(request, { params }) {
     return NextResponse.json({ success: true })
   }
 
+  if (action === 'set_ambassadeur') {
+    const { date_fin } = body
+    await admin.from('commerces').update({
+      est_ambassadeur:      true,
+      date_fin_ambassadeur: date_fin || null,
+    }).eq('id', id)
+    return NextResponse.json({ success: true })
+  }
+
+  if (action === 'unset_ambassadeur') {
+    await admin.from('commerces').update({
+      est_ambassadeur:      false,
+      date_fin_ambassadeur: null,
+      abonnement_actif:     false,
+      palier:               null,
+    }).eq('id', id)
+    return NextResponse.json({ success: true })
+  }
+
   return NextResponse.json({ error: 'Action inconnue' }, { status: 400 })
 }
 

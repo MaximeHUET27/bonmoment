@@ -51,6 +51,22 @@ export async function POST(request) {
     return Response.json({ error: 'Commerce introuvable' }, { status: 404 })
   }
 
+  // ── Bypass Stripe pour les commerçants ambassadeurs ──────────────────────
+  const { data: commerceFlags } = await supabaseAdmin
+    .from('commerces')
+    .select('est_ambassadeur')
+    .eq('id', commerce_id)
+    .single()
+
+  if (commerceFlags?.est_ambassadeur) {
+    await supabaseAdmin
+      .from('commerces')
+      .update({ palier, abonnement_actif: true, resiliation_prevue: false, date_fin_abonnement: null })
+      .eq('id', commerce_id)
+    const siteUrlAmb = process.env.NEXT_PUBLIC_SITE_URL || 'https://bonmoment.app'
+    return Response.json({ url: `${siteUrlAmb}/commercant/dashboard?commerce=${commerce_id}` })
+  }
+
   // ── Validation et application du code parrainage (re-validation serveur) ──
   let parrainIdEffectif = commerce.parrain_id
 

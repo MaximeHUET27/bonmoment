@@ -13,7 +13,7 @@ const admin = createClient(
 
 function calcMRR(commerces) {
   return commerces
-    .filter(c => c.abonnement_actif)
+    .filter(c => c.abonnement_actif && !c.est_ambassadeur)
     .reduce((s, c) => s + (PALIER_PRIX[c.palier || 'essentiel'] || 29), 0)
 }
 
@@ -55,7 +55,7 @@ export async function GET() {
     { data: offresRec14j },
     { data: usersMoisPre },
   ] = await Promise.all([
-    admin.from('commerces').select('id, nom, email, abonnement_actif, palier, ville, created_at, date_fin_essai, resiliation_prevue, type_compte'),
+    admin.from('commerces').select('id, nom, abonnement_actif, palier, ville, created_at, date_fin_essai, resiliation_prevue, categorie_bonmoment, est_ambassadeur'),
     admin.from('users').select('id, created_at'),
     admin.from('offres').select('id, commerce_id, created_at, statut, date_debut, date_fin'),
     admin.from('reservations').select('id, offre_id, statut, created_at, utilise_at').gte('created_at', debutMois),
@@ -126,8 +126,9 @@ export async function GET() {
   const villesActives = new Set(comm.filter(c => c.abonnement_actif && c.ville).map(c => c.ville)).size
 
   /* ── KPIs opérationnels ── */
-  const nonAbonnes         = comm.filter(c => c.abonnement_actif && !c.palier).length
-  const mairieAssoActifs   = comm.filter(c => c.abonnement_actif && c.type_compte === 'mairie_asso').length
+  const nonAbonnes           = comm.filter(c => c.abonnement_actif && !c.palier).length
+  const mairieAssoActifs     = comm.filter(c => c.abonnement_actif && c.categorie_bonmoment === 'mairie_asso').length
+  const ambassadeursActifs   = comm.filter(c => c.est_ambassadeur && c.abonnement_actif).length
   const resiliationsPrev = comm.filter(c => c.resiliation_prevue).length
   const bonsReservesMois = rMois.length
   const bonsUtilisesMois = utilisesMois
@@ -228,6 +229,7 @@ export async function GET() {
       taux_util:   tauxUtil,   taux_util_evol: evol(tauxUtil, tauxUtilPre),
       villes_actives: villesActives,
       non_abonnes:         nonAbonnes,
+      ambassadeurs_actifs: ambassadeursActifs,
       resiliations_prev:   resiliationsPrev,
       bons_reserves_mois:  bonsReservesMois,
       bons_utilises_mois:  bonsUtilisesMois,
