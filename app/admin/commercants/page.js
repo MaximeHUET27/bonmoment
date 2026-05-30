@@ -68,8 +68,9 @@ function Modal({ open, onClose, title, children }) {
 
 /* ── Fiche détail commerçant ── */
 function FicheCommercant({ id, onClose, onRefresh }) {
-  const [data,    setData]    = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [data,       setData]       = useState(null)
+  const [loading,    setLoading]    = useState(true)
+  const [fetchError, setFetchError] = useState(null)
   const [modal,   setModal]   = useState(null) // 'deactivate'|'palier'|'essai'|'email'|'delete'
   const [acting,  setActing]  = useState(false)
   const [notes,   setNotes]   = useState('')
@@ -84,10 +85,14 @@ function FicheCommercant({ id, onClose, onRefresh }) {
     if (!id) return
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
+    setFetchError(null)
     fetch(`/api/admin/commercants/${id}`)
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) return r.json().then(e => { throw new Error(e.error || `HTTP ${r.status}`) })
+        return r.json()
+      })
       .then(d => { setData(d); setNotes(d.commerce?.notes_admin || ''); setLoading(false) })
-      .catch(() => setLoading(false))
+      .catch(err => { console.error('[FicheCommercant]', err.message); setFetchError(err.message); setLoading(false) })
   }, [id])
 
   async function doAction(action, extra = {}) {
@@ -143,7 +148,7 @@ function FicheCommercant({ id, onClose, onRefresh }) {
           {[...Array(6)].map((_, i) => <Sk key={i} className="h-8" />)}
         </div>
       ) : !c ? (
-        <p className="p-5 text-red-500">Erreur de chargement</p>
+        <p className="p-5 text-red-500">{fetchError || 'Erreur de chargement'}</p>
       ) : (
         <div className="flex flex-col gap-5 p-5">
 

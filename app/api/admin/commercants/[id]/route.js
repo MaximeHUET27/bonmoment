@@ -25,22 +25,20 @@ export async function GET(request, { params }) {
 
   const { id } = await params
 
+  try {
   const [
-    { data: commerce },
+    { data: commerce, error: commerceError },
     { data: offres },
-    { data: parrainages },
   ] = await Promise.all([
     admin.from('commerces').select('*').eq('id', id).single(),
     admin.from('offres')
       .select('id, titre, type_remise, valeur, statut, date_debut, date_fin, nb_bons_total, nb_bons_restants, created_at')
       .eq('commerce_id', id)
       .order('created_at', { ascending: false }),
-    admin.from('parrainages')
-      .select('id, code, date_expiration, filleuls:parrainages_filleuls(user_id, created_at, users(nom, email))')
-      .eq('parrain_id', id)
-      .maybeSingle()
-      .catch(() => ({ data: null })),
   ])
+
+  if (commerceError || !commerce)
+    return NextResponse.json({ error: 'Commerce introuvable' }, { status: 404 })
 
   /* Réservations par offre */
   const offreIds = (offres || []).map(o => o.id)
@@ -87,8 +85,12 @@ export async function GET(request, { params }) {
     offres:  offresWithStats,
     stats:   { total_bons: totalBons, total_utilises: totalUtilises, taux_util: tauxUtil, nb_offres: offres?.length || 0 },
     invoices,
-    parrainage: parrainages || null,
+    parrainage: null,
   })
+  } catch (err) {
+    console.error('[admin/commercants/[id] GET]', err)
+    return NextResponse.json({ error: String(err?.message || err) }, { status: 500 })
+  }
 }
 
 /* ── POST : actions ── */
