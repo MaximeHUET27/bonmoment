@@ -64,7 +64,7 @@ function AbonnementContent() {
 
     supabase
       .from('commerces')
-      .select('id, nom, palier, stripe_customer_id, stripe_subscription_id')
+      .select('id, nom, palier, stripe_customer_id, stripe_subscription_id, est_ambassadeur, date_fin_ambassadeur')
       .eq('id', commerceId)
       .eq('owner_id', user.id)   // vérifie l'appartenance
       .single()
@@ -214,6 +214,16 @@ function AbonnementContent() {
       </header>
 
       <section className="flex-1 px-4 py-8 max-w-4xl mx-auto w-full flex flex-col gap-5">
+
+        {/* ── Bandeau compte fondateur (ambassadeur) ── */}
+        {commerce?.est_ambassadeur && (
+          <div className="bg-[#FFF0E0] border border-[#FFD0A0] rounded-2xl px-4 py-4 text-[#FF6B00] text-sm font-semibold leading-relaxed">
+            {commerce.date_fin_ambassadeur
+              ? `🧡 Compte fondateur — accès offert jusqu'au ${new Date(commerce.date_fin_ambassadeur).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}. Aucun paiement ne te sera demandé d'ici là. Choisis ton palier ci-dessous.`
+              : '🧡 Compte fondateur — ton accès est offert, aucun paiement ne te sera demandé. Choisis simplement ton palier ci-dessous.'
+            }
+          </div>
+        )}
 
         {/* ── CGV + TVA — EN HAUT, avant les cartes ── */}
         <div className="bg-[#F5F5F5] rounded-2xl px-4 py-4 flex flex-col gap-2">
