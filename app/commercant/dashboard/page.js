@@ -42,6 +42,7 @@ export default function DashboardPage() {
   const [showRefreshModal, setShowRefreshModal] = useState(false)
   const [refreshing,       setRefreshing]       = useState(false)
   const [toast,            setToast]            = useState(null)
+  const [photoUrlError,    setPhotoUrlError]    = useState(false)
 
   /* ── Auth guard ─────────────────────────────────────────────────────────── */
   useEffect(() => {
@@ -310,13 +311,14 @@ export default function DashboardPage() {
         {commerce && (
           <div className="bg-white rounded-3xl overflow-hidden flex flex-col gap-4 shadow-sm">
             {/* Photo */}
-            {commerce.photo_url ? (
+            {commerce.photo_url && !photoUrlError ? (
               <Image
                 src={commerce.photo_url}
                 alt={commerce.nom}
                 width={500}
                 height={200}
                 className="w-full h-[200px] object-cover"
+                onError={() => setPhotoUrlError(true)}
               />
             ) : (
               <div className="w-full h-[200px] bg-[#F5F5F5] flex items-center justify-center">

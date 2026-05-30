@@ -80,7 +80,8 @@ export default function InscriptionCommercant() {
 
   // États d'envoi
   const [showAllHoraires, setShowAllHoraires] = useState(false)
-  const [submitting, setSubmitting]     = useState(false)
+  const [submitting,        setSubmitting]        = useState(false)
+  const [finalisationPhoto, setFinalisationPhoto] = useState(false)
   const [duplicate, setDuplicate]       = useState(false)
   const [submitError, setSubmitError]   = useState(null)
 
@@ -224,7 +225,7 @@ export default function InscriptionCommercant() {
       ville:               selectedPlace.ville,
       categorie:           selectedPlace.categorie,
       categorie_bonmoment: categorieBonmoment,
-      photo_url:           selectedPlace.photo_url,
+      photo_url:           null,
       telephone:           selectedPlace.telephone,
       note_google:         selectedPlace.note_google,
       horaires:            selectedPlace.horaires,
@@ -250,14 +251,20 @@ export default function InscriptionCommercant() {
       }).then(({ error }) => { if (error) console.error('Code parrainage auto:', error.message) })
     }
 
-    // 3.6 Upload de la photo dans Supabase Storage (non-bloquant)
-    // Remplace l'URL Google temporaire par une URL Supabase permanente
+    // 3.6 Upload de la photo dans Supabase Storage (bloquant — photo prête avant redirection)
     if (insertData?.id && selectedPlace.photo_url) {
-      fetch('/api/upload-photo-commerce', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ commerce_id: insertData.id, photo_url_google: selectedPlace.photo_url }),
-      }).catch(err => console.error('upload-photo-commerce:', err))
+      setFinalisationPhoto(true)
+      try {
+        await fetch('/api/upload-photo-commerce', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ commerce_id: insertData.id, photo_url_google: selectedPlace.photo_url }),
+        })
+      } catch (err) {
+        console.error('upload-photo-commerce:', err)
+        // photo_url reste null → placeholder propre ; récupérable via "Actualiser" dans le dashboard
+      }
+      setFinalisationPhoto(false)
     }
 
     // 3.7 Upsert de la ville dans la table villes (non-bloquant)
@@ -567,7 +574,7 @@ export default function InscriptionCommercant() {
                 {submitting ? (
                   <>
                     <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Inscription en cours...
+                    {finalisationPhoto ? 'Finalisation de ta fiche…' : 'Inscription en cours…'}
                   </>
                 ) : (
                   'Rejoindre BONMOMENT 🎉'
