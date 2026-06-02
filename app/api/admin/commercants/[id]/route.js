@@ -29,12 +29,14 @@ export async function GET(request, { params }) {
   const [
     { data: commerce, error: commerceError },
     { data: offres },
+    { data: villesRows },
   ] = await Promise.all([
     admin.from('commerces').select('*').eq('id', id).single(),
     admin.from('offres')
       .select('id, titre, type_remise, valeur, statut, date_debut, date_fin, nb_bons_total, nb_bons_restants, created_at')
       .eq('commerce_id', id)
       .order('created_at', { ascending: false }),
+    admin.from('villes').select('nom').eq('active', true).order('nom'),
   ])
 
   if (commerceError || !commerce)
@@ -82,10 +84,11 @@ export async function GET(request, { params }) {
 
   return NextResponse.json({
     commerce,
-    offres:  offresWithStats,
-    stats:   { total_bons: totalBons, total_utilises: totalUtilises, taux_util: tauxUtil, nb_offres: offres?.length || 0 },
+    offres:         offresWithStats,
+    stats:          { total_bons: totalBons, total_utilises: totalUtilises, taux_util: tauxUtil, nb_offres: offres?.length || 0 },
     invoices,
-    parrainage: null,
+    parrainage:     null,
+    villes_actives: (villesRows || []).map(v => v.nom),
   })
   } catch (err) {
     console.error('[admin/commercants/[id] GET]', err)
@@ -178,6 +181,13 @@ export async function POST(request, { params }) {
       abonnement_actif:     false,
       palier:               null,
     }).eq('id', id)
+    return NextResponse.json({ success: true })
+  }
+
+  if (action === 'set_ville_rattachement') {
+    const { valeur } = body
+    const ville_rattachement = (valeur && String(valeur).trim()) ? String(valeur).trim() : null
+    await admin.from('commerces').update({ ville_rattachement }).eq('id', id)
     return NextResponse.json({ success: true })
   }
 

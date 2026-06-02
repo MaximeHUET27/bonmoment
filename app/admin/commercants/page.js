@@ -79,6 +79,9 @@ function FicheCommercant({ id, onClose, onRefresh }) {
   const [palierSelect, setPalierSelect] = useState('')
   const [joursEssai, setJoursEssai] = useState(7)
   const [ambassadeurDateFin, setAmbassadeurDateFin] = useState('')
+  const [villeRatt,          setVilleRatt]          = useState(null)
+  const [villesActives,      setVillesActives]      = useState([])
+  const [actingVilleRatt,    setActingVilleRatt]    = useState(false)
   const { showToast } = useToast()
 
   useEffect(() => {
@@ -91,7 +94,7 @@ function FicheCommercant({ id, onClose, onRefresh }) {
         if (!r.ok) return r.json().then(e => { throw new Error(e.error || `HTTP ${r.status}`) })
         return r.json()
       })
-      .then(d => { setData(d); setNotes(d.commerce?.notes_admin || ''); setLoading(false) })
+      .then(d => { setData(d); setNotes(d.commerce?.notes_admin || ''); setVilleRatt(d.commerce?.ville_rattachement ?? null); setVillesActives(d.villes_actives || []); setLoading(false) })
       .catch(err => { console.error('[FicheCommercant]', err.message); setFetchError(err.message); setLoading(false) })
   }, [id])
 
@@ -121,6 +124,27 @@ function FicheCommercant({ id, onClose, onRefresh }) {
     setActing(false)
     if (d.success) { showToast('✅ Commerçant supprimé'); onClose(); onRefresh() }
     else showToast(`⚠️ ${d.error}`)
+  }
+
+  async function handleVilleRattachement(valeur) {
+    setActingVilleRatt(true)
+    const res = await fetch(`/api/admin/commercants/${id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'set_ville_rattachement', valeur }),
+    })
+    const d = await res.json()
+    setActingVilleRatt(false)
+    if (d.success) {
+      showToast('✅ Ville de rattachement mise à jour')
+      onRefresh()
+      fetch(`/api/admin/commercants/${id}`)
+        .then(r => r.json())
+        .then(d2 => { setData(d2); setNotes(d2.commerce?.notes_admin || ''); setVilleRatt(d2.commerce?.ville_rattachement ?? null); setVillesActives(d2.villes_actives || []) })
+        .catch(() => {})
+    } else {
+      showToast(`⚠️ ${d.error || 'Erreur'}`)
+    }
   }
 
   async function saveNotes() {
@@ -191,6 +215,26 @@ function FicheCommercant({ id, onClose, onRefresh }) {
                 <span className="font-semibold text-[#0A0A0A] text-right max-w-[55%] truncate">{v}</span>
               </div>
             ) : null)}
+          </section>
+
+          {/* Ville de rattachement — visible uniquement sur cet écran admin */}
+          <section className="bg-[#F5F5F5] rounded-2xl p-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-[#FF6B00] mb-3">Ville de rattachement</p>
+            <select
+              value={villeRatt ?? ''}
+              onChange={e => handleVilleRattachement(e.target.value || null)}
+              disabled={actingVilleRatt}
+              className="w-full border-2 border-[#E0E0E0] rounded-xl px-3 py-2.5 text-sm focus:border-[#FF6B00] focus:outline-none bg-white disabled:opacity-60"
+            >
+              <option value="">— Aucune (ville réelle) —</option>
+              {villeRatt && !villesActives.includes(villeRatt) && (
+                <option value={villeRatt}>{villeRatt}</option>
+              )}
+              {villesActives.map(v => <option key={v} value={v}>{v}</option>)}
+            </select>
+            <p className="text-[10px] text-[#3D3D3D]/50 mt-2">
+              Affecte ce commerce à une ville active sans changer son adresse. Visible uniquement ici.
+            </p>
           </section>
 
           {/* Stats */}
