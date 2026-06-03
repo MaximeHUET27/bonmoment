@@ -2,20 +2,14 @@ import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { computeStripeMRR } from '@/lib/stripe/mrr'
 
 const ADMIN_EMAIL = 'bonmomentapp@gmail.com'
-const PALIER_PRIX = { essentiel: 29, pro: 49 }
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
-
-function calcMRR(commerces) {
-  return commerces
-    .filter(c => c.abonnement_actif && !c.est_ambassadeur)
-    .reduce((s, c) => s + (PALIER_PRIX[c.palier || 'essentiel'] || 29), 0)
-}
 
 function monthRange(year, month) {
   const debut = new Date(year, month, 1).toISOString()
@@ -46,6 +40,7 @@ export async function GET() {
 
   /* ── Requêtes principales ── */
   const [
+    stripeResult,
     { data: commerces },
     { data: users },
     { data: offresAll },
@@ -55,6 +50,7 @@ export async function GET() {
     { data: offresRec14j },
     { data: usersMoisPre },
   ] = await Promise.all([
+    computeStripeMRR(),
     admin.from('commerces').select('id, nom, abonnement_actif, palier, ville, created_at, date_fin_essai, resiliation_prevue, categorie_bonmoment, est_ambassadeur'),
     admin.from('users').select('id, created_at'),
     admin.from('offres').select('id, commerce_id, created_at, statut, date_debut, date_fin'),
@@ -71,19 +67,18 @@ export async function GET() {
   const rMois   = resaMois  || []
   const rPrec   = resaMoisPre || []
 
-  /* ── MRR / ARR / ARPU ── */
-  const mrr     = calcMRR(comm)
-  const arr     = mrr * 12
+  /* ── MRR / ARR / ARPU (source Stripe) ── */
+  const mrr     = stripeResult.ok ? stripeResult.mrr : null
+  const arr     = mrr != null ? mrr * 12 : null
   const actifs  = comm.filter(c => c.abonnement_actif).length
-  const arpu    = actifs > 0 ? Math.round(mrr / actifs) : 0
+  const arpu    = (mrr != null && stripeResult.payingCount > 0)
+    ? Math.round(mrr / stripeResult.payingCount) : 0
 
-  /* ── MRR mois précédent (approximation : mêmes commerçants) ── */
-  const mrrPrec = comm
-    .filter(c => c.created_at < finMoisPre)
-    .reduce((s, c) => {
-      if (!c.abonnement_actif) return s
-      return s + (PALIER_PRIX[c.palier || 'essentiel'] || 29)
-    }, 0)
+  /* ── MRR mois précédent (approximation depuis subs Stripe) ── */
+  const finMoisPreTS = new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000
+  const mrrPrec      = stripeResult.subs
+    .filter(s => s.created <= finMoisPreTS)
+    .reduce((s, sub) => s + sub.monthlyAmount, 0)
 
   /* ── Commerçants segments ── */
   const essai   = comm.filter(c => !c.abonnement_actif && c.date_fin_essai && new Date(c.date_fin_essai) > now)
@@ -133,14 +128,16 @@ export async function GET() {
   const bonsReservesMois = rMois.length
   const bonsUtilisesMois = utilisesMois
 
-  /* ── Graphique MRR 12 mois ── */
+  /* ── Graphique MRR 12 mois (source Stripe) ── */
   const graphMRR = []
   for (let i = 11; i >= 0; i--) {
-    const m = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const label = m.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' })
-    const actifsCeMois = comm.filter(c => c.created_at <= new Date(now.getFullYear(), now.getMonth() - i + 1, 1).toISOString() && c.abonnement_actif)
-    const mrrPoint = actifsCeMois.reduce((s, c) => s + (PALIER_PRIX[c.palier || 'essentiel'] || 29), 0)
-    graphMRR.push({ label, mrr: mrrPoint })
+    const m      = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const finMTS = new Date(now.getFullYear(), now.getMonth() - i + 1, 1).getTime() / 1000
+    const label  = m.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' })
+    const mrrPoint = stripeResult.subs
+      .filter(s => s.created <= finMTS)
+      .reduce((sum, s) => sum + s.monthlyAmount, 0)
+    graphMRR.push({ label, mrr: Math.round(mrrPoint * 100) / 100 })
   }
 
   /* ── Graphique inscriptions 6 mois ── */

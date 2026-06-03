@@ -1,9 +1,9 @@
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { computeStripeMRR } from '@/lib/stripe/mrr'
 
-const ADMIN_EMAIL   = 'bonmomentapp@gmail.com'
-const PALIER_PRIX   = { essentiel: 29, pro: 49 }
+const ADMIN_EMAIL = 'bonmomentapp@gmail.com'
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -28,6 +28,7 @@ export async function GET() {
 
   /* ── Requêtes parallèles ── */
   const [
+    stripeResult,
     { data: commercesData },
     { count: totalUsers },
     { count: offresActives },
@@ -39,6 +40,7 @@ export async function GET() {
     { data: resaToday },
     { data: commercesM1 },
   ] = await Promise.all([
+    computeStripeMRR(),
     admin.from('commerces').select('id, abonnement_actif, palier, ville, created_at'),
     admin.from('users').select('*', { count: 'exact', head: true }),
     admin.from('offres').select('*', { count: 'exact', head: true }).eq('statut', 'active'),
@@ -59,10 +61,8 @@ export async function GET() {
   const commercantsActifs  = commerces.filter(c => c.abonnement_actif).length
   const commercantsTotal   = commerces.length
 
-  /* ── MRR ── */
-  const mrr = commerces
-    .filter(c => c.abonnement_actif)
-    .reduce((s, c) => s + (PALIER_PRIX[c.palier || 'essentiel'] || 29), 0)
+  /* ── MRR (source Stripe) ── */
+  const mrr = stripeResult.ok ? stripeResult.mrr : null
 
   /* ── Villes actives ── */
   const villesActives = new Set(
@@ -82,8 +82,8 @@ export async function GET() {
     : 0
 
   /* ── KPIs SaaS avancés ── */
-  const arr  = mrr * 12
-  const arpu = commercantsActifs > 0 ? Math.round(mrr / commercantsActifs) : 0
+  const arr  = mrr != null ? mrr * 12 : null
+  const arpu = (mrr != null && stripeResult.payingCount > 0) ? Math.round(mrr / stripeResult.payingCount) : 0
 
   // Taux d'activation : commerçants ayant au moins 1 offre / total
   const commercantsAvecOffres = new Set((offresData || []).map(o => o.commerce_id)).size
