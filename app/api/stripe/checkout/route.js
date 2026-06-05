@@ -2,6 +2,7 @@ import { stripe } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { rateLimit } from '@/lib/rate-limit'
+import { hashPlaceId } from '@/lib/essai/placeIdHash'
 
 export const runtime = 'nodejs'
 
@@ -42,7 +43,7 @@ export async function POST(request) {
   // Vérifie que le commerce appartient bien à cet utilisateur
   const { data: commerce } = await supabase
     .from('commerces')
-    .select('id, parrain_id')
+    .select('id, parrain_id, place_id, stripe_customer_id, stripe_subscription_id')
     .eq('id', commerce_id)
     .eq('owner_id', user.id)
     .maybeSingle()
@@ -171,18 +172,55 @@ export async function POST(request) {
   const prixCentimes  = { essentiel: 2900, pro: 4900 }
   const amountOff     = discountAmountsCents[palier] ?? 1000
 
+  // ── Vérification anti-abus du mois d'essai (côté serveur) ────────────────
+  const serverFirstSubscription =
+    !commerce.stripe_customer_id && !commerce.stripe_subscription_id
+  const placeIdHash = commerce.place_id ? hashPlaceId(commerce.place_id) : null
+
+  // Purge paresseuse des entrées expirées (non bloquante)
+  try {
+    await supabaseAdmin.from('essais_consommes')
+      .delete().lt('expire_le', new Date().toISOString())
+  } catch {}
+
+  let dejaEssai = false
+  if (placeIdHash) {
+    try {
+      const { data: ledger } = await supabaseAdmin
+        .from('essais_consommes')
+        .select('place_id_hash')
+        .eq('place_id_hash', placeIdHash)
+        .maybeSingle()
+      dejaEssai = !!ledger
+    } catch (e) {
+      // FAIL-OPEN volontaire : si la lecture échoue on n'empêche pas le trial
+      // (priorité = ne jamais bloquer un vrai nouveau commerçant ; risque = trial
+      //  en trop dans un cas d'erreur rare, jugé acceptable)
+      console.error('Lecture registre essai:', e.message)
+    }
+  }
+
+  const trialEligible = serverFirstSubscription && !dejaEssai
+  // ─────────────────────────────────────────────────────────────────────────
+
   try {
     const session = await stripe.checkout.sessions.create({
       mode:                 'subscription',
       payment_method_types: ['card'],
       line_items:           [{ price: priceId, quantity: 1 }],
       subscription_data: {
-        ...(isFirstSubscription ? { trial_period_days: 30 } : {}),
+        ...(trialEligible ? { trial_period_days: 30 } : {}),
         ...(subscriptionDiscounts.length ? { discounts: subscriptionDiscounts } : {}),
         metadata: { commerce_id, palier, user_id: user.id, ...filleulMeta },
       },
       customer_email: user.email,
-      metadata:       { commerce_id, palier, user_id: user.id },
+      metadata: {
+        commerce_id,
+        palier,
+        user_id:        user.id,
+        place_id_hash:  placeIdHash || '',
+        trial_granted:  trialEligible ? 'true' : 'false',
+      },
       success_url:    `${siteUrl}/commercant/abonnement/succes?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url:     `${siteUrl}/commercant/abonnement?commerce_id=${commerce_id}`,
       locale:         'fr',

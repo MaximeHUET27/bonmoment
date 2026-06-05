@@ -2,6 +2,7 @@ import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { hashPlaceId } from '@/lib/essai/placeIdHash'
 
 const ADMIN_EMAIL = 'bonmomentapp@gmail.com'
 const admin = createClient(
@@ -188,6 +189,13 @@ export async function POST(request, { params }) {
     const { valeur } = body
     const ville_rattachement = (valeur && String(valeur).trim()) ? String(valeur).trim() : null
     await admin.from('commerces').update({ ville_rattachement }).eq('id', id)
+    return NextResponse.json({ success: true })
+  }
+
+  if (action === 'reset_essai') {
+    const { data: c } = await admin.from('commerces').select('place_id').eq('id', id).single()
+    if (!c?.place_id) return NextResponse.json({ error: 'place_id introuvable' }, { status: 400 })
+    await admin.from('essais_consommes').delete().eq('place_id_hash', hashPlaceId(c.place_id))
     return NextResponse.json({ success: true })
   }
 

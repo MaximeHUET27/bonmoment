@@ -43,6 +43,23 @@ export async function POST(request) {
           resiliation_prevue:     false,
           date_fin_abonnement:    null,
         }).eq('id', commerce_id)
+
+        if (session.metadata?.trial_granted === 'true' && session.metadata?.place_id_hash) {
+          const expire = new Date()
+          expire.setMonth(expire.getMonth() + 24)
+          try {
+            await supabaseAdmin.from('essais_consommes').upsert(
+              {
+                place_id_hash: session.metadata.place_id_hash,
+                consomme_le:   new Date().toISOString(),
+                expire_le:     expire.toISOString(),
+              },
+              { onConflict: 'place_id_hash', ignoreDuplicates: true }
+            )
+          } catch (e) {
+            console.error('Écriture registre essai:', e.message)
+          }
+        }
         break
       }
 

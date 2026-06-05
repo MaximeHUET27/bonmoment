@@ -155,6 +155,7 @@ export default function Confidentialite() {
                   ["Factures Stripe", "10 ans — obligation comptable légale"],
                   ["Logs d'activité serveur", "12 mois — suppression automatique"],
                   ["Données supprimées à la demande", "Effacement sous 30 jours ouvrés"],
+                  ["Identifiant d'établissement pseudonymisé (prévention des abus de l'essai gratuit)", "24 mois"],
                 ].map(([donnee, duree], i, arr) => (
                   <tr key={i} className={i < arr.length - 1 ? 'border-b border-[#F5F5F5]' : ''}>
                     <td className="px-4 py-2.5">{donnee}</td>
@@ -238,6 +239,9 @@ export default function Confidentialite() {
             <li><strong className="text-[#0A0A0A]">Droit à la limitation</strong> : demander la suspension temporaire d&apos;un traitement</li>
             <li><strong className="text-[#0A0A0A]">Droit de retrait du consentement</strong> : à tout moment, sans préjudice des traitements antérieurs</li>
           </ul>
+          <p className="mt-4">
+            Conformément à l&apos;article 17.3 du RGPD et à son considérant 47 (prévention de la fraude), un identifiant pseudonymisé d&apos;établissement peut être conservé jusqu&apos;à 24 mois à des fins de prévention des abus, même après l&apos;exercice du droit à l&apos;effacement ; les autres données personnelles sont, elles, bien supprimées.
+          </p>
           <p className="mt-4">Pour exercer ces droits, vous pouvez :</p>
           <ul className="list-disc pl-5 mt-2 space-y-1">
             <li>Utiliser le bouton « Supprimer mon compte » directement dans l&apos;application</li>

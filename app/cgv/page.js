@@ -82,6 +82,10 @@ export default function CGV() {
           <p className="mt-2">
             Le premier mois d&apos;abonnement est offert sur le palier choisi par le commerçant lors de son inscription. L&apos;enregistrement d&apos;un moyen de paiement valide est requis pour activer cette période. Aucun prélèvement n&apos;est effectué durant cette période.
           </p>
+          <p className="mt-2">
+            Cette période d&apos;essai est limitée à un seul mois offert par établissement, accordé une seule fois. À cette fin, un identifiant pseudonymisé de l&apos;établissement est conservé, y compris après suppression du compte, afin d&apos;empêcher l&apos;octroi répété de la période gratuite (voir notre{' '}
+            <a href="/confidentialite" className="text-[#FF6B00] hover:text-[#CC5500]">Politique de confidentialité</a>).
+          </p>
 
           <div className="mt-4 bg-[#F5F5F5] rounded-2xl px-5 py-4">
             <p className="font-black text-[#0A0A0A] mb-2">Parrainage</p>

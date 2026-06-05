@@ -184,6 +184,17 @@ function FicheCommercant({ id, onClose, onRefresh }) {
             }
             <button onClick={() => { setPalierSelect(c.palier || 'essentiel'); setModal('palier') }} className="px-3 py-1.5 text-xs font-bold bg-[#FFF0E0] text-[#FF6B00] border border-[#FFD0A0] rounded-xl hover:bg-[#FFE0C0] transition-colors">Changer palier</button>
             <button onClick={() => setModal('essai')} className="px-3 py-1.5 text-xs font-bold bg-[#F5F5F5] text-[#0A0A0A] border border-[#E0E0E0] rounded-xl hover:bg-[#E8E8E8] transition-colors">Prolonger essai</button>
+            <button
+              onClick={() => {
+                if (window.confirm('Rouvrir le mois gratuit pour cet établissement ?')) {
+                  doAction('reset_essai')
+                }
+              }}
+              disabled={acting}
+              className="px-3 py-1.5 text-xs font-bold bg-[#F5F5F5] text-[#0A0A0A] border border-[#E0E0E0] rounded-xl hover:bg-[#E8E8E8] transition-colors disabled:opacity-60"
+            >
+              Réinitialiser éligibilité gratuit
+            </button>
             <button onClick={() => { setEmailForm({ subject: '', body: '' }); setModal('email') }} className="px-3 py-1.5 text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 rounded-xl hover:bg-blue-100 transition-colors">✉️ Email</button>
             {c.est_ambassadeur
               ? <button onClick={() => setModal('unset_ambassadeur')} className="px-3 py-1.5 text-xs font-bold bg-orange-50 text-orange-700 border border-orange-200 rounded-xl hover:bg-orange-100 transition-colors">🧡 Retirer ambassadeur</button>
