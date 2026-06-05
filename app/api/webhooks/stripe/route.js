@@ -60,6 +60,25 @@ export async function POST(request) {
             console.error('Écriture registre essai:', e.message)
           }
         }
+
+        // Ex-ambassadeur : pousser la cagnotte bancarisée sur le nouveau solde Stripe
+        try {
+          const { data: c } = await supabaseAdmin
+            .from('commerces').select('cagnotte_parrainage_cents')
+            .eq('id', commerce_id).maybeSingle()
+          const cents = c?.cagnotte_parrainage_cents || 0
+          if (cents > 0 && session.customer) {
+            await stripe.customers.createBalanceTransaction(
+              session.customer,
+              { amount: -cents, currency: 'eur', description: 'Cagnotte parrainage (cumul ambassadeur)' },
+              { idempotencyKey: `cagnotte-conv-${commerce_id}` }
+            )
+            await supabaseAdmin.from('commerces')
+              .update({ cagnotte_parrainage_cents: 0 }).eq('id', commerce_id)
+          }
+        } catch (e) {
+          console.error('Push cagnotte à la conversion:', e.message)
+        }
         break
       }
 
@@ -159,30 +178,39 @@ export async function POST(request) {
         // Ignore si pas de parrainage ou déjà traité (idempotent)
         if (!filleul?.parrain_id || filleul.parrainage_parrain_recompense) break
 
-        // Récupère l'abonnement Stripe du parrain
+        // Récupère les infos du parrain
         const { data: parrain } = await supabaseAdmin
           .from('commerces')
-          .select('id, nom, stripe_subscription_id, owner_id')
+          .select('id, nom, stripe_subscription_id, stripe_customer_id, owner_id')
           .eq('id', filleul.parrain_id)
           .maybeSingle()
 
         const discountAmountsCents = { essentiel: 1000, pro: 1500 }
         const amountOff = discountAmountsCents[filleul.palier] ?? 1000
 
-        if (parrain?.stripe_subscription_id) {
+        if (parrain?.stripe_customer_id) {
+          // Parrain avec client Stripe → crédit direct du solde (NÉGATIF = crédit)
           try {
-            const coupon = await stripe.coupons.create({
-              amount_off: amountOff,
-              currency:   'eur',
-              duration:   'once',
-              name:       `Parrainage parrain — filleul ${filleul.palier}`,
-            })
-            await stripe.subscriptions.update(parrain.stripe_subscription_id, {
-              discounts: [{ coupon: coupon.id }],
-            })
+            await stripe.customers.createBalanceTransaction(
+              parrain.stripe_customer_id,
+              { amount: -amountOff, currency: 'eur',
+                description: `Cagnotte parrainage — filleul ${filleul.nom || filleul.id}` },
+              { idempotencyKey: `cagnotte-reward-${filleul.id}` }
+            )
           } catch (err) {
-            console.error('Coupon parrain:', err.message)
-            // On marque quand même pour éviter les doubles tentatives
+            console.error('Crédit cagnotte parrain (Stripe):', err.message)
+          }
+        } else {
+          // Parrain sans client Stripe (ambassadeur) → bancarisation en base
+          try {
+            const { data: p } = await supabaseAdmin
+              .from('commerces').select('cagnotte_parrainage_cents')
+              .eq('id', parrain.id).maybeSingle()
+            await supabaseAdmin.from('commerces')
+              .update({ cagnotte_parrainage_cents: (p?.cagnotte_parrainage_cents || 0) + amountOff })
+              .eq('id', parrain.id)
+          } catch (err) {
+            console.error('Bancarisation cagnotte parrain (DB):', err.message)
           }
         }
 
@@ -207,8 +235,8 @@ export async function POST(request) {
                 body: JSON.stringify({
                   sender:      { name: 'BONMOMENT', email: 'bonmomentapp@gmail.com' },
                   to:          [{ email: parrainUser.email }],
-                  subject:     `🎉 Nouveau filleul — ${montant}€ de remise sur votre prochaine mensualité !`,
-                  htmlContent: buildEmailParrain({ parrainNom: parrain.nom, filleulNom: filleul.nom, montant }),
+                  subject:     `🎉 Nouveau filleul — ${montant}€ crédités sur votre cagnotte parrainage !`,
+                  htmlContent: buildEmailParrain({ parrainNom: parrain.nom, filleulNom: filleul.nom, montant, estPayant: !!parrain?.stripe_customer_id }),
                 }),
               })
             }
@@ -239,8 +267,15 @@ export async function POST(request) {
   return Response.json({ received: true })
 }
 
-function buildEmailParrain({ parrainNom, filleulNom, montant }) {
+function buildEmailParrain({ parrainNom, filleulNom, montant, estPayant }) {
   const siteUrl = 'https://bonmoment.app'
+  const sousTitre = estPayant
+    ? `Nouveau filleul — ${montant}€ crédités sur votre cagnotte parrainage !`
+    : `Nouveau filleul — ${montant}€ crédités sur votre cagnotte parrainage !`
+  const corpsRecompense = estPayant
+    ? `${montant}€ ont été ajoutés à votre cagnotte parrainage. Ce montant sera automatiquement déduit de vos prochaines mensualités.`
+    : `${montant}€ ont été crédités sur votre cagnotte parrainage. Ils seront automatiquement déduits dès le début de votre abonnement payant.`
+
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -250,7 +285,7 @@ function buildEmailParrain({ parrainNom, filleulNom, montant }) {
 </head>
 <body style="margin:0;padding:0;background:#F5F5F5;">
 
-<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${filleulNom} a rejoint BONMOMENT — ${montant}€ de remise pour vous</div>
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${filleulNom} a rejoint BONMOMENT — ${montant}€ crédités sur votre cagnotte</div>
 
 <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#F5F5F5" style="background:#F5F5F5;padding:20px 0;">
 <tr><td align="center" style="padding:20px 16px;">
@@ -260,7 +295,7 @@ function buildEmailParrain({ parrainNom, filleulNom, montant }) {
   <tr><td style="background:#FF6B00;padding:32px 24px;text-align:center;">
     <span style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:900;color:#FFFFFF;letter-spacing:2px;">BONMOMENT</span>
     <div style="font-size:36px;line-height:1;margin:12px 0 8px;">🎉</div>
-    <div style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#FFFFFF;line-height:1.3;">Nouveau filleul — ${montant}€ de remise sur votre prochaine mensualité !</div>
+    <div style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#FFFFFF;line-height:1.3;">${sousTitre}</div>
   </td></tr>
 
   <tr><td style="padding:32px 28px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:15px;color:#3D3D3D;line-height:1.7;">
@@ -270,14 +305,11 @@ function buildEmailParrain({ parrainNom, filleulNom, montant }) {
     </p>
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#FFF0E0;border-radius:10px;margin-bottom:24px;">
       <tr><td style="padding:20px 24px;text-align:center;">
-        <p style="margin:0 0 4px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#CC5500;text-transform:uppercase;letter-spacing:1px;">Votre récompense</p>
-        <p style="margin:0;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:32px;font-weight:900;color:#FF6B00;line-height:1;">${montant}€</p>
-        <p style="margin:4px 0 0;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:13px;color:#3D3D3D;">de remise sur votre prochaine mensualité payante</p>
+        <p style="margin:0 0 4px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#CC5500;text-transform:uppercase;letter-spacing:1px;">Votre cagnotte parrainage</p>
+        <p style="margin:0;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:32px;font-weight:900;color:#FF6B00;line-height:1;">+${montant}€</p>
+        <p style="margin:8px 0 0;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:13px;color:#3D3D3D;line-height:1.5;">${corpsRecompense}</p>
       </td></tr>
     </table>
-    <p style="margin:0;font-size:14px;color:#3D3D3D;line-height:1.6;">
-      Cette remise sera automatiquement appliquée sur votre prochaine facture BONMOMENT.
-    </p>
   </td></tr>
 
   <tr><td style="padding:0 28px 32px;text-align:center;">

@@ -1033,12 +1033,21 @@ function genCodeBM() {
 }
 
 function ParrainageSection({ commerce, supabase }) {
-  const [codes,      setCodes]      = useState([])
-  const [loaded,     setLoaded]     = useState(false)
-  const [generating, setGenerating] = useState(false)
-  const [newCode,    setNewCode]    = useState(null)
-  const [limitMsg,   setLimitMsg]   = useState(null)
-  const [copiedCode, setCopiedCode] = useState(null)
+  const [codes,         setCodes]         = useState([])
+  const [loaded,        setLoaded]        = useState(false)
+  const [generating,    setGenerating]    = useState(false)
+  const [newCode,       setNewCode]       = useState(null)
+  const [limitMsg,      setLimitMsg]      = useState(null)
+  const [copiedCode,    setCopiedCode]    = useState(null)
+  const [cagnotteCents, setCagnotteCents] = useState(null)
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+  useEffect(() => {
+    fetch(`/api/commerce/cagnotte?commerce_id=${commerce.id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d && typeof d.cents === 'number') setCagnotteCents(d.cents) })
+      .catch(() => {})
+  }, [commerce.id])
 
   async function handleCopy(code) {
     try {
@@ -1135,6 +1144,14 @@ function ParrainageSection({ commerce, supabase }) {
           Ce mois : {loaded ? countMois : '…'}/3
         </span>
       </div>
+
+      {cagnotteCents !== null && (
+        <div className="bg-[#FFF0E0] border border-[#FF6B00]/20 rounded-2xl px-5 py-4 flex flex-col gap-1">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00]">Cagnotte parrainage</p>
+          <p className="text-3xl font-black text-[#FF6B00] leading-none">{(cagnotteCents / 100).toFixed(2)} €</p>
+          <p className="text-[11px] text-[#3D3D3D]/60 mt-0.5">Déduite automatiquement de vos prochaines mensualités.</p>
+        </div>
+      )}
 
       <p className="text-xs text-[#3D3D3D]/60 -mt-2">
         Génère un code à partager à un autre commerçant. Limite : 3 codes par mois, valables 3 mois.

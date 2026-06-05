@@ -90,21 +90,17 @@ export default function CGV() {
           <div className="mt-4 bg-[#F5F5F5] rounded-2xl px-5 py-4">
             <p className="font-black text-[#0A0A0A] mb-2">Parrainage</p>
             <p className="mb-3">
-              Tout commerçant actif dispose d&apos;un code de parrainage unique et permanent accessible depuis son espace « Mon commerce ». Ce dispositif fonctionne selon les règles suivantes :
+              Chaque commerçant peut générer jusqu&apos;à 3 codes de parrainage par mois calendaire depuis son espace « Mon commerce ». Chaque code est à usage unique et valable 3 mois.
             </p>
-            <p className="mb-2">
-              Lorsqu&apos;un nouveau commerçant s&apos;inscrit en utilisant un code de parrainage valide, le parrain et le filleul bénéficient chacun d&apos;une remise appliquée automatiquement lors du premier prélèvement Stripe, dont le montant dépend du palier souscrit par le filleul :
+            <p className="mb-3">
+              Lorsqu&apos;un nouveau commerçant s&apos;inscrit avec un code valide et souscrit un abonnement payant : le filleul bénéficie d&apos;une remise immédiate sur sa première facture (10 € palier Essentiel, 15 € palier Pro) ; le parrain reçoit le même montant, crédité sur sa cagnotte de parrainage.
             </p>
-            <ul className="list-disc pl-5 space-y-1 mb-3">
-              <li>Palier Essentiel (29 €/mois) : remise de <strong className="text-[#0A0A0A]">10 €</strong> pour le parrain et le filleul</li>
-              <li>Palier Pro (49 €/mois) : remise de <strong className="text-[#0A0A0A]">15 €</strong> pour le parrain et le filleul</li>
-            </ul>
             <ul className="list-disc pl-5 space-y-1 text-[#3D3D3D]/80">
-              <li>Un parrain ne peut bénéficier de cette remise que pour 3 parrainages maximum par mois calendaire — au-delà, le code reste actif mais n&apos;ouvre plus droit à la remise pour le mois en cours</li>
-              <li>Les remises de parrainage ne sont pas cumulables : une seule remise peut être appliquée par facture mensuelle</li>
-              <li>Chaque code de parrainage a une durée de validité de 3 mois à compter de sa date de génération. À expiration, un nouveau code est automatiquement régénéré et l&apos;ancien ne peut plus être utilisé</li>
-              <li>La remise est non remboursable, non reportable et ne peut pas être convertie en avoir</li>
-              <li>BONMOMENT se réserve le droit de suspendre le bénéfice du parrainage en cas d&apos;usage frauduleux détecté (auto-parrainage, faux comptes, tentatives de contournement des limites mensuelles)</li>
+              <li>La cagnotte de parrainage est cumulable sans limite : chaque nouveau filleul payant l&apos;augmente.</li>
+              <li>Son montant est déduit automatiquement des prochaines mensualités du parrain, avant tout prélèvement sur la carte bancaire.</li>
+              <li>La cagnotte n&apos;expire pas. Elle est non remboursable et ne peut être convertie en avoir ou en espèces.</li>
+              <li>La récompense du parrain est créditée uniquement après le premier paiement effectif du filleul.</li>
+              <li>BONMOMENT se réserve le droit de suspendre le parrainage en cas d&apos;usage frauduleux (auto-parrainage, faux comptes, contournement des limites).</li>
             </ul>
           </div>
 
