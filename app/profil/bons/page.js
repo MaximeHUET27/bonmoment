@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/app/context/AuthContext'
 import FullScreenBon from '@/app/components/FullScreenBon'
 import CommerceInfoCard from '@/app/components/CommerceInfoCard'
-import { formatDebut } from '@/lib/offreStatus'
+import { formatFenetreOffre } from '@/lib/offreStatus'
 import { getFullOffreTitle } from '@/lib/offreTitle'
 import { isMairieAssoEnabled } from '@/lib/featureFlags'
 
@@ -99,8 +99,8 @@ function BonActifCard({ resa, supabase, onCancelled }) {
 
       {/* Timer / statut temporel */}
       {programmee ? (
-        <div className="inline-flex items-center gap-1.5 bg-[#FFF0E0] text-[#FF6B00] text-sm font-bold px-3 py-1.5 rounded-full self-start">
-          📅 Actif le {formatDebut(resa.offres.date_debut)}
+        <div className="bg-[#FFF0E0] text-[#FF6B00] text-sm font-bold px-3 py-2 rounded-xl self-start">
+          📅 {formatFenetreOffre(resa.offres.date_debut, resa.offres.date_fin).long}
         </div>
       ) : timeLeft ? (
         <p className={`text-xl font-black tabular-nums tracking-tight ${timerRed ? 'text-red-500' : 'text-[#0A0A0A]'}`}>

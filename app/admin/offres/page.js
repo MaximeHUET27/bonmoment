@@ -13,6 +13,12 @@ import { getFullOffreTitle } from '@/lib/offreTitle'
 
 function fmtDate(d)    { return d ? new Date(d).toLocaleDateString('fr-FR') : '—' }
 function fmtDateTime(d){ return d ? new Date(d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—' }
+function toDatetimeLocal(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const p = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
+}
 function Sk({ className = 'h-8' }) {
   return <div className={`bg-[#E0E0E0] rounded-xl animate-pulse ${className}`} />
 }
@@ -67,6 +73,9 @@ function FicheOffre({ id, onClose, onRefresh }) {
   const [modal,   setModal]   = useState(null)
   const [acting,  setActing]  = useState(false)
   const [confirmText, setConfirmText] = useState('')
+  const [editOpen,    setEditOpen]    = useState(false)
+  const [editDateFin, setEditDateFin] = useState('')
+  const [editBons,    setEditBons]    = useState('')
   const { showToast } = useToast()
 
   useEffect(() => {
@@ -75,7 +84,14 @@ function FicheOffre({ id, onClose, onRefresh }) {
     setLoading(true)
     fetch(`/api/admin/offres/${id}`)
       .then(r => r.json())
-      .then(d => { setData(d); setLoading(false) })
+      .then(d => {
+        setData(d)
+        if (d.offre) {
+          setEditDateFin(toDatetimeLocal(d.offre.date_fin))
+          setEditBons(d.offre.nb_bons_restants === 9999 ? '' : String(d.offre.nb_bons_restants ?? ''))
+        }
+        setLoading(false)
+      })
       .catch(() => setLoading(false))
   }, [id])
 
@@ -102,6 +118,29 @@ function FicheOffre({ id, onClose, onRefresh }) {
     setActing(false)
     if (d.success) { showToast('✅ Offre supprimée'); onClose(); onRefresh() }
     else showToast(`⚠️ ${d.error}`)
+  }
+
+  async function doModifier() {
+    // Convertir en ISO dans le navigateur (timezone-aware) avant envoi au serveur (Vercel = UTC)
+    const body = {
+      action: 'modifier',
+      date_fin: editDateFin ? new Date(editDateFin).toISOString() : '',
+      nb_bons_restants: editBons,
+    }
+    setActing(true)
+    const res = await fetch(`/api/admin/offres/${id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    const d = await res.json()
+    setActing(false)
+    if (d.success) {
+      showToast('✅ Offre modifiée')
+      setEditOpen(false)
+      fetch(`/api/admin/offres/${id}`).then(r => r.json()).then(d2 => { setData(d2); onRefresh() })
+    } else {
+      showToast(`⚠️ ${d.error || 'Erreur'}`)
+    }
   }
 
   const o = data?.offre
@@ -135,6 +174,49 @@ function FicheOffre({ id, onClose, onRefresh }) {
             </>}
             <button onClick={() => { setConfirmText(''); setModal('delete') }} className="px-3 py-1.5 text-xs font-bold bg-red-600 text-white rounded-xl">Supprimer</button>
           </div>
+
+          {/* Modifier */}
+          <section className="bg-[#F5F5F5] rounded-2xl overflow-hidden">
+            <button
+              className="w-full flex items-center justify-between px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#FF6B00]"
+              onClick={() => setEditOpen(v => !v)}
+            >
+              Modifier l&apos;offre
+              <span className="text-xs">{editOpen ? '▲' : '▼'}</span>
+            </button>
+            {editOpen && (
+              <div className="px-4 pb-4 flex flex-col gap-3">
+                <div>
+                  <label className="text-xs text-[#3D3D3D]/60 block mb-1">Date de fin</label>
+                  <input
+                    type="datetime-local"
+                    value={editDateFin}
+                    onChange={e => setEditDateFin(e.target.value)}
+                    className="w-full border-2 border-[#E0E0E0] rounded-xl px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none bg-white"
+                  />
+                </div>
+                {o.nb_bons_total !== 9999 && (
+                  <div>
+                    <label className="text-xs text-[#3D3D3D]/60 block mb-1">Bons restants</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={editBons}
+                      onChange={e => setEditBons(e.target.value)}
+                      className="w-full border-2 border-[#E0E0E0] rounded-xl px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none bg-white"
+                    />
+                  </div>
+                )}
+                <button
+                  onClick={doModifier}
+                  disabled={acting}
+                  className="w-full bg-[#FF6B00] text-white font-bold text-sm py-2.5 rounded-xl disabled:opacity-60 min-h-[44px]"
+                >
+                  {acting ? '…' : 'Sauvegarder'}
+                </button>
+              </div>
+            )}
+          </section>
 
           {/* Stats */}
           <section className="grid grid-cols-4 gap-2">

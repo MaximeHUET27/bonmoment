@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/app/context/AuthContext'
-import { formatDebut } from '@/lib/offreStatus'
+import { formatFenetreOffre } from '@/lib/offreStatus'
 
 const PENDING_KEY = 'bonmoment_pending_reservation'
 import AuthBottomSheet from '@/app/components/AuthBottomSheet'
@@ -116,11 +116,6 @@ function formatBadge(offre) {
 }
 
 /* ── Composant ───────────────────────────────────────────────────────────── */
-
-function formatDateCourt(iso) {
-  if (!iso) return ''
-  return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
-}
 
 export default function OffreCard({ offre, userReservation }) {
   const timeLeft   = useCountdown(offre.date_fin)
@@ -344,14 +339,14 @@ export default function OffreCard({ offre, userReservation }) {
                 <>
                   <span className="text-[10px] shrink-0">📅</span>
                   <span className="text-[10px] font-semibold text-[#FF6B00] truncate">
-                    {formatDateCourt(offre.date_debut)} → {formatDateCourt(offre.date_fin)}
+                    {formatFenetreOffre(offre.date_debut, offre.date_fin).court}
                   </span>
                 </>
               ) : programmee ? (
                 <>
                   <span className="text-[10px] shrink-0">📅</span>
                   <span className="text-[10px] font-semibold text-[#FF6B00] truncate">
-                    Début le {formatDebut(offre.date_debut)}
+                    {formatFenetreOffre(offre.date_debut, offre.date_fin).court}
                   </span>
                 </>
               ) : (

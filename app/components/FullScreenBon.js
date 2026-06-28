@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import ShareButton from '@/app/components/ShareButton'
 import CommerceInfoCard from '@/app/components/CommerceInfoCard'
 import { useAuth } from '@/app/context/AuthContext'
-import { formatDebut } from '@/lib/offreStatus'
+import { formatFenetreOffre } from '@/lib/offreStatus'
 import { getFullOffreTitle } from '@/lib/offreTitle'
 import { toSlug } from '@/lib/utils'
 import { useToast } from '@/app/components/Toast'
@@ -212,8 +212,8 @@ export default function FullScreenBon({ reservation, offre, commerce, onClose })
         <div className="text-center">
           {programmee ? (
             <>
-              <p className="text-xl font-black text-[#FF6B00]">📅 Valable à partir du</p>
-              <p className="text-base font-bold text-[#FF6B00] mt-1">{formatDebut(offre.date_debut)}</p>
+              <p className="text-xl font-black text-[#FF6B00]">📅 Valable</p>
+              <p className="text-base font-bold text-[#FF6B00] mt-1">{formatFenetreOffre(offre.date_debut, offre.date_fin).long}</p>
               <p className="text-[11px] text-[#FF6B00]/70 mt-1 font-medium">Ce bon n&apos;est pas encore actif</p>
             </>
           ) : timeLeft ? (

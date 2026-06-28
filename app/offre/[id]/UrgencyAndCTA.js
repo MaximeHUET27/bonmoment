@@ -8,7 +8,7 @@ import FullScreenBon from '@/app/components/FullScreenBon'
 import FavoriButton from '@/app/components/FavoriButton'
 import { useReservation } from '@/app/hooks/useReservation'
 import { useFavoris } from '@/app/context/FavorisContext'
-import { formatDebut } from '@/lib/offreStatus'
+import { formatFenetreOffre } from '@/lib/offreStatus'
 import { useToast } from '@/app/components/Toast'
 import { triggerConfetti } from '@/lib/confetti'
 
@@ -218,7 +218,7 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
           <div className="flex items-center gap-2 w-full">
             <span className="text-lg">📅</span>
             <span className="text-sm font-bold text-[#FF6B00]">
-              Cette offre commence le {formatDebut(offre.date_debut)}
+              {formatFenetreOffre(offre.date_debut, offre.date_fin).long}
             </span>
           </div>
         ) : (
@@ -229,13 +229,18 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
               {expired ? (
                 <span className="text-sm font-bold text-red-500">Trop tard !</span>
               ) : (
-                <span className={`text-base font-black tabular-nums tracking-tight ${
-                  urgent && !fini ? 'text-white' : 'text-[#0A0A0A]'
-                }`}>
-                  {String(timeLeft.h).padStart(2, '0')}h{' '}
-                  {String(timeLeft.m).padStart(2, '0')}m{' '}
-                  {String(timeLeft.s).padStart(2, '0')}s
-                </span>
+                <div>
+                  <span className={`text-base font-black tabular-nums tracking-tight ${
+                    urgent && !fini ? 'text-white' : 'text-[#0A0A0A]'
+                  }`}>
+                    {String(timeLeft.h).padStart(2, '0')}h{' '}
+                    {String(timeLeft.m).padStart(2, '0')}m{' '}
+                    {String(timeLeft.s).padStart(2, '0')}s
+                  </span>
+                  <p className={`text-[10px] font-medium leading-tight ${urgent && !fini ? 'text-white/70' : 'text-[#3D3D3D]/50'}`}>
+                    {formatFenetreOffre(offre.date_debut, offre.date_fin).court}
+                  </p>
+                </div>
               )}
             </div>
 

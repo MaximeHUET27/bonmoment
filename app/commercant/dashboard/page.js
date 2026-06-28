@@ -13,6 +13,7 @@ import AuthButton from '@/app/components/AuthButton'
 import DeleteCommerceButton from '@/app/commercant/[id]/DeleteCommerceButton'
 import DashboardFideliteSection from '@/app/components/fidelite/DashboardFideliteSection'
 import { getOffreTitle, getFullOffreTitle } from '@/lib/offreTitle'
+import { formatFenetreOffre } from '@/lib/offreStatus'
 import dynamic from 'next/dynamic'
 import { isMairieAssoEnabled } from '@/lib/featureFlags'
 import GestionAdherents from '@/app/components/mairie-asso/GestionAdherents'
@@ -1484,7 +1485,6 @@ function OffresSection({ offresActives, offresExpirees, commerce, supabase, nbPa
 function OffreActiveCard({ offre, commerce, confirmId, deletingId, onConfirm, onCancel, onDelete }) {
   const isConfirming = confirmId === offre.id
   const isDeleting   = deletingId === offre.id
-  const dateFin      = new Date(offre.date_fin)
   const nbUtilises   = offre.nb_bons_total != null && offre.nb_bons_restants != null
     ? offre.nb_bons_total - offre.nb_bons_restants
     : null
@@ -1519,7 +1519,7 @@ function OffreActiveCard({ offre, commerce, confirmId, deletingId, onConfirm, on
       {/* Détails */}
       <div className="flex flex-wrap gap-x-4 gap-y-1">
         <p className="text-[11px] text-[#3D3D3D]/60">
-          ⏱ Jusqu&apos;au {dateFin.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} à {dateFin.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+          📅 {formatFenetreOffre(offre.date_debut, offre.date_fin).court}
         </p>
         {offre.nb_bons_total != null ? (
           <p className="text-[11px] text-[#3D3D3D]/60">
@@ -1599,9 +1599,9 @@ function OffreExpireCard({ offre, commerce, stats, nbParticipants, gagnantUser, 
         <p className="text-sm font-bold text-[#0A0A0A] leading-tight">{getOffreTitle(offre)}</p>
       </div>
 
-      {/* Date de fin */}
+      {/* Fenêtre temporelle */}
       <p className="text-[11px] text-[#3D3D3D]/50">
-        Terminée le {new Date(offre.date_fin).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+        📅 {formatFenetreOffre(offre.date_debut, offre.date_fin).court}
       </p>
 
       {/* Bilan réservations */}
