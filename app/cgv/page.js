@@ -31,7 +31,7 @@ export default function CGV() {
             <tbody>
               <Tr label="Vendeur" value="Manon LISSE — Micro-entrepreneur" />
               <Tr label="Adresse" value="7 rue du Chesne, 27190 Nogent-le-Sec" />
-              <Tr label="Email" value={<a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a>} />
+              <Tr label="Email" value={<a href="mailto:contact@bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">contact@bonmoment.app</a>} />
               <Tr label="Site" value={<a href="https://bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">bonmoment.app</a>} />
               <Tr label="SIRET" value="10314509000017" />
               <Tr label="Régime TVA" value="TVA non applicable, article 293 B du CGI" last />
@@ -246,7 +246,7 @@ export default function CGV() {
           <SectionTitle num="13">Loi applicable — Juridiction — Médiation</SectionTitle>
           <p className="mt-3">
             Les présentes CGV sont soumises au droit français. En cas de litige, une résolution amiable sera recherchée en priorité (contact :{' '}
-            <a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a>). À défaut, le tribunal compétent sera celui du ressort d&apos;Évreux (27).
+            <a href="mailto:contact@bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">contact@bonmoment.app</a>). À défaut, le tribunal compétent sera celui du ressort d&apos;Évreux (27).
           </p>
           <p className="mt-3">
             Conformément à l&apos;article L.612-1 du Code de la consommation, tout professionnel peut également recourir à un médiateur. Médiateur compétent pour les auto-entrepreneurs :{" "}
@@ -259,7 +259,7 @@ export default function CGV() {
           <SectionTitle num="14">Contact</SectionTitle>
           <p className="mt-3">
             Pour toute question relative aux présentes CGV :{' '}
-            <a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a>
+            <a href="mailto:contact@bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">contact@bonmoment.app</a>
           </p>
         </div>
 

@@ -35,7 +35,7 @@ export default function CGU() {
               <Tr label="Éditeur" value="Manon LISSE — Micro-entrepreneur" />
               <Tr label="SIRET" value="10314509000017" />
               <Tr label="Adresse" value="7 rue du Chesne, 27190 Nogent-le-Sec" />
-              <Tr label="Email" value={<a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a>} />
+              <Tr label="Email" value={<a href="mailto:contact@bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">contact@bonmoment.app</a>} />
               <Tr label="Site" value={<a href="https://bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">bonmoment.app</a>} last />
             </tbody>
           </table>
@@ -183,7 +183,7 @@ export default function CGU() {
           <SectionTitle num="10">Contact</SectionTitle>
           <p className="mt-3">
             Pour toute question relative aux présentes CGU :{' '}
-            <a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a>
+            <a href="mailto:contact@bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">contact@bonmoment.app</a>
           </p>
         </div>
 

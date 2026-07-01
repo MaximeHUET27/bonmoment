@@ -42,10 +42,10 @@ export default function ContactPage() {
         setMessage('')
         setErrors({})
       } else {
-        setToast('❌ Erreur lors de l\'envoi. Écris directement à bonmomentapp@gmail.com')
+        setToast('❌ Erreur lors de l\'envoi. Écris directement à contact@bonmoment.app')
       }
     } catch {
-      setToast('❌ Erreur réseau. Écris directement à bonmomentapp@gmail.com')
+      setToast('❌ Erreur réseau. Écris directement à contact@bonmoment.app')
     } finally {
       setSending(false)
       setTimeout(() => setToast(null), 6000)
@@ -77,8 +77,8 @@ export default function ContactPage() {
         <div className="bg-white rounded-3xl px-6 py-5 shadow-sm flex flex-col gap-3">
           <div className="flex items-center gap-3">
             <span className="text-xl">📧</span>
-            <a href="mailto:bonmomentapp@gmail.com" className="text-sm font-bold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors">
-              bonmomentapp@gmail.com
+            <a href="mailto:contact@bonmoment.app" className="text-sm font-bold text-[#0A0A0A] hover:text-[#FF6B00] transition-colors">
+              contact@bonmoment.app
             </a>
           </div>
           <div className="flex items-center gap-3">

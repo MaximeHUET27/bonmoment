@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { hashPlaceId } from '@/lib/essai/placeIdHash'
+import { BREVO_SENDER, BREVO_REPLY_TO } from '@/lib/brevo/sender'
 
 const ADMIN_EMAIL = 'bonmomentapp@gmail.com'
 const admin = createClient(
@@ -151,8 +152,9 @@ export async function POST(request, { params }) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        sender:   { name: 'BONMOMENT', email: 'bonmomentapp@gmail.com' },
+        sender:   BREVO_SENDER,
         to:       [{ email: c.email, name: c.nom || '' }],
+        replyTo:  BREVO_REPLY_TO,
         subject,
         htmlContent: `<p>${emailBody.replace(/\n/g, '<br>')}</p>`,
       }),

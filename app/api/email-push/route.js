@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit } from '@/lib/rate-limit'
+import { BREVO_SENDER, BREVO_REPLY_TO } from '@/lib/brevo/sender'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -93,6 +94,8 @@ export async function POST(req) {
   for (const dest of destinataires) {
     try {
       const prenom = dest.nom?.split(' ')[0] || 'Habitant'
+      const titrePropre = (offre_titre || '').replace(/\s+/g, ' ').trim()
+      const titreCourt  = titrePropre.length > 55 ? titrePropre.slice(0, 55).trimEnd() + '…' : titrePropre
 
       await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
@@ -101,9 +104,12 @@ export async function POST(req) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          sender:      { name: 'BONMOMENT', email: 'bonmomentapp@gmail.com' },
+          sender:      BREVO_SENDER,
           to:          [{ email: dest.email, name: prenom }],
-          subject:     `🔥 ${commerce_nom} vient de publier une offre !`,
+          replyTo:     BREVO_REPLY_TO,
+          subject:     titreCourt
+            ? `🔥 ${commerce_nom} : ${titreCourt} !`
+            : `🔥 ${commerce_nom} vient de publier une offre !`,
           htmlContent: `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -148,7 +154,7 @@ export async function POST(req) {
 
   <tr><td style="padding:20px 28px;text-align:center;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:12px;color:#999999;line-height:1.6;">
     L'équipe BONMOMENT<br>
-    <a href="mailto:bonmomentapp@gmail.com" style="color:#999999;text-decoration:none;">bonmomentapp@gmail.com</a><br><br>
+    <a href="mailto:contact@bonmoment.app" style="color:#999999;text-decoration:none;">contact@bonmoment.app</a><br><br>
     <span style="font-size:11px;">Tu reçois cet email car tu suis <strong>${commerce_nom}</strong> ou la ville de <strong>${commerce_ville}</strong> sur BONMOMENT.</span><br><br>
     <a href="https://bonmoment.app/profil" style="color:#999999;text-decoration:underline;font-size:11px;">Gérer mes notifications</a>
     &nbsp;·&nbsp;

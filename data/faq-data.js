@@ -44,7 +44,7 @@ const FAQ = [
       },
       {
         q: "Je n'arrive pas à me connecter",
-        r: "Vérifie que tu utilises le même compte qu'à ta première connexion. Rafraîchis la page et vide le cache. Si ça persiste, écris-nous : bonmomentapp@gmail.com",
+        r: "Vérifie que tu utilises le même compte qu'à ta première connexion. Rafraîchis la page et vide le cache. Si ça persiste, écris-nous : contact@bonmoment.app",
       },
       {
         q: 'Comment supprimer mon compte ?',
@@ -239,7 +239,7 @@ const FAQ = [
       },
       {
         q: 'Comment exercer mes droits RGPD ?',
-        r: "Écris à bonmomentapp@gmail.com. Réponse sous 30 jours. Tu peux aussi supprimer ton compte directement depuis ton profil.",
+        r: "Écris à contact@bonmoment.app. Réponse sous 30 jours. Tu peux aussi supprimer ton compte directement depuis ton profil.",
       },
     ],
   },

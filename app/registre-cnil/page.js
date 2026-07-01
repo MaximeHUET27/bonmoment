@@ -37,7 +37,7 @@ export default function RegistreCNIL() {
               <Tr label="Responsable de traitement" value="Manon LISSE" />
               <Tr label="Qualité" value="Auto-entrepreneur — Éditeur de la plateforme bonmoment.app" />
               <Tr label="Adresse" value="7 rue du Chesne, 27190 Nogent-le-Sec" />
-              <Tr label="Email DPO / Contact RGPD" value={<a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a>} />
+              <Tr label="Email DPO / Contact RGPD" value={<a href="mailto:contact@bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">contact@bonmoment.app</a>} />
               <Tr label="Date de création du registre" value="Mars 2026" />
               <Tr label="Dernière mise à jour" value="Mars 2026" last />
             </tbody>

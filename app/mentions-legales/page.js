@@ -32,7 +32,7 @@ export default function MentionsLegales() {
               <Tr label="Nom et prénom" value="Manon LISSE" />
               <Tr label="Statut juridique" value="Auto-entrepreneur (Entrepreneur Individuel)" />
               <Tr label="Adresse postale" value="7 rue du Chesne, 27190 Nogent-le-Sec" />
-<Tr label="Email de contact" value={<a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a>} />
+<Tr label="Email de contact" value={<a href="mailto:contact@bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">contact@bonmoment.app</a>} />
               <Tr label="Site web" value={<a href="https://bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">bonmoment.app</a>} />
               <Tr label="SIRET" value="10314509000017" />
               <Tr label="Régime TVA" value="TVA non applicable, article 293 B du CGI" />
@@ -84,7 +84,7 @@ export default function MentionsLegales() {
             <Link href="/confidentialite" className="text-[#FF6B00] hover:text-[#CC5500] underline underline-offset-2">Politique de Confidentialité</Link>{' '}
             disponible sur le site. Conformément au Règlement Général sur la Protection des Données (RGPD — Règlement UE 2016/679) et à la loi Informatique et Libertés modifiée, vous disposez d&apos;un droit d&apos;accès, de rectification, d&apos;effacement, de portabilité et d&apos;opposition à vos données.
           </p>
-          <p className="mt-3">Pour exercer ces droits, contactez : <a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a></p>
+          <p className="mt-3">Pour exercer ces droits, contactez : <a href="mailto:contact@bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">contact@bonmoment.app</a></p>
           <p className="mt-2">Vous pouvez également adresser une réclamation à la CNIL : <a href="https://cnil.fr" target="_blank" rel="noopener noreferrer" className="text-[#FF6B00] hover:text-[#CC5500]">cnil.fr</a></p>
         </div>
 
@@ -118,7 +118,7 @@ export default function MentionsLegales() {
           <SectionTitle num="9">Contact</SectionTitle>
           <p className="mt-3">
             Pour toute question relative aux présentes mentions légales, vous pouvez nous contacter à l&apos;adresse suivante :{" "}
-            <a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a>
+            <a href="mailto:contact@bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">contact@bonmoment.app</a>
           </p>
         </div>
 

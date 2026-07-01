@@ -32,7 +32,7 @@ export default function Confidentialite() {
               <Tr label="Responsable de traitement" value="Manon LISSE" />
               <Tr label="SIRET" value="10314509000017" />
               <Tr label="Adresse" value="7 rue du Chesne, 27190 Nogent-le-Sec" />
-              <Tr label="Email DPO / Contact RGPD" value={<a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a>} />
+              <Tr label="Email DPO / Contact RGPD" value={<a href="mailto:contact@bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">contact@bonmoment.app</a>} />
               <Tr label="Site web" value={<a href="https://bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">bonmoment.app</a>} last />
             </tbody>
           </table>
@@ -245,7 +245,7 @@ export default function Confidentialite() {
           <p className="mt-4">Pour exercer ces droits, vous pouvez :</p>
           <ul className="list-disc pl-5 mt-2 space-y-1">
             <li>Utiliser le bouton « Supprimer mon compte » directement dans l&apos;application</li>
-            <li>Envoyer un email à : <a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a> — Réponse sous 30 jours ouvrés</li>
+            <li>Envoyer un email à : <a href="mailto:contact@bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">contact@bonmoment.app</a> — Réponse sous 30 jours ouvrés</li>
             <li>Adresser une réclamation à la CNIL : <a href="https://cnil.fr" target="_blank" rel="noopener noreferrer" className="text-[#FF6B00] hover:text-[#CC5500]">cnil.fr</a> / 3 Place de Fontenoy, 75007 Paris</li>
           </ul>
         </div>
@@ -344,7 +344,7 @@ export default function Confidentialite() {
           <SectionTitle num="12">Contact</SectionTitle>
           <p className="mt-3">
             Pour toute question relative à la présente politique de confidentialité :{' '}
-            <a href="mailto:bonmomentapp@gmail.com" className="text-[#FF6B00] hover:text-[#CC5500]">bonmomentapp@gmail.com</a>
+            <a href="mailto:contact@bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">contact@bonmoment.app</a>
           </p>
         </div>
 

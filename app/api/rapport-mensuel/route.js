@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import jwt from 'jsonwebtoken'
+import { BREVO_SENDER, BREVO_REPLY_TO } from '@/lib/brevo/sender'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -206,7 +207,7 @@ function buildEmailHtml({ commerce, kpis, moisLabel, anneeLabel, unsubscribeUrl 
 
   <tr><td style="padding:20px 28px;text-align:center;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:12px;color:#999999;line-height:1.6;">
     L'équipe BONMOMENT<br>
-    <a href="mailto:bonmomentapp@gmail.com" style="color:#999999;text-decoration:none;">bonmomentapp@gmail.com</a><br><br>
+    <a href="mailto:contact@bonmoment.app" style="color:#999999;text-decoration:none;">contact@bonmoment.app</a><br><br>
     Tu reçois ce rapport car tu es commerçant sur BONMOMENT.<br><br>
     <a href="${unsubscribeUrl}" style="color:#999999;text-decoration:underline;font-size:11px;">Se désinscrire de ces rapports</a>
   </td></tr>
@@ -227,8 +228,9 @@ async function envoyerEmail(destinataire, sujet, htmlContent) {
       'api-key': BREVO_API_KEY,
     },
     body: JSON.stringify({
-      sender: { name: 'BONMOMENT', email: 'bonmomentapp@gmail.com' },
+      sender: BREVO_SENDER,
       to: [{ email: destinataire }],
+      replyTo: BREVO_REPLY_TO,
       subject: sujet,
       htmlContent,
     }),

@@ -8,6 +8,7 @@
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { BREVO_SENDER, BREVO_REPLY_TO } from '@/lib/brevo/sender'
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -55,13 +56,15 @@ export async function POST(request) {
   const adresse  = [commerce.adresse, commerce.ville].filter(Boolean).join(', ')
 
   /* ── Envoi Brevo ── */
+  const titreGagnant = (offre.titre || '').replace(/\s+/g, ' ').trim()
   const res = await fetch('https://api.brevo.com/v3/smtp/email', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json', 'api-key': process.env.BREVO_API_KEY },
     body: JSON.stringify({
-      sender:      { name: 'BONMOMENT', email: 'bonmomentapp@gmail.com' },
+      sender:      BREVO_SENDER,
       to:          [{ email: gagnantUser.email }],
-      subject:     `🎉 Tu as gagné "${offre.titre}" chez ${commerce.nom} !`,
+      replyTo:     BREVO_REPLY_TO,
+      subject:     `🎉 Tu as gagné "${titreGagnant}" chez ${commerce.nom} !`,
       htmlContent: buildEmailGagnant({ prenom, offre, commerce, adresse }),
     }),
   })
@@ -134,7 +137,7 @@ function buildEmailGagnant({ prenom, offre, commerce, adresse }) {
 
   <tr><td style="padding:20px 28px;text-align:center;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:12px;color:#999999;line-height:1.6;">
     L'équipe BONMOMENT<br>
-    <a href="mailto:bonmomentapp@gmail.com" style="color:#999999;text-decoration:none;">bonmomentapp@gmail.com</a>
+    <a href="mailto:contact@bonmoment.app" style="color:#999999;text-decoration:none;">contact@bonmoment.app</a>
   </td></tr>
 
 </table>

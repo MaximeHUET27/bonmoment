@@ -1,5 +1,6 @@
 import { stripe } from '@/lib/stripe'
 import { createClient } from '@supabase/supabase-js'
+import { BREVO_SENDER, BREVO_REPLY_TO } from '@/lib/brevo/sender'
 
 export const runtime = 'nodejs'
 export const dynamic  = 'force-dynamic'
@@ -233,8 +234,9 @@ export async function POST(request) {
                   'api-key':       process.env.BREVO_API_KEY,
                 },
                 body: JSON.stringify({
-                  sender:      { name: 'BONMOMENT', email: 'bonmomentapp@gmail.com' },
+                  sender:      BREVO_SENDER,
                   to:          [{ email: parrainUser.email }],
+                  replyTo:     BREVO_REPLY_TO,
                   subject:     `🎉 Nouveau filleul — ${montant}€ crédités sur votre cagnotte parrainage !`,
                   htmlContent: buildEmailParrain({ parrainNom: parrain.nom, filleulNom: filleul.nom, montant, estPayant: !!parrain?.stripe_customer_id }),
                 }),
@@ -325,7 +327,7 @@ function buildEmailParrain({ parrainNom, filleulNom, montant, estPayant }) {
 
   <tr><td style="padding:20px 28px;text-align:center;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:12px;color:#999999;line-height:1.6;">
     L'équipe BONMOMENT<br>
-    <a href="mailto:bonmomentapp@gmail.com" style="color:#999999;text-decoration:none;">bonmomentapp@gmail.com</a>
+    <a href="mailto:contact@bonmoment.app" style="color:#999999;text-decoration:none;">contact@bonmoment.app</a>
   </td></tr>
 
 </table>

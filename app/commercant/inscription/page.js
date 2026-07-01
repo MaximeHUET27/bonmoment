@@ -546,8 +546,8 @@ export default function InscriptionCommercant() {
                   <p className="text-xs text-red-700 font-semibold leading-relaxed">
                     Ce commerce est déjà inscrit sur BONMOMENT. Si tu en es le propriétaire,
                     contacte-nous à{' '}
-                    <a href="mailto:bonmomentapp@gmail.com" className="underline">
-                      bonmomentapp@gmail.com
+                    <a href="mailto:contact@bonmoment.app" className="underline">
+                      contact@bonmoment.app
                     </a>.
                   </p>
                 </div>

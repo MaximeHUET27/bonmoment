@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { BREVO_SENDER, BREVO_REPLY_TO } from '@/lib/brevo/sender'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -138,7 +139,7 @@ function buildEmailHtml(offres, villesAbonnees) {
 
   <tr><td style="padding:20px 28px;text-align:center;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:12px;color:#999999;line-height:1.6;">
     L'équipe BONMOMENT<br>
-    <a href="mailto:bonmomentapp@gmail.com" style="color:#999999;text-decoration:none;">bonmomentapp@gmail.com</a><br><br>
+    <a href="mailto:contact@bonmoment.app" style="color:#999999;text-decoration:none;">contact@bonmoment.app</a><br><br>
     <span style="font-size:11px;">${footerText}</span><br><br>
     <a href="https://bonmoment.app/profil" style="color:#999999;text-decoration:underline;font-size:11px;">Gérer mes préférences</a>
     &nbsp;·&nbsp;
@@ -160,8 +161,9 @@ async function envoyerEmail(destinataire, sujet, htmlContent) {
     method:  'POST',
     headers: { 'Content-Type': 'application/json', 'api-key': BREVO_API_KEY },
     body: JSON.stringify({
-      sender:      { name: 'BONMOMENT', email: 'bonmomentapp@gmail.com' },
+      sender:      BREVO_SENDER,
       to:          [{ email: destinataire }],
+      replyTo:     BREVO_REPLY_TO,
       subject:     sujet,
       htmlContent,
     }),

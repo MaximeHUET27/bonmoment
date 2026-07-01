@@ -1,6 +1,7 @@
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { BREVO_SENDER, BREVO_REPLY_TO } from '@/lib/brevo/sender'
 
 const ADMIN_EMAIL = 'bonmomentapp@gmail.com'
 const admin = createClient(
@@ -86,8 +87,9 @@ export async function POST(request, { params }) {
       method: 'POST',
       headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        sender:      { name: 'BONMOMENT', email: 'bonmomentapp@gmail.com' },
+        sender:      BREVO_SENDER,
         to:          [{ email: u.email, name: u.nom || '' }],
+        replyTo:     BREVO_REPLY_TO,
         subject,
         htmlContent: `<p>${emailBody.replace(/\n/g, '<br>')}</p>`,
       }),

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/rate-limit'
+import { BREVO_SENDER } from '@/lib/brevo/sender'
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY
 const checkRate = rateLimit({ maxRequests: 5, windowMs: 15 * 60 * 1000 })
@@ -100,7 +101,7 @@ export async function POST(req) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        sender:   { name: 'BONMOMENT', email: 'bonmomentapp@gmail.com' },
+        sender:   BREVO_SENDER,
         to:       [{ email: TO_EMAIL, name: TO_NAME }],
         replyTo:  { email, name: prenom },
         subject:  `[BON'Aide] Nouveau message de ${prenom} (${profil})`,
