@@ -27,6 +27,13 @@ function getBadgeProgress(badge, bonsValides) {
   return 100
 }
 
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+  const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const raw     = atob(base64)
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)))
+}
+
 
 function Toggle({ value, onChange, label, sublabel }) {
   return (
@@ -169,21 +176,29 @@ export default function ProfilPage() {
         showToast('Permission refusée. Active les notifications dans les paramètres du navigateur.')
         return
       }
+      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      if (!vapidKey) {
+        showToast("Les notifications push ne sont pas disponibles pour le moment.")
+        console.error('[push] NEXT_PUBLIC_VAPID_PUBLIC_KEY manquante')
+        return
+      }
       try {
         const reg     = await navigator.serviceWorker.register('/sw.js')
         const sub     = await reg.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+          applicationServerKey: urlBase64ToUint8Array(vapidKey),
         })
         const subJson = sub.toJSON()
-        await fetch('/api/push/subscribe', {
+        const res = await fetch('/api/push/subscribe', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
           body:    JSON.stringify({ endpoint: subJson.endpoint, keys: subJson.keys }),
         })
-      } catch {
-        // Subscription PushManager échouée — on marque quand même le flag
-        await supabase.from('users').update({ notifications_push: true }).eq('id', user.id)
+        if (!res.ok) throw new Error('subscribe API ' + res.status)
+      } catch (err) {
+        console.error('[push] activation échouée', err)
+        showToast("L'activation des notifications a échoué. Réessaie.")
+        return
       }
     } else {
       await supabase
