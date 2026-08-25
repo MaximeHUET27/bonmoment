@@ -12,7 +12,7 @@ import PartagerOffreButton from '@/app/components/PartagerOffreButton'
 import AuthButton from '@/app/components/AuthButton'
 import DeleteCommerceButton from '@/app/commercant/[id]/DeleteCommerceButton'
 import DashboardFideliteSection from '@/app/components/fidelite/DashboardFideliteSection'
-import { getOffreTitle, getFullOffreTitle } from '@/lib/offreTitle'
+import { getOffreTitle } from '@/lib/offreTitle'
 import { formatFenetreOffre } from '@/lib/offreStatus'
 import dynamic from 'next/dynamic'
 import { isMairieAssoEnabled } from '@/lib/featureFlags'
@@ -1301,8 +1301,6 @@ function OffreRow({ offre, commerce, expired = false }) {
           <ShareButton
             offre={{ ...offre, commerces: commerce }}
             commerce={commerce}
-            shareText={`${getFullOffreTitle(offre)} chez ${commerce.nom} à ${commerce.ville} 🎁 Réserve ton bon gratuit :`}
-            shareTitle={`🎁 ${getFullOffreTitle(offre)} — ${commerce.nom}`}
           />
         )}
       </div>

@@ -3,9 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Share2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { getFullOffreTitle } from '@/lib/offreTitle'
-
-const BASE_URL = 'https://bonmoment.app'
+import { buildShareContent, BASE_URL } from '@/lib/shareContent'
 
 /**
  * Props:
@@ -20,10 +18,10 @@ export default function PartagerOffreButton({ offre, commerce, variant = 'icon',
   const [copied,   setCopied]   = useState(false)
   const menuRef = useRef(null)
 
-  const shareUrl  = offre?.id ? `${BASE_URL}/offre/${offre.id}` : BASE_URL
-  const fullTitre = getFullOffreTitle(offre) || offre?.titre || 'Offre'
-  const shareTitle = `🎁 ${fullTitre} — ${commerce?.nom || 'BONMOMENT'}`
-  const shareText  = `${fullTitre} chez ${commerce?.nom || 'ce commerce'} à ${commerce?.ville || 'ta ville'} 🎁 Réserve ton bon gratuit :`
+  const shared     = buildShareContent(offre, commerce)
+  const shareUrl   = offre?.id ? shared.url : BASE_URL
+  const shareTitle = shared.title
+  const shareText  = shared.text
 
   const encodedText = encodeURIComponent(`${shareText}\n${shareUrl}`)
   const encodedUrl  = encodeURIComponent(shareUrl)
