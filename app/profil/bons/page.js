@@ -69,15 +69,18 @@ function BonActifCard({ resa, supabase, onCancelled }) {
   async function handleCancel() {
     setCancelling(true)
     try {
-      await supabase.from('reservations').update({ statut: 'annulee' }).eq('id', resa.id)
-      const { data: o } = await supabase
-        .from('offres').select('nb_bons_restants').eq('id', resa.offres?.id).single()
-      if (o?.nb_bons_restants != null && o.nb_bons_restants !== 9999) {
-        await supabase.from('offres')
-          .update({ nb_bons_restants: o.nb_bons_restants + 1 }).eq('id', resa.offres?.id)
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      const { data, error } = await supabase.rpc('annuler_bon', {
+        p_reservation_id: resa.id,
+        p_user_id:        authUser?.id,
+      })
+      const ok = !error && data?.[0]?.success
+      if (ok) {
+        window.dispatchEvent(new CustomEvent('bonmoment:annulation', { detail: { offreId: resa.offres?.id } }))
+        onCancelled(resa.id)
+      } else {
+        setCancelling(false)
       }
-      window.dispatchEvent(new CustomEvent('bonmoment:annulation', { detail: { offreId: resa.offres?.id } }))
-      onCancelled(resa.id)
     } catch {
       setCancelling(false)
     }

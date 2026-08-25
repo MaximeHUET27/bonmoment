@@ -215,11 +215,18 @@ export default function UrgencyAndCTA({ offre, reservationsCount = 0 }) {
         style={!programmee && urgent && !fini ? { backgroundColor: '#FF6B00', color: 'white' } : {}}
       >
         {programmee ? (
-          <div className="flex items-center gap-2 w-full">
-            <span className="text-lg">📅</span>
-            <span className="text-sm font-bold text-[#FF6B00]">
-              {formatFenetreOffre(offre.date_debut, offre.date_fin).long}
-            </span>
+          <div className="flex items-center justify-between gap-2 w-full">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">📅</span>
+              <span className="text-sm font-bold text-[#FF6B00]">
+                {formatFenetreOffre(offre.date_debut, offre.date_fin).long}
+              </span>
+            </div>
+            <p className="text-sm font-black text-[#0A0A0A]">
+              {nbBons === null || nbBons === 9999
+                ? '∞ bons'
+                : `🎫 ${nbBons} restant${nbBons > 1 ? 's' : ''}`}
+            </p>
           </div>
         ) : (
           <>

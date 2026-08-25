@@ -1,6 +1,7 @@
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { after } from 'next/server'
 import { rateLimit } from '@/lib/rate-limit'
 import { sendPushToMany } from '@/lib/push'
 
@@ -104,7 +105,7 @@ export async function POST(request) {
   }
 
   /* ── Notification push non-bloquante aux abonnés du commerce ── */
-  ;(async () => {
+  after(async () => {
     try {
       const { data: abonnes } = await admin
         .from('users')
@@ -129,10 +130,10 @@ export async function POST(request) {
     } catch (e) {
       console.error('[push/offre]', e.message)
     }
-  })()
+  })
 
   /* ── Mail Push — email instantané aux abonnés (non-bloquant) ── */
-  ;(async () => {
+  after(async () => {
     try {
       const offreTitre = body.titre || ''
       await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'https://bonmoment.app'}/api/email-push`, {
@@ -155,7 +156,7 @@ export async function POST(request) {
     } catch (err) {
       console.error('[email-push/offre]', err.message)
     }
-  })()
+  })
 
   return NextResponse.json({ success: true, id: inserted.id })
 }

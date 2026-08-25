@@ -36,25 +36,34 @@ function prefixRemise(type, valeur) {
   return ''
 }
 
+/** "Le Neubourg" → "au Neubourg" ; "Les Andelys" → "aux Andelys" ; sinon "à X". */
+function villeAvecArticle(ville) {
+  if (!ville) return ''
+  if (/^Le\s+/i.test(ville))  return 'au ' + ville.replace(/^Le\s+/i, '')
+  if (/^Les\s+/i.test(ville)) return 'aux ' + ville.replace(/^Les\s+/i, '')
+  if (/^La\s+/i.test(ville))  return 'à La ' + ville.replace(/^La\s+/i, '')
+  return 'à ' + ville
+}
+
 /* ── Template HTML ───────────────────────────────────────────────────────── */
 
-function buildEmailHtml(offres, villesAbonnees) {
+function buildEmailHtml(offres, villesAbonnees, villesOffres) {
   /* Tri par urgence : expire le plus tôt en premier */
   const offresTriees = [...offres].sort((a, b) => new Date(a.date_fin) - new Date(b.date_fin))
   const MAX          = 5
   const offresMontrees = offresTriees.slice(0, MAX)
   const reste          = offresTriees.length - MAX
 
-  const villesLabel = villesAbonnees.length > 0 ? villesAbonnees.join(' & ') : null
+  const villesLabel = villesOffres?.length > 0 ? villesOffres.join(' & ') : null
   const headerTitre = villesLabel
     ? `Bons plans de demain à ${villesLabel}`
     : 'Tes bons plans de demain'
-  const footerText = villesLabel
-    ? `Tu reçois cet email car tu es abonné à ${villesLabel} sur BONMOMENT.`
+  const footerText = villesAbonnees.length > 0
+    ? `Tu reçois cet email car tu es abonné à ${villesAbonnees.join(' & ')} sur BONMOMENT.`
     : 'Tu reçois cet email car tu suis des commerçants sur BONMOMENT.'
-  const lienVille = villesAbonnees[0]
-    ? `https://bonmoment.app/ville/${toSlug(villesAbonnees[0])}`
-    : 'https://bonmoment.app'
+  const lienVille = villesOffres?.[0]
+    ? `https://bonmoment.app/ville/${toSlug(villesOffres[0])}`
+    : (villesAbonnees[0] ? `https://bonmoment.app/ville/${toSlug(villesAbonnees[0])}` : 'https://bonmoment.app')
 
   const offresHtml = offresMontrees.map(o => {
     const commerceNom = o.commerces?.nom || '—'
@@ -264,14 +273,22 @@ export async function GET(request) {
       continue
     }
 
-    /* Sujet personnalisé */
-    const n      = offresUser.length
-    const ville1 = villesAbonnees[0] || null
-    const sujet  = ville1
-      ? `🔥 ${n} bon${n > 1 ? 's' : ''} plan${n > 1 ? 's' : ''} demain à ${ville1} !`
-      : `🔥 ${n} bon${n > 1 ? 's' : ''} plan${n > 1 ? 's' : ''} demain chez tes commerçants !`
+    /* Villes réellement concernées par les offres retenues (et non les villes suivies) */
+    const villesOffres = [...new Set(
+      offresUser.map(o => o.commerces?.ville).filter(Boolean)
+    )]
 
-    const html = buildEmailHtml(offresUser, villesAbonnees)
+    /* Sujet personnalisé */
+    const n  = offresUser.length
+    const nb = `${n} bon${n > 1 ? 's' : ''} plan${n > 1 ? 's' : ''}`
+    let ouLabel
+    if (villesOffres.length === 1)      ouLabel = villeAvecArticle(villesOffres[0])
+    else if (villesOffres.length === 2) ouLabel = `${villeAvecArticle(villesOffres[0])} et ${villeAvecArticle(villesOffres[1])}`
+    else if (villesOffres.length > 2)   ouLabel = 'près de chez toi'
+    else                                ouLabel = 'chez tes commerçants'
+    const sujet = `🔥 ${nb} demain ${ouLabel} !`
+
+    const html = buildEmailHtml(offresUser, villesAbonnees, villesOffres)
 
     const ok = await envoyerEmail(u.email, sujet, html)
     if (ok) envoyes++

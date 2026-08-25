@@ -7,7 +7,7 @@ import CaMInteresseButton from './CaMInteresseButton'
 import ShareButton from '@/app/components/ShareButton'
 import FavoriButton from '@/app/components/FavoriButton'
 import CommerceInfoCard from '@/app/components/CommerceInfoCard'
-import { getOffreTitle, getFullOffreTitle } from '@/lib/offreTitle'
+import { getOffreTitle, getTypeLabelFr, cleanOffreTitre } from '@/lib/offreTitle'
 import { isMairieAssoEnabled } from '@/lib/featureFlags'
 
 const OG_DEFAULT_IMAGE = 'https://bonmoment.app/og-default.jpg'
@@ -25,12 +25,13 @@ export async function generateMetadata({ params }) {
 
   if (!offre) return {}
 
-  const badge = formatBadge(offre)
   const nom   = offre.commerces?.nom   || 'Commerce'
   const ville = offre.commerces?.ville || ''
   const image = offre.commerces?.photo_url || OG_DEFAULT_IMAGE
-  const offreTitle = `${badge} chez ${nom} — BONMOMENT`
-  const offreDesc  = `${getFullOffreTitle(offre)} à ${ville}. Réserve ton bon gratuit !`
+  const typeFr      = getTypeLabelFr(offre)
+  const titrePropre = cleanOffreTitre(offre)
+  const offreTitle  = titrePropre ? `${typeFr} : ${titrePropre}` : `${typeFr} chez ${nom}`
+  const offreDesc   = `${nom}${ville ? ` à ${ville}` : ''} · Réserve ton bon gratuit sur BONMOMENT, sans appli.`
   const offreUrl   = `https://bonmoment.app/offre/${id}`
 
   return {

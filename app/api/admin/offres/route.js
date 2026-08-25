@@ -43,7 +43,7 @@ export async function GET(request) {
   let resaMap = {}, utilMap = {}
   if (ids.length) {
     const [{ data: resas }, { data: utils }] = await Promise.all([
-      admin.from('reservations').select('offre_id').in('offre_id', ids),
+      admin.from('reservations').select('offre_id').neq('statut', 'annulee').in('offre_id', ids),
       admin.from('reservations').select('offre_id').eq('statut', 'utilisee').in('offre_id', ids),
     ])
     for (const r of resas || []) resaMap[r.offre_id] = (resaMap[r.offre_id] || 0) + 1
@@ -61,7 +61,7 @@ export async function GET(request) {
   ] = await Promise.all([
     admin.from('offres').select('*', { count: 'exact', head: true }).eq('statut', 'active').gt('date_fin', now),
     admin.from('offres').select('*', { count: 'exact', head: true }).gte('created_at', debutMois),
-    admin.from('reservations').select('*', { count: 'exact', head: true }).gte('created_at', debutMois),
+    admin.from('reservations').select('*', { count: 'exact', head: true }).neq('statut', 'annulee').gte('created_at', debutMois),
     admin.from('reservations').select('*', { count: 'exact', head: true }).eq('statut', 'utilisee').gte('utilise_at', debutMois),
   ])
 

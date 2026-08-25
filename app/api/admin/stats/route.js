@@ -44,12 +44,12 @@ export async function GET() {
     admin.from('commerces').select('id, abonnement_actif, palier, ville, created_at'),
     admin.from('users').select('*', { count: 'exact', head: true }),
     admin.from('offres').select('*', { count: 'exact', head: true }).eq('statut', 'active'),
-    admin.from('reservations').select('*', { count: 'exact', head: true }).gte('created_at', debutMois),
+    admin.from('reservations').select('*', { count: 'exact', head: true }).neq('statut', 'annulee').gte('created_at', debutMois),
     admin.from('reservations').select('*', { count: 'exact', head: true }).eq('statut', 'utilisee').gte('utilise_at', debutMois),
     admin.from('offres').select('commerce_id').gte('created_at', debutMois),
     admin.from('reservations').select('user_id').eq('statut', 'utilisee'),
-    admin.from('reservations').select('user_id').gte('created_at', debutMois),
-    admin.from('reservations').select('user_id').gte('created_at', today),
+    admin.from('reservations').select('user_id').neq('statut', 'annulee').gte('created_at', debutMois),
+    admin.from('reservations').select('user_id').neq('statut', 'annulee').gte('created_at', today),
     // Commerces inscrits le mois précédent (pour rétention M1)
     admin.from('commerces')
       .select('id, abonnement_actif')

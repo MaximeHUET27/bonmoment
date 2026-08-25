@@ -2,24 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useToast } from './Toast'
+import { getTypeLabelFr, cleanOffreTitre } from '@/lib/offreTitle'
 
 const BASE_URL = 'https://bonmoment.app'
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
-
-function formatBadge(offre) {
-  if (!offre) return 'Offre'
-  if (offre.type_remise === 'pourcentage')    return `−${offre.valeur}%`
-  if (offre.type_remise === 'montant_fixe')   return `−${offre.valeur}€`
-  if (offre.type_remise === 'cadeau')         return '🎁 Cadeau'
-  if (offre.type_remise === 'produit_offert') return '📦 Offert'
-  if (offre.type_remise === 'service_offert') return '✂️ Offert'
-  if (offre.type_remise === 'concours')       return '🎰 Concours'
-  if (offre.type_remise === 'atelier')        return '🎉 Évènement'
-  if (offre.type_remise === 'fidelite')       return '⭐ Fidélité'
-  if (offre.type_remise === 'anti_gaspi')     return '🥗 Anti-gaspi'
-  return 'Offre'
-}
 
 function formatHeure(isoStr) {
   if (!isoStr) return ''
@@ -34,7 +21,7 @@ function buildShareContent(offre, commerce) {
   const ville = commerce?.ville || 'ta ville'
   const nb    = offre?.nb_bons_restants
   const url   = `${BASE_URL}/offre/${offre?.id}`
-  const badge = formatBadge(offre)
+  const badge = `${getTypeLabelFr(offre)} : ${cleanOffreTitre(offre)}`
   const heure = offre?.date_fin ? ` jusqu'à ${formatHeure(offre.date_fin)}` : ''
   const nbStr = nb && nb !== 9999 && nb > 0 ? ` Plus que ${nb} bons dispo.` : ''
 
