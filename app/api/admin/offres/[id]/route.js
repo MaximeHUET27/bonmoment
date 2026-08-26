@@ -78,24 +78,76 @@ export async function POST(request, { params }) {
   }
 
   if (action === 'modifier') {
-    const { date_fin, nb_bons_restants } = body
+    const { date_fin, nb_bons_restants, date_debut, titre, description, type_remise, valeur } = body
     const update = {}
+
+    const { data: cur } = await admin.from('offres').select('date_debut, date_fin, type_remise').eq('id', id).single()
+    if (!cur) return NextResponse.json({ error: 'Offre introuvable' }, { status: 404 })
+
+    if (date_debut !== undefined && date_debut !== '') {
+      const deb = new Date(date_debut)
+      if (isNaN(deb.getTime()))
+        return NextResponse.json({ error: 'Date de début invalide' }, { status: 400 })
+      update.date_debut = deb.toISOString()
+    }
 
     if (date_fin !== undefined && date_fin !== '') {
       const fin = new Date(date_fin)
       if (isNaN(fin.getTime()))
         return NextResponse.json({ error: 'Date de fin invalide' }, { status: 400 })
-      const { data: cur } = await admin.from('offres').select('date_debut').eq('id', id).single()
-      if (cur?.date_debut && fin <= new Date(cur.date_debut))
+      const debutRef = update.date_debut ? new Date(update.date_debut) : new Date(cur.date_debut)
+      if (fin <= debutRef)
         return NextResponse.json({ error: 'La date de fin doit être après le début' }, { status: 400 })
       update.date_fin = fin.toISOString()
     }
+
+    const debutEffectif = update.date_debut ? new Date(update.date_debut) : (cur.date_debut ? new Date(cur.date_debut) : null)
+    const finEffectif   = update.date_fin   ? new Date(update.date_fin)   : (cur.date_fin   ? new Date(cur.date_fin)   : null)
+    if (debutEffectif && finEffectif && (finEffectif - debutEffectif) > 24 * 60 * 60 * 1000)
+      return NextResponse.json({ error: 'Une offre ne peut pas dépasser 24 heures' }, { status: 400 })
 
     if (nb_bons_restants !== undefined && nb_bons_restants !== '') {
       const val = parseInt(nb_bons_restants, 10)
       if (isNaN(val) || val < 0)
         return NextResponse.json({ error: 'Nombre de bons invalide' }, { status: 400 })
       update.nb_bons_restants = val
+    }
+
+    if (titre !== undefined) {
+      const t = String(titre).trim()
+      if (t.length === 0)
+        return NextResponse.json({ error: 'Le titre ne peut pas être vide' }, { status: 400 })
+      if (t.length > 120)
+        return NextResponse.json({ error: 'Titre trop long (120 caractères max)' }, { status: 400 })
+      update.titre = t
+    }
+
+    if (description !== undefined) {
+      const d = String(description).trim()
+      if (d.length > 150)
+        return NextResponse.json({ error: 'Description trop longue (150 caractères max)' }, { status: 400 })
+      update.description = d
+    }
+
+    const TYPES_VALIDES = ['pourcentage', 'montant_fixe', 'montant', 'cadeau',
+      'produit_offert', 'service_offert', 'concours', 'atelier', 'fidelite']
+    if (type_remise !== undefined && type_remise !== '') {
+      if (!TYPES_VALIDES.includes(type_remise))
+        return NextResponse.json({ error: "Type d'offre invalide" }, { status: 400 })
+      update.type_remise = type_remise
+    }
+    const typeEffectif = update.type_remise || cur.type_remise
+    if (valeur !== undefined) {
+      if (['pourcentage', 'montant_fixe', 'montant'].includes(typeEffectif)) {
+        const v = Number(valeur)
+        if (isNaN(v) || v <= 0)
+          return NextResponse.json({ error: 'Valeur invalide' }, { status: 400 })
+        if (typeEffectif === 'pourcentage' && v > 100)
+          return NextResponse.json({ error: 'Le pourcentage ne peut pas dépasser 100' }, { status: 400 })
+        update.valeur = v
+      } else {
+        update.valeur = null
+      }
     }
 
     if (Object.keys(update).length === 0)

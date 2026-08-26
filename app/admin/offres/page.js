@@ -76,6 +76,11 @@ function FicheOffre({ id, onClose, onRefresh }) {
   const [editOpen,    setEditOpen]    = useState(false)
   const [editDateFin, setEditDateFin] = useState('')
   const [editBons,    setEditBons]    = useState('')
+  const [editDateDebut,   setEditDateDebut]   = useState('')
+  const [editTitre,       setEditTitre]       = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [editType,        setEditType]        = useState('')
+  const [editValeur,      setEditValeur]      = useState('')
   const { showToast } = useToast()
 
   useEffect(() => {
@@ -89,6 +94,11 @@ function FicheOffre({ id, onClose, onRefresh }) {
         if (d.offre) {
           setEditDateFin(toDatetimeLocal(d.offre.date_fin))
           setEditBons(d.offre.nb_bons_restants === 9999 ? '' : String(d.offre.nb_bons_restants ?? ''))
+          setEditDateDebut(toDatetimeLocal(d.offre.date_debut))
+          setEditTitre(d.offre.titre ?? '')
+          setEditDescription(d.offre.description ?? '')
+          setEditType(d.offre.type_remise ?? '')
+          setEditValeur(d.offre.valeur ?? '')
         }
         setLoading(false)
       })
@@ -126,6 +136,11 @@ function FicheOffre({ id, onClose, onRefresh }) {
       action: 'modifier',
       date_fin: editDateFin ? new Date(editDateFin).toISOString() : '',
       nb_bons_restants: editBons,
+      date_debut: editDateDebut ? new Date(editDateDebut).toISOString() : '',
+      titre: editTitre,
+      description: editDescription,
+      type_remise: editType,
+      valeur: editValeur,
     }
     setActing(true)
     const res = await fetch(`/api/admin/offres/${id}`, {
@@ -186,6 +201,64 @@ function FicheOffre({ id, onClose, onRefresh }) {
             </button>
             {editOpen && (
               <div className="px-4 pb-4 flex flex-col gap-3">
+                <div>
+                  <label className="text-xs text-[#3D3D3D]/60 block mb-1">Début</label>
+                  <input
+                    type="datetime-local"
+                    value={editDateDebut}
+                    onChange={e => setEditDateDebut(e.target.value)}
+                    className="w-full border-2 border-[#E0E0E0] rounded-xl px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-[#3D3D3D]/60 block mb-1">Titre</label>
+                  <input
+                    type="text"
+                    value={editTitre}
+                    onChange={e => setEditTitre(e.target.value)}
+                    className="w-full border-2 border-[#E0E0E0] rounded-xl px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-[#3D3D3D]/60 block mb-1">Description</label>
+                  <textarea
+                    value={editDescription}
+                    onChange={e => setEditDescription(e.target.value.slice(0, 150))}
+                    rows={2}
+                    className="w-full border-2 border-[#E0E0E0] rounded-xl px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none bg-white resize-none"
+                  />
+                  <p className="text-[10px] text-[#3D3D3D]/40 text-right mt-0.5 tabular-nums">{editDescription.length}/150</p>
+                </div>
+                <div>
+                  <label className="text-xs text-[#3D3D3D]/60 block mb-1">Type d&apos;offre</label>
+                  <select
+                    value={editType}
+                    onChange={e => setEditType(e.target.value)}
+                    className="w-full border-2 border-[#E0E0E0] rounded-xl px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none bg-white"
+                  >
+                    <option value="">—</option>
+                    {Object.entries(TYPE_LABEL).filter(([k], i, a) => a.findIndex(([, v]) => v === TYPE_LABEL[k]) === i).map(([k, v]) => (
+                      <option key={k} value={k}>{v}</option>
+                    ))}
+                  </select>
+                </div>
+                {(editType === 'pourcentage' || editType === 'montant_fixe') && (
+                  <div>
+                    <label className="text-xs text-[#3D3D3D]/60 block mb-1">Valeur</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        value={editValeur}
+                        onChange={e => setEditValeur(e.target.value)}
+                        className="w-full border-2 border-[#E0E0E0] rounded-xl px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none bg-white pr-8"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#3D3D3D]/50">
+                        {editType === 'pourcentage' ? '%' : '€'}
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <div>
                   <label className="text-xs text-[#3D3D3D]/60 block mb-1">Date de fin</label>
                   <input
