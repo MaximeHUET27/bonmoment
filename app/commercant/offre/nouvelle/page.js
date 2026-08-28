@@ -796,8 +796,8 @@ function NouvelleOffrePageInner() {
                     className={inputBase}
                   />
                 </div>
-                <div className="flex gap-2 w-full sm:contents">
-                  <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                <div className="grid grid-cols-2 gap-3 w-full sm:contents">
+                  <div className="min-w-0 flex flex-col gap-1.5">
                     <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
                       ⏰ De
                     </label>
@@ -806,10 +806,10 @@ function NouvelleOffrePageInner() {
                       value={heureDebut}
                       step="900"
                       onChange={e => setHeureDebut(e.target.value)}
-                      className={`${inputBase} min-w-0`}
+                      className={`${inputBase} min-w-0 px-2 sm:px-3 appearance-none`}
                     />
                   </div>
-                  <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                  <div className="min-w-0 flex flex-col gap-1.5">
                     <label className="text-[10px] font-bold text-[#3D3D3D]/50 uppercase tracking-widest">
                       ⏰ À
                     </label>
@@ -818,7 +818,7 @@ function NouvelleOffrePageInner() {
                       value={heureFin}
                       step="900"
                       onChange={e => setHeureFin(e.target.value)}
-                      className={`${inputBase} min-w-0`}
+                      className={`${inputBase} min-w-0 px-2 sm:px-3 appearance-none`}
                     />
                   </div>
                 </div>
@@ -913,7 +913,58 @@ function NouvelleOffrePageInner() {
           )}
         </section>
 
-        {/* ══ 7. APERÇU TEMPS RÉEL ═══════════════════════════════════════ */}
+        {/* ══ 7. PHOTO DE L'OFFRE ════════════════════════════════════════ */}
+        <section className="bg-white rounded-2xl px-5 py-4 shadow-sm">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-[#3D3D3D]/50 mb-3">
+            Photo de l&apos;offre
+          </p>
+          <div className="flex items-center gap-3">
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoChange}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => photoInputRef.current?.click()}
+              className="relative shrink-0 w-[72px] h-[72px] rounded-xl overflow-hidden border-2 border-dashed border-[#E0E0E0] hover:border-[#FF6B00] transition-colors flex items-center justify-center bg-[#F5F5F5]"
+            >
+              {photoUploading ? (
+                <span className="w-5 h-5 border-2 border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
+              ) : photoPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={photoPreview} alt="Photo de l'offre" className="absolute inset-0 w-full h-full object-cover" />
+              ) : (
+                <span className="text-2xl">📷</span>
+              )}
+              {photoPreview && !photoUploading && (
+                <span
+                  role="button"
+                  onClick={(e) => { e.stopPropagation(); handleRemovePhoto() }}
+                  className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white text-xs flex items-center justify-center"
+                >
+                  ✕
+                </span>
+              )}
+            </button>
+            <div className="flex flex-col gap-1">
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                className="border-2 border-[#FF6B00] text-[#FF6B00] font-bold text-sm rounded-xl px-4 py-2.5 min-h-[44px] hover:bg-[#FFF0E0] transition-colors"
+              >
+                📷 {photoPreview ? 'Changer la photo' : 'Ajouter une photo'}
+              </button>
+              <span className="text-[10px] text-[#3D3D3D]/50">
+                Optionnel — sinon la photo de votre commerce sera utilisée
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* ══ 8. APERÇU TEMPS RÉEL ═══════════════════════════════════════ */}
         <section id="tut-apercu">
           <p className="text-[11px] font-bold uppercase tracking-widest text-[#3D3D3D]/50 mb-3 px-1">
             Aperçu client en temps réel
@@ -930,42 +981,7 @@ function NouvelleOffrePageInner() {
           </div>
         )}
 
-        {/* ══ PHOTO DE L'OFFRE (optionnelle) ═════════════════════════════ */}
-        <div className="flex items-center gap-3 px-1">
-          <input
-            ref={photoInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handlePhotoChange}
-            className="hidden"
-          />
-          <button
-            type="button"
-            onClick={() => photoInputRef.current?.click()}
-            className="relative shrink-0 w-[72px] h-[72px] rounded-xl overflow-hidden border-2 border-dashed border-[#E0E0E0] hover:border-[#FF6B00] transition-colors flex items-center justify-center bg-[#F5F5F5]"
-          >
-            {photoUploading ? (
-              <span className="w-5 h-5 border-2 border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
-            ) : photoPreview ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={photoPreview} alt="Photo de l'offre" className="absolute inset-0 w-full h-full object-cover" />
-            ) : (
-              <span className="text-2xl">📷</span>
-            )}
-            {photoPreview && !photoUploading && (
-              <span
-                role="button"
-                onClick={(e) => { e.stopPropagation(); handleRemovePhoto() }}
-                className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white text-xs flex items-center justify-center"
-              >
-                ✕
-              </span>
-            )}
-          </button>
-          <span className="text-xs text-[#3D3D3D]/60">Photo de l&apos;offre (optionnel)</span>
-        </div>
-
-        {/* ══ 8. BOUTON PUBLICATION ══════════════════════════════════════ */}
+        {/* ══ 9. BOUTON PUBLICATION ══════════════════════════════════════ */}
         <button
          
           id="tut-publier"
