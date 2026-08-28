@@ -105,6 +105,22 @@ function FicheOffre({ id, onClose, onRefresh }) {
       .catch(() => setLoading(false))
   }, [id])
 
+  async function doRemovePhoto() {
+    setActing(true)
+    const res = await fetch(`/api/admin/offres/${id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'modifier', photo_url: null }),
+    })
+    const d = await res.json()
+    setActing(false)
+    if (d.success) {
+      showToast('✅ Photo retirée')
+      fetch(`/api/admin/offres/${id}`).then(r => r.json()).then(d2 => { setData(d2); onRefresh() })
+    } else {
+      showToast(`⚠️ ${d.error || 'Erreur'}`)
+    }
+  }
+
   async function doAction(action) {
     setActing(true)
     const res = await fetch(`/api/admin/offres/${id}`, {
@@ -189,6 +205,21 @@ function FicheOffre({ id, onClose, onRefresh }) {
             </>}
             <button onClick={() => { setConfirmText(''); setModal('delete') }} className="px-3 py-1.5 text-xs font-bold bg-red-600 text-white rounded-xl">Supprimer</button>
           </div>
+
+          {/* Photo de l'offre */}
+          {o.photo_url && (
+            <div className="flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={o.photo_url} alt="" className="w-16 h-16 rounded-xl object-cover border border-[#E0E0E0]" />
+              <button
+                onClick={doRemovePhoto}
+                disabled={acting}
+                className="px-3 py-1.5 text-xs font-bold bg-[#F5F5F5] text-[#0A0A0A] border border-[#E0E0E0] rounded-xl hover:bg-[#E8E8E8] disabled:opacity-60"
+              >
+                Retirer la photo
+              </button>
+            </div>
+          )}
 
           {/* Modifier */}
           <section className="bg-[#F5F5F5] rounded-2xl overflow-hidden">

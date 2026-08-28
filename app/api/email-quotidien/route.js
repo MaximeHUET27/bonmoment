@@ -209,7 +209,7 @@ export async function GET(request) {
   /* 1. Pré-charger TOUTES les offres actives demain (1 seule requête) */
   const { data: toutesOffres } = await supabase
     .from('offres')
-    .select('id, titre, date_debut, date_fin, type_remise, valeur, nb_bons_restants, commerce_id, commerces(nom, ville, note_google)')
+    .select('id, titre, date_debut, date_fin, type_remise, valeur, nb_bons_restants, photo_url, commerce_id, commerces(nom, ville, note_google)')
     .eq('statut', 'active')
     .gte('date_fin',   debutDemain.toISOString())
     .lte('date_debut', finDemain.toISOString())

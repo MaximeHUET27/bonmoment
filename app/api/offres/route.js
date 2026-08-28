@@ -97,6 +97,8 @@ export async function POST(request) {
     est_recurrente:   body.est_recurrente ?? false,
     jours_recurrence: body.jours_recurrence ?? null,
     avec_bon:         body.avec_bon ?? true,
+    photo_url:        typeof body.photo_url === 'string' && body.photo_url.startsWith('https://')
+      ? body.photo_url : null,
   }).select('id').single()
 
   if (insertErr) {

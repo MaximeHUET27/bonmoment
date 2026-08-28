@@ -20,7 +20,7 @@ export async function generateMetadata({ params }) {
   const supabase = await createClient()
   const { data: offre } = await supabase
     .from('offres')
-    .select('type_remise, valeur, titre, date_debut, date_fin, commerces(nom, ville, photo_url)')
+    .select('type_remise, valeur, titre, date_debut, date_fin, photo_url, commerces(nom, ville, photo_url)')
     .eq('id', id)
     .single()
 
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }) {
 
   const nom   = offre.commerces?.nom   || 'Commerce'
   const ville = offre.commerces?.ville || ''
-  const image = offre.commerces?.photo_url || OG_DEFAULT_IMAGE
+  const image = offre.photo_url || offre.commerces?.photo_url || OG_DEFAULT_IMAGE
   const offreTitle  = buildShareHeadline(offre, offre.commerces)
   const offreDesc   = `${nom}${ville ? ` à ${ville}` : ''} · Réserve ton bon gratuit sur BONMOMENT, sans appli.`
   const offreUrl   = `https://bonmoment.app/offre/${id}`
@@ -250,7 +250,11 @@ export default async function OffrePage({ params }) {
           </div>
 
           {/* Bloc unifié commerce — nom = lien cliquable vers /commercant/[id] */}
-          <CommerceInfoCard commerce={commerce} commerceId={commerce?.id} placeId={commerce?.place_id ?? null} />
+          <CommerceInfoCard
+            commerce={{ ...commerce, photo_url: offre.photo_url || commerce?.photo_url || null }}
+            commerceId={commerce?.id}
+            placeId={commerce?.place_id ?? null}
+          />
 
           {/* Description */}
           {commerce?.description && (

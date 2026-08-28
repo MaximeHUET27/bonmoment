@@ -12,7 +12,7 @@ export default async function Home() {
     supabase.from('villes').select('id, nom').eq('active', true).order('nom'),
     supabase
       .from('offres')
-      .select('id, titre, type_remise, valeur, statut, date_debut, date_fin, nb_bons_restants, avec_bon, commerces(id, nom, ville, adresse, categorie, photo_url, note_google, telephone, horaires)')
+      .select('id, titre, type_remise, valeur, statut, date_debut, date_fin, nb_bons_restants, avec_bon, photo_url, commerces(id, nom, ville, adresse, categorie, photo_url, note_google, telephone, horaires)')
       .in('statut', ['active', 'expiree'])
       .order('date_fin', { ascending: true }),
     supabase.auth.getUser(),

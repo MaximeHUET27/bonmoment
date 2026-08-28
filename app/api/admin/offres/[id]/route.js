@@ -78,8 +78,10 @@ export async function POST(request, { params }) {
   }
 
   if (action === 'modifier') {
-    const { date_fin, nb_bons_restants, date_debut, titre, description, type_remise, valeur } = body
+    const { date_fin, nb_bons_restants, date_debut, titre, description, type_remise, valeur, photo_url } = body
     const update = {}
+
+    if (photo_url !== undefined) update.photo_url = photo_url || null
 
     const { data: cur } = await admin.from('offres').select('date_debut, date_fin, type_remise').eq('id', id).single()
     if (!cur) return NextResponse.json({ error: 'Offre introuvable' }, { status: 404 })

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -10,6 +10,8 @@ import TutorialOffre from '@/app/components/tutorial/TutorialOffre'
 import suggestionsData from '@/data/suggestions-offres.json'
 import { triggerConfetti } from '@/lib/confetti'
 import PartagerOffreButton from '@/app/components/PartagerOffreButton'
+import { compressImage } from '@/lib/imageCompress'
+import { useToast } from '@/app/components/Toast'
 
 const TUT_KEY = 'bonmoment_tutoriel'
 function readTutState() {
@@ -91,6 +93,7 @@ function NouvelleOffrePageInner() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const isTutoriel   = searchParams.get('tutoriel') === 'true'
+  const { showToast } = useToast()
 
   /* ── État auth / commerce ── */
   const [commerce,      setCommerce]      = useState(null)
@@ -130,6 +133,12 @@ function NouvelleOffrePageInner() {
   })
   const [avecBon,         setAvecBon]         = useState(true)
   const [dateFinEvent,    setDateFinEvent]     = useState(today)
+
+  /* ── État photo (optionnelle) ── */
+  const [photoFile,      setPhotoFile]      = useState(null)
+  const [photoPreview,   setPhotoPreview]   = useState(null)
+  const [photoUploading, setPhotoUploading] = useState(false)
+  const photoInputRef = useRef(null)
 
   /* ── État soumission ── */
   const [submitting,      setSubmitting]      = useState(false)
@@ -284,6 +293,47 @@ function NouvelleOffrePageInner() {
     )
   }
 
+  /* ── Photo offre (optionnelle) ── */
+  useEffect(() => {
+    return () => { if (photoPreview) URL.revokeObjectURL(photoPreview) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function handlePhotoChange(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+      showToast('⚠️ Format non supporté (JPG, PNG ou WebP)')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('⚠️ Photo trop lourde (10 Mo max)')
+      return
+    }
+
+    try {
+      setPhotoUploading(true)
+      const blob = await compressImage(file)
+      const url  = URL.createObjectURL(blob)
+      setPhotoPreview(prev => { if (prev) URL.revokeObjectURL(prev); return url })
+      setPhotoFile(blob)
+    } catch (err) {
+      console.error('[photo offre] compression', err)
+      showToast("⚠️ La photo n'a pas pu être traitée, l'offre sera publiée sans photo.")
+      setPhotoFile(null)
+      setPhotoPreview(prev => { if (prev) URL.revokeObjectURL(prev); return null })
+    } finally {
+      setPhotoUploading(false)
+    }
+  }
+
+  function handleRemovePhoto() {
+    setPhotoPreview(prev => { if (prev) URL.revokeObjectURL(prev); return null })
+    setPhotoFile(null)
+  }
+
   /* ── Preview temps réel ── */
   const previewOffre = {
     type_remise:      typeRemise,
@@ -294,6 +344,7 @@ function NouvelleOffrePageInner() {
     date_debut:       buildISO(dateOffre, heureDebut),
     date_fin:         buildISO(dateFinPour, heureFin),
     avec_bon:         avecBon,
+    photo_url:        photoPreview || null,
     commerces: {
       nom:         commerce?.nom         || 'Mon commerce',
       categorie:   commerce?.categorie   || null,
@@ -336,6 +387,27 @@ function NouvelleOffrePageInner() {
     setSubmitting(true)
     const nbTotal = illimite ? null : nbBons
 
+    /* Upload photo (si choisie) — non-bloquant : en cas d'échec, l'offre part sans photo */
+    let photoUrl = null
+    if (photoFile) {
+      try {
+        const path = `${commerce.id}/${crypto.randomUUID()}.jpg`
+        const { error: upErr } = await supabase.storage
+          .from('offres-photos')
+          .upload(path, photoFile, { contentType: 'image/jpeg', upsert: false })
+        if (upErr) {
+          console.error('[photo offre]', upErr)
+          showToast("La photo n'a pas pu être envoyée, l'offre est publiée sans photo.")
+        } else {
+          const { data: pub } = supabase.storage.from('offres-photos').getPublicUrl(path)
+          photoUrl = pub.publicUrl
+        }
+      } catch (err) {
+        console.error('[photo offre] upload', err)
+        showToast("La photo n'a pas pu être envoyée, l'offre est publiée sans photo.")
+      }
+    }
+
     try {
       const res = await fetch('/api/offres', {
         method: 'POST',
@@ -352,6 +424,7 @@ function NouvelleOffrePageInner() {
           est_recurrente:    estRecurrente,
           jours_recurrence:  estRecurrente ? joursRecurrence : null,
           avec_bon:          avecBon,
+          photo_url:         photoUrl,
         }),
       })
       const result = await res.json()
@@ -856,6 +929,41 @@ function NouvelleOffrePageInner() {
             <p className="text-sm text-red-600 font-semibold">⚠ {errors.submit}</p>
           </div>
         )}
+
+        {/* ══ PHOTO DE L'OFFRE (optionnelle) ═════════════════════════════ */}
+        <div className="flex items-center gap-3 px-1">
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoChange}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => photoInputRef.current?.click()}
+            className="relative shrink-0 w-[72px] h-[72px] rounded-xl overflow-hidden border-2 border-dashed border-[#E0E0E0] hover:border-[#FF6B00] transition-colors flex items-center justify-center bg-[#F5F5F5]"
+          >
+            {photoUploading ? (
+              <span className="w-5 h-5 border-2 border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
+            ) : photoPreview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={photoPreview} alt="Photo de l'offre" className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <span className="text-2xl">📷</span>
+            )}
+            {photoPreview && !photoUploading && (
+              <span
+                role="button"
+                onClick={(e) => { e.stopPropagation(); handleRemovePhoto() }}
+                className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white text-xs flex items-center justify-center"
+              >
+                ✕
+              </span>
+            )}
+          </button>
+          <span className="text-xs text-[#3D3D3D]/60">Photo de l&apos;offre (optionnel)</span>
+        </div>
 
         {/* ══ 8. BOUTON PUBLICATION ══════════════════════════════════════ */}
         <button

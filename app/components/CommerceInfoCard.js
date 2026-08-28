@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { formatHoraire } from '@/lib/formatHoraires'
@@ -26,6 +26,12 @@ export default function CommerceInfoCard({ commerce, commerceId, placeId }) {
   const { user } = useAuth()
   const [showReview, setShowReview] = useState(false)
   const [showAuth,   setShowAuth]   = useState(false)
+  const [imgError,   setImgError]   = useState(false)
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setImgError(false)
+  }, [commerce?.photo_url])
 
   if (!commerce) return null
 
@@ -47,8 +53,15 @@ export default function CommerceInfoCard({ commerce, commerceId, placeId }) {
 
       {/* Photo */}
       <div className="w-full h-36 bg-[#FFF0E0] flex items-center justify-center overflow-hidden">
-        {commerce.photo_url ? (
-          <Image src={commerce.photo_url} alt={commerce.nom} width={500} height={144} className="w-full h-full object-cover" />
+        {commerce.photo_url && !imgError ? (
+          <Image
+            src={commerce.photo_url}
+            alt={commerce.nom}
+            width={500}
+            height={144}
+            className="w-full h-full object-cover"
+            onError={() => setImgError(true)}
+          />
         ) : (
           <span className="text-5xl">🏪</span>
         )}

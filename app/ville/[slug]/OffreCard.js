@@ -132,6 +132,11 @@ export default function OffreCard({ offre, userReservation }) {
   const [showBon,           setShowBon]           = useState(false)
   const [abonneCommLoading, setAbonneCommLoading] = useState(false)
   const [nbBonsDelta,       setNbBonsDelta]       = useState(0)
+  const [imgError,          setImgError]          = useState(false)
+
+  const photoAffichee = offre?.photo_url || commerce?.photo_url || null
+
+  useEffect(() => { setImgError(false) }, [photoAffichee])
 
   const abonneComm = isFavori(commerce?.id)
 
@@ -315,11 +320,13 @@ export default function OffreCard({ offre, userReservation }) {
         <div
           className="relative w-[100px] sm:w-[130px] shrink-0 self-stretch"
         >
-          {commerce?.photo_url ? (
+          {photoAffichee && !imgError ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={commerce.photo_url}
+              src={photoAffichee}
               alt={commerce?.nom || ''}
+              loading="lazy"
+              onError={() => setImgError(true)}
               className={`absolute inset-0 w-full h-full object-cover${fini ? ' grayscale' : ''}`}
             />
           ) : (
