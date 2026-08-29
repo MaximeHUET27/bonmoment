@@ -141,7 +141,11 @@ const FAQ = [
     questions: [
       {
         q: 'Combien coûte BONMOMENT ?',
-        r: "Découverte 29€/mois (4 offres), Essentiel 49€/mois (8 offres), Pro 79€/mois (16 offres). Premier mois offert avec CB enregistrée. Bons illimités sur tous les paliers.",
+        r: "Essentiel 29 €/mois (8 offres/mois) ou Pro 49 €/mois (offres illimitées + carte de fidélité). Bons illimités sur les deux paliers. Prix nets, TVA non applicable (art. 293 B du CGI).",
+      },
+      {
+        q: 'Puis-je ajouter une photo à mon offre ?',
+        r: "Oui, c'est optionnel. Au moment de créer ton offre, clique sur « Ajouter une photo » : tu peux la prendre sur le moment ou la choisir dans ta galerie. Si tu n'en mets pas, la photo de ton commerce est utilisée automatiquement. Assure-toi d'avoir les droits sur les images que tu publies (accord des personnes visibles, pas de photo protégée par un droit d'auteur).",
       },
       {
         q: 'Faut-il un SIRET ?',
@@ -173,7 +177,7 @@ const FAQ = [
       },
       {
         q: 'Comment parrainer ?',
-        r: "Mon commerce → Parrainage → Partage ton code. Le filleul et toi recevez une remise selon le palier choisi (Découverte -10€, Essentiel -15€, Pro -20€). Max 3 parrainages/mois.",
+        r: "Mon commerce → Parrainage → partage ton code. Quand ton filleul souscrit, il reçoit une remise sur sa première facture (10 € en Essentiel, 15 € en Pro) et tu reçois le même montant sur ta cagnotte de parrainage. Maximum 3 parrainages par mois.",
       },
       {
         q: 'Comment voir mes statistiques ?',
@@ -204,7 +208,7 @@ const FAQ = [
     questions: [
       {
         q: "La carte fidélité est-elle incluse dans mon abonnement ?",
-        r: "Elle est incluse dans le palier Pro uniquement. Les paliers Découverte et Essentiel te donnent accès aux offres mais pas au système de fidélité. Tu peux passer au Pro à tout moment depuis ton dashboard.",
+        r: "Elle est incluse dans le palier Pro uniquement. Le palier Essentiel te donne accès aux offres mais pas au système de fidélité. Tu peux passer au Pro à tout moment depuis ton dashboard.",
       },
       {
         q: "Comment je configure mon programme fidélité ?",

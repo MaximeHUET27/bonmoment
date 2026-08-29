@@ -177,6 +177,7 @@ export default function CGV() {
             <li>Ne pas publier d&apos;offres mensongères, trompeuses ou contraires à la réglementation</li>
             <li>Informer BONMOMENT de toute fermeture temporaire ou définitive de son établissement</li>
             <li>Ne pas tenter de créer plusieurs comptes pour un même établissement</li>
+            <li>Garantir qu&apos;il détient l&apos;ensemble des droits sur les contenus qu&apos;il publie sur la plateforme (textes et photographies), notamment le droit à l&apos;image des personnes représentées et les droits d&apos;auteur. Le commerçant garantit BONMOMENT contre toute réclamation d&apos;un tiers à ce titre. BONMOMENT se réserve le droit de retirer sans préavis tout contenu manifestement illicite ou portant atteinte aux droits d&apos;un tiers, signalé à contact@bonmoment.app.</li>
           </ul>
           <p className="mt-3">Tout manquement à ces obligations pourra entraîner la suspension immédiate du compte sans remboursement.</p>
         </div>

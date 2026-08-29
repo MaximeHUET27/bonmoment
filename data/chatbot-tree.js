@@ -126,7 +126,7 @@ const TREE = {
 
   'c-parrainage': {
     user: 'Comment fonctionne le parrainage ?',
-    bot: "Ton code est dans Mon commerce → Parrainage.\n🎁 Partage-le à un commerçant non inscrit\n💰 Vous recevez tous les deux une remise : Découverte -10€, Essentiel -15€, Pro -20€\n⚠️ Max 3 parrainages/mois. Code valable 3 mois.",
+    bot: "Ton code est dans Mon commerce → Parrainage.\n🎁 Partage-le à un commerçant non inscrit\n💰 Ton filleul reçoit une remise sur sa première facture (10€ en Essentiel, 15€ en Pro) et tu reçois le même montant sur ta cagnotte\n⚠️ Max 3 parrainages/mois.",
     buttons: [
       { label: 'Merci ! 😊',    next: 'merci-fin'             },
       { label: 'Autre question', next: 'commercant-menu-back' },
@@ -155,7 +155,7 @@ const TREE = {
 
   'c-tarifs': {
     user: 'Paliers et tarifs',
-    bot: "📋 Découverte : 29€/mois — 4 offres\nEssentiel : 49€/mois — 8 offres\nPro : 79€/mois — 16 offres\n\n🎁 Premier mois offert ! Bons illimités sur tous les paliers.",
+    bot: "📋 Essentiel : 29€/mois — 8 offres/mois\nPro : 49€/mois — Offres illimitées + carte de fidélité\n\nBons illimités sur les deux paliers.\n💶 Prix nets — TVA non applicable, art. 293 B du CGI.",
     buttons: [
       { label: 'Merci ! 😊', next: 'merci-fin' },
     ],

@@ -87,6 +87,7 @@ export default function Confidentialite() {
                   ['Adresse du commerce', 'Géolocalisation, filtrage par ville'],
                   ['Place ID Google', 'Unicité du profil, anti-doublons'],
                   ['Photo de commerce', 'Affichage (récupérée via Google Places)'],
+                  ['Photos des offres publiées', "Affichage de l'offre sur la plateforme et dans les partages (optionnel)"],
                   ["Historique des offres publiées", 'Statistiques, facturation'],
                   ['Données de paiement', 'Gérées exclusivement par Stripe — jamais stockées par BONMOMENT'],
                 ].map(([donnee, finalite], i, arr) => (

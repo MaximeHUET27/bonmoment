@@ -64,7 +64,7 @@ export default function RegistreCNIL() {
             ["Finalité", "Inscription, gestion du profil commerce, publication d'offres, statistiques"],
             ["Base légale", "Exécution du contrat (Art. 6.1.b RGPD)"],
             ["Catégories de personnes", "Commerçants inscrits sur la plateforme"],
-            ["Données traitées", "Email, nom du commerce, adresse, Place ID Google, photo du commerce, historique des offres publiées"],
+            ["Données traitées", "Email, nom du commerce, adresse, Place ID Google, photo du commerce, historique des offres publiées, photos des offres publiées (optionnelles, stockées sur Supabase Storage — région EU)"],
             ["Destinataires", "Supabase — Vercel — Stripe (paiement) — Brevo (emails) — Google Places API"],
             ["Transferts hors UE", "Vercel Inc. (USA) — Stripe Inc. (USA) — Google LLC (USA) — CCT Commission Européenne"],
             ["Durée de conservation", "Durée de la relation contractuelle + 3 mois après résiliation"],
