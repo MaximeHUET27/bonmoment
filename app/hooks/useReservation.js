@@ -113,6 +113,15 @@ export function useReservation() {
         body:    JSON.stringify({ offre_id: offre.id }),
       }).catch(() => {})
 
+      /* Email de confirmation non-bloquant — filet pour qui ferme l'onglet */
+      if (resaId) {
+        fetch('/api/email-confirmation-bon', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ reservation_id: resaId }),
+        }).catch(() => {})
+      }
+
       return finalRes
 
     } catch (err) {
