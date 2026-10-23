@@ -2,7 +2,7 @@ CONTEXTE PROJET BONMOMENT
 Identité
 
 Porteur : Maxime HUET, auto-entrepreneur, 7 rue du Chesne, 27190 Nogent-le-Sec
-Email : bonmomentapp@gmail.com | Tél : 06 37 66 50 78
+Email : bonmomentapp@gmail.com
 Domaine : bonmoment.app | Hébergeur : Vercel Inc.
 Tagline : Soyez là au bon moment
 
