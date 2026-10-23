@@ -2,7 +2,7 @@ import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
-const ADMIN_EMAIL = 'bonmomentapp@gmail.com'
+import { isAdmin } from '@/lib/isAdmin'
 const MAX_SIZE = 5 * 1024 * 1024 // 5MB
 const TYPES_AUTORISES = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
 const EXT_MAP = {
@@ -22,7 +22,7 @@ export async function POST(request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user)
     return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
-  if (user.email !== ADMIN_EMAIL)
+  if (!isAdmin(user))
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
 
   const formData = await request.formData()

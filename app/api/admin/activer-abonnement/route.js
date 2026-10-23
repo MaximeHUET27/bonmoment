@@ -8,14 +8,14 @@ const supabaseAdmin = createAdminClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'bonmomentapp@gmail.com'
+import { isAdmin } from '@/lib/isAdmin'
 
 export async function POST(request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) return Response.json({ error: 'Non authentifié' }, { status: 401 })
-  if (user.email !== ADMIN_EMAIL) return Response.json({ error: 'Accès refusé' }, { status: 403 })
+  if (!isAdmin(user)) return Response.json({ error: 'Accès refusé' }, { status: 403 })
 
   const body = await request.json().catch(() => ({}))
   const { commerce_id, palier } = body

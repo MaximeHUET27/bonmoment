@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/app/context/AuthContext'
 
-const ADMIN_EMAIL = 'bonmomentapp@gmail.com'
+import { isAdmin } from '@/lib/isAdmin'
 
 const NAV = [
   { href: '/admin',                label: 'Dashboard',      icon: '📊' },
@@ -23,12 +23,12 @@ export default function AdminLayout({ children }) {
   const pathname = usePathname()
 
   useEffect(() => {
-    if (!loading && (!user || user.email !== ADMIN_EMAIL)) {
+    if (!loading && (!user || !isAdmin(user))) {
       router.replace('/')
     }
   }, [user, loading, router])
 
-  if (loading || !user || user.email !== ADMIN_EMAIL) {
+  if (loading || !user || !isAdmin(user)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F5F5F5]">
         <span className="w-8 h-8 border-[3px] border-[#FF6B00] border-t-transparent rounded-full animate-spin" />

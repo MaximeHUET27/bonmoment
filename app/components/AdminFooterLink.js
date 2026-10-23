@@ -3,11 +3,11 @@
 import Link from 'next/link'
 import { useAuth } from '@/app/context/AuthContext'
 
-const ADMIN_EMAIL = 'bonmomentapp@gmail.com'
+import { isAdmin } from '@/lib/isAdmin'
 
 export default function AdminFooterLink() {
   const { user } = useAuth()
-  if (!user || user.email !== ADMIN_EMAIL) return null
+  if (!user || !isAdmin(user)) return null
   return (
     <Link
       href="/admin"

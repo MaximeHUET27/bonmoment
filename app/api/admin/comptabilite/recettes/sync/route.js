@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const ADMIN_EMAIL = 'bonmomentapp@gmail.com'
+import { isAdmin } from '@/lib/isAdmin'
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -20,7 +20,7 @@ export async function POST(request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user)
     return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
-  if (user.email !== ADMIN_EMAIL)
+  if (!isAdmin(user))
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
   }
 

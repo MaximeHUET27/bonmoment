@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/app/context/AuthContext'
+import { isAdmin } from '@/lib/isAdmin'
 
 const FEATURES_COMMUNES = [
   'Bons illimités',
@@ -38,7 +39,7 @@ function AbonnementContent() {
   const router       = useRouter()
   const searchParams = useSearchParams()
 
-  const isAdmin = user?.email === 'bonmomentapp@gmail.com'
+  const isAdmin = isAdmin(user)
 
   const [commerce,          setCommerce]          = useState(null)
   const [fetching,          setFetching]          = useState(true)
