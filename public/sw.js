@@ -25,6 +25,7 @@ self.addEventListener('push', (event) => {
     icon:    data.icon    || '/icon-192.png',
     badge:   data.badge   || '/icon-72.png',
     image:   data.image   || undefined,
+    tag:     data.tag     || undefined,
     data:    { url: data.url || '/' },
     actions: [
       { action: 'voir', title: 'Voir les offres' },

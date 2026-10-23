@@ -137,7 +137,7 @@ export async function POST(req) {
   const qrData    = resa.qr_code_data || `${SITE}/bon/${resa.id}`
   const qrImgUrl  = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=${encodeURIComponent(qrData)}`
   const bonUrl    = `${SITE}/bon/${resa.id}`
-  const annulerUrl = `${SITE}/api/annuler-bon-email?r=${resa.id}&t=${signerAnnulation(resa.id)}`
+  const annulerUrl = `${SITE}/annuler?r=${resa.id}&t=${signerAnnulation(resa.id)}`
   const prenom    = (user.user_metadata?.nom || user.user_metadata?.full_name || '').split(' ')[0] || 'Habitant'
 
   const html = buildHtml({

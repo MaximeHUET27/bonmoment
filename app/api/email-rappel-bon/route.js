@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { BREVO_SENDER, BREVO_REPLY_TO } from '@/lib/brevo/sender'
 import { signerAnnulation } from '@/lib/emailLinks'
+import { sendPushToMany } from '@/lib/push'
 
 /**
  * Appelée toutes les 10-15 min par un job pg_cron côté Supabase (pas un cron
@@ -14,8 +15,7 @@ const admin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-const SITE       = process.env.NEXT_PUBLIC_SITE_URL || 'https://bonmoment.app'
-const FENETRE_MS = 2 * 60 * 60 * 1000
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://bonmoment.app'
 
 function labelRemise(type_remise, valeur) {
   switch (type_remise) {
@@ -53,7 +53,7 @@ function buildHtml({ prenom, commerce, badge, offreTitre, heureFin, code, qrImgU
 </head>
 <body style="margin:0;padding:0;background:#F5F5F5;">
 
-<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Ton bon chez ${commerce} expire à ${heureFin} — dernière ligne droite !</div>
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Ton bon chez ${commerce} est disponible — jusqu'à ${heureFin} !</div>
 
 <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#F5F5F5" style="background:#F5F5F5;padding:20px 0;">
 <tr><td align="center" style="padding:20px 16px;">
@@ -62,12 +62,12 @@ function buildHtml({ prenom, commerce, badge, offreTitre, heureFin, code, qrImgU
 
   <tr><td style="background:#FF6B00;padding:28px 24px;text-align:center;">
     <span style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:900;color:#FFFFFF;letter-spacing:2px;">BONMOMENT</span>
-    <div style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:15px;font-weight:600;color:rgba(255,255,255,0.92);margin-top:8px;">⏰ Ton bon expire bientôt</div>
+    <div style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:15px;font-weight:600;color:rgba(255,255,255,0.92);margin-top:8px;">🔓 Ton bon est disponible</div>
   </td></tr>
 
   <tr><td style="padding:32px 28px 8px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:16px;color:#3D3D3D;line-height:1.7;text-align:center;">
     <p style="margin:0 0 4px;">Salut ${prenom} ! 👋</p>
-    <p style="margin:0 0 24px;font-size:15px;">Ton bon chez <strong>${commerce}</strong> expire à <strong>${heureFin}</strong>.</p>
+    <p style="margin:0 0 24px;font-size:15px;">Ton bon chez <strong>${commerce}</strong> est disponible <strong>dès maintenant</strong>. Tu as jusqu'à <strong>${heureFin}</strong> pour en profiter.</p>
 
     <div style="background:#FFF8F0;border-left:4px solid #FF6B00;border-radius:8px;padding:20px;margin-bottom:24px;">
       <p style="margin:0 0 12px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:18px;font-weight:800;color:#FF6B00;">${badge} — ${offreTitre}</p>
@@ -115,9 +115,9 @@ export async function GET(req) {
   const { data: candidats, error } = await admin
     .from('reservations')
     .select(`
-      id, code_validation, qr_code_data,
-      users:user_id ( email, nom, notifications_email ),
-      offres:offre_id ( titre, type_remise, valeur, date_fin, commerces:commerce_id ( nom ) )
+      id, user_id, code_validation, qr_code_data, created_at,
+      users:user_id ( email, nom, notifications_email, notifications_push ),
+      offres:offre_id ( titre, type_remise, valeur, date_debut, date_fin, est_recurrente, commerces:commerce_id ( nom ) )
     `)
     .eq('statut', 'reservee')
     .is('rappel_envoye_at', null)
@@ -133,30 +133,84 @@ export async function GET(req) {
     const offre    = r.offres
     const commerce = offre?.commerces
     const u        = r.users
-    if (!offre?.date_fin || !commerce || !u?.email) continue
+    if (!offre || !commerce || !u?.email) continue
 
-    const finMs = new Date(offre.date_fin).getTime()
+    /* Offres récurrentes : date_debut est figée à la création et ne reflète
+       plus le début réel de l'occurrence en cours dès la 2e fois. Comparer
+       created_at à date_debut n'a alors plus de sens. Aucune offre
+       récurrente n'existe en base à ce jour ; on les exclut explicitement du
+       rappel en attendant un vrai mécanisme par occurrence, plutôt que de
+       risquer un rappel envoyé au mauvais moment. On ne marque pas
+       rappel_envoye_at : ces réservations redeviendront naturellement
+       éligibles si le support des occurrences est ajouté plus tard. */
+    if (offre.est_recurrente) { ignores++; continue }
 
-    /* Trop tôt : pas encore dans la fenêtre H-2, on retentera au prochain passage */
-    if (finMs - now > FENETRE_MS) continue
+    if (!offre.date_debut || !offre.date_fin) {
+      /* Anomalie de données (dates manquantes) : rien de fiable à comparer,
+         on neutralise pour ne plus jamais réexaminer cette réservation. */
+      await admin
+        .from('reservations')
+        .update({ rappel_envoye_at: new Date().toISOString() })
+        .eq('id', r.id)
+      ignores++
+      continue
+    }
 
-    /* Fenêtre passée (offre déjà expirée) ou utilisateur qui refuse les emails
-       → on marque quand même pour ne plus jamais réexaminer cette réservation */
-    const doitEnvoyer = finMs > now && u.notifications_email !== false
+    const debutMs = new Date(offre.date_debut).getTime()
+    const finMs   = new Date(offre.date_fin).getTime()
+    const creeMs  = new Date(r.created_at).getTime()
 
-    if (doitEnvoyer) {
-      const qrData     = r.qr_code_data || `${SITE}/bon/${r.id}`
-      const qrImgUrl   = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=${encodeURIComponent(qrData)}`
-      const bonUrl     = `${SITE}/bon/${r.id}`
-      const annulerUrl = `${SITE}/api/annuler-bon-email?r=${r.id}&t=${signerAnnulation(r.id)}`
-      const prenom     = (u.nom || '').split(' ')[0] || 'Habitant'
+    /* Offre pas encore démarrée : on retentera au prochain passage */
+    if (debutMs > now) continue
 
+    /* Expirée avant d'avoir pu prévenir → on neutralise sans envoyer */
+    if (finMs <= now) {
+      await admin
+        .from('reservations')
+        .update({ rappel_envoye_at: new Date().toISOString() })
+        .eq('id', r.id)
+      ignores++
+      continue
+    }
+
+    /* Réservation faite après le démarrage de l'offre (cas le plus fréquent
+       en pratique) : la confirmation envoyée à la réservation a déjà tout
+       dit, un rappel ferait doublon → on neutralise sans envoyer.
+       Cas nominal : réservée avant le démarrage, l'offre vient d'ouvrir. */
+    const reserveeApresDebut = creeMs >= debutMs
+    const doitEnvoyer = !reserveeApresDebut
+
+    if (!doitEnvoyer) {
+      ignores++
+      await admin
+        .from('reservations')
+        .update({ rappel_envoye_at: new Date().toISOString() })
+        .eq('id', r.id)
+      continue
+    }
+
+    /* Marqueur anti-doublon posé AVANT les envois : un échec d'un canal
+       (ou des deux) ne doit jamais provoquer de renvoi au cron suivant. */
+    await admin
+      .from('reservations')
+      .update({ rappel_envoye_at: new Date().toISOString() })
+      .eq('id', r.id)
+
+    const qrData     = r.qr_code_data || `${SITE}/bon/${r.id}`
+    const qrImgUrl   = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=${encodeURIComponent(qrData)}`
+    const bonUrl     = `${SITE}/bon/${r.id}`
+    const annulerUrl = `${SITE}/annuler?r=${r.id}&t=${signerAnnulation(r.id)}`
+    const prenom     = (u.nom || '').split(' ')[0] || 'Habitant'
+    const badge      = labelRemise(offre.type_remise, offre.valeur)
+    const heureFin   = heureFr(offre.date_fin)
+
+    if (u.notifications_email !== false) {
       const html = buildHtml({
         prenom,
         commerce:   commerce.nom,
-        badge:      labelRemise(offre.type_remise, offre.valeur),
+        badge,
         offreTitre: offre.titre,
-        heureFin:   heureFr(offre.date_fin),
+        heureFin,
         code:       formatCode(r.code_validation),
         qrImgUrl, bonUrl, annulerUrl,
       })
@@ -169,24 +223,42 @@ export async function GET(req) {
             sender:      BREVO_SENDER,
             to:          [{ email: u.email, name: prenom }],
             replyTo:     BREVO_REPLY_TO,
-            subject:     `⏰ Ton bon chez ${commerce.nom} expire à ${heureFr(offre.date_fin)} !`,
+            subject:     `🔓 Ton bon chez ${commerce.nom} est disponible !`,
             htmlContent: html,
           }),
         })
         if (!res.ok) throw new Error(`Brevo ${res.status}`)
         envoyes++
       } catch (err) {
-        console.error('[email-rappel-bon] envoi', r.id, err.message)
-        continue // on retentera au prochain passage, sans marquer rappel_envoye_at
+        console.error('[email-rappel-bon] envoi email', r.id, err.message)
       }
     } else {
       ignores++
     }
 
-    await admin
-      .from('reservations')
-      .update({ rappel_envoye_at: new Date().toISOString() })
-      .eq('id', r.id)
+    /* Push (audit P1) : même source d'abonnements que
+       /api/push/notify-reservation (table push_subscriptions), même
+       garde-fous que l'email. Un échec du push est journalisé sans
+       bloquer l'email ni faire échouer la route. */
+    if (u.notifications_push !== false) {
+      try {
+        const { data: subs } = await admin
+          .from('push_subscriptions')
+          .select('id, endpoint, p256dh, auth')
+          .eq('user_id', r.user_id)
+
+        if (subs?.length) {
+          await sendPushToMany(subs, {
+            title: `C'est ouvert chez ${commerce.nom}`,
+            body:  `Ton bon ${badge} est valable jusqu'à ${heureFin}. Montre ton code en caisse.`,
+            url:   `${SITE}/bon/${r.id}`,
+            tag:   r.id,
+          }, admin)
+        }
+      } catch (err) {
+        console.error('[email-rappel-bon] envoi push', r.id, err.message)
+      }
+    }
   }
 
   return Response.json({ examinees: candidats?.length ?? 0, envoyes, ignores })

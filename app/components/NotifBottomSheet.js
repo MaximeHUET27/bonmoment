@@ -12,7 +12,11 @@ export default function NotifBottomSheet({ isOpen, onClose, villeNom }) {
   const { user, supabase } = useAuth()
   const [emailOn,          setEmailOn]          = useState(true)
   const [emailInstantOn,   setEmailInstantOn]   = useState(true)
-  const [pushOn,           setPushOn]           = useState(true)
+  /* Audit P1 : ne JAMAIS présumer un abonnement push actif. Initialisé à
+     false, puis mis à jour par l'effet ci-dessous d'après l'état réel du
+     navigateur — sinon handleSave écrivait notifications_push=true sans
+     qu'aucun abonnement n'ait jamais été créé. */
+  const [pushOn,           setPushOn]           = useState(false)
   const [saving,        setSaving]        = useState(false)
   const [showIOSPrompt, setShowIOSPrompt] = useState(false)
 
@@ -23,6 +27,16 @@ export default function NotifBottomSheet({ isOpen, onClose, villeNom }) {
       window.dispatchEvent(new Event('bonmoment:bottomsheet-close'))
     }
   }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen || !user || !('serviceWorker' in navigator)) return
+    let cancelled = false
+    navigator.serviceWorker.getRegistration()
+      .then(reg => reg?.pushManager.getSubscription())
+      .then(sub => { if (!cancelled) setPushOn(!!sub) })
+      .catch(() => { if (!cancelled) setPushOn(false) })
+    return () => { cancelled = true }
+  }, [isOpen, user])
 
   if (!isOpen) return null
 
