@@ -235,7 +235,15 @@ export default function ProfilPage() {
 
   async function supprimerCompte() {
     setDeleting(true)
-    await supabase.from('users').delete().eq('id', user.id)
+    const res = await fetch('/api/compte/supprimer', { method: 'POST' }).catch(() => null)
+    const data = await res?.json().catch(() => null)
+
+    if (!res?.ok) {
+      setDeleting(false)
+      showToast(data?.error || "La suppression a échoué, réessaie.")
+      return
+    }
+
     await signOut()
     router.push('/')
     showToast('Ton compte a été supprimé.')
