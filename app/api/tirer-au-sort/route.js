@@ -18,7 +18,7 @@ const admin = createClient(
 )
 
 export async function POST(request) {
-  const limited = checkRate(request)
+  const limited = await checkRate(request)
   if (limited) return limited
 
   /* ── Auth ─────────────────────────────────────────────────────────────── */

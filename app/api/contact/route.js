@@ -16,7 +16,7 @@ function escapeHtml(str) {
 }
 
 export async function POST(req) {
-  const limited = checkRate(req)
+  const limited = await checkRate(req)
   if (limited) return limited
 
   try {

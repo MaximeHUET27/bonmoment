@@ -14,7 +14,7 @@ const supabaseAdmin = createAdminClient(
 )
 
 export async function POST(request) {
-  const limited = checkRate(request)
+  const limited = await checkRate(request)
   if (limited) return limited
 
   const supabase = await createClient()

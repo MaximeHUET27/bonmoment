@@ -48,7 +48,7 @@ export async function GET(request, { params }) {
 
 /* POST /api/offres/[id]/participants — s'inscrire à un événement sans bon */
 export async function POST(request, { params }) {
-  const limited = checkRate(request)
+  const limited = await checkRate(request)
   if (limited) return limited
 
   const { id: offre_id } = await params

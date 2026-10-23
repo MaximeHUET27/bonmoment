@@ -13,7 +13,7 @@ const BREVO_API_KEY = process.env.BREVO_API_KEY
 const checkRate = rateLimit({ maxRequests: 10, windowMs: 5 * 60 * 1000 })
 
 export async function POST(request) {
-  const limited = checkRate(request)
+  const limited = await checkRate(request)
   if (limited) return limited
 
   const supabase = await createServerClient()

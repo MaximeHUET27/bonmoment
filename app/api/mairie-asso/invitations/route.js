@@ -20,7 +20,7 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Feature désactivée' }, { status: 404 });
   }
 
-  const limited = checkRate(request);
+  const limited = await checkRate(request);
   if (limited) return limited;
 
   const supabase = await createClient();

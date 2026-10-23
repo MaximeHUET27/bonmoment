@@ -101,7 +101,7 @@ function buildHtml({ prenom, commerce, badge, offreTitre, heureFin, code, qrImgU
 }
 
 export async function POST(req) {
-  const limited = checkRate(req)
+  const limited = await checkRate(req)
   if (limited) return limited
 
   const { reservation_id } = await req.json().catch(() => ({}))

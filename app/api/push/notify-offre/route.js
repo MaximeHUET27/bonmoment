@@ -19,7 +19,7 @@ const admin = createClient(
 const checkRate = rateLimit({ maxRequests: 10, windowMs: 60 * 1000 })
 
 export async function POST(request) {
-  const limited = checkRate(request)
+  const limited = await checkRate(request)
   if (limited) return limited
 
   /* Auth utilisateur — doit être connecté (le commerçant) */

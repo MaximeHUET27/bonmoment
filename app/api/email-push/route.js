@@ -10,7 +10,7 @@ const supabaseAdmin = createClient(
 const checkRate = rateLimit({ maxRequests: 10, windowMs: 60 * 1000 })
 
 export async function POST(req) {
-  const limited = checkRate(req)
+  const limited = await checkRate(req)
   if (limited) return limited
 
   /* ── Sécurité ── */
