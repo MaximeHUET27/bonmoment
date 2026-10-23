@@ -54,13 +54,44 @@ export async function POST(request) {
       offres(id, commerce_id, statut, date_debut, date_fin, type_remise, titre, valeur)
     `)
 
-  if (reservation_id) q = q.eq('id', reservation_id)
-  else                q = q.eq('code_validation', code_validation)
+  if (reservation_id) {
+    q = q.eq('id', reservation_id)
+  } else {
+    // Audit M3 : un code à 6 chiffres n'est unique que par offre, pas
+    // globalement — restreindre la recherche aux offres des commerces du
+    // commerçant connecté + des mairies/assos dont il est membre accepté,
+    // sinon un code partagé par deux commerces différents fait échouer
+    // .maybeSingle() et renvoie "Code invalide" même pour le bon commerçant.
+    const { data: membresAsso } = await admin
+      .from('mairie_asso_membres')
+      .select('mairie_asso_id, commerces!mairie_asso_id(categorie_bonmoment)')
+      .in('commerce_id', commerceIds)
+      .eq('statut', 'accepted')
+    const assoIds = (membresAsso || [])
+      .filter(m => m.commerces?.categorie_bonmoment === 'mairie_asso')
+      .map(m => m.mairie_asso_id)
+    const allowedCommerceIds = [...commerceIds, ...assoIds]
+
+    const { data: offresAutorisees } = await admin
+      .from('offres').select('id').in('commerce_id', allowedCommerceIds)
+    const offreIdsAutorises = (offresAutorisees || []).map(o => o.id)
+
+    q = q.eq('code_validation', code_validation).in('offre_id', offreIdsAutorises)
+  }
 
   const { data: res, error: fetchErr } = await q.maybeSingle()
 
   if (fetchErr) {
     console.error('[valider-bon] fetchErr:', fetchErr.message, fetchErr.details)
+    // PGRST116 = plusieurs lignes trouvées (deux offres du même commerçant
+    // ont généré le même code) : message distinct de "Code invalide" pour
+    // ne pas laisser croire que le code n'existe pas.
+    if (fetchErr.code === 'PGRST116') {
+      return NextResponse.json(
+        { error: 'Plusieurs bons correspondent à ce code — utilise le scan QR pour celui-ci' },
+        { status: 409 }
+      )
+    }
     return NextResponse.json({ error: 'Code invalide' }, { status: 404 })
   }
   if (!res) return NextResponse.json({ error: 'Code invalide' }, { status: 404 })
