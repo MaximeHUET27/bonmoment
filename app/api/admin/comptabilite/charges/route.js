@@ -13,9 +13,7 @@ const admin = createClient(
 async function checkAdmin(request) {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user)
-    return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
-  if (!isAdmin(user)) return null
+  if (!user || !isAdmin(user)) return null
   return user
 }
 
