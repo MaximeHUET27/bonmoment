@@ -39,7 +39,7 @@ function AbonnementContent() {
   const router       = useRouter()
   const searchParams = useSearchParams()
 
-  const isAdmin = isAdmin(user)
+  const estAdmin = isAdmin(user)
 
   const [commerce,          setCommerce]          = useState(null)
   const [fetching,          setFetching]          = useState(true)
@@ -130,7 +130,7 @@ function AbonnementContent() {
     setError(null)
 
     /* ── Bypass Stripe pour l'admin ── */
-    if (isAdmin) {
+    if (estAdmin) {
       try {
         const res  = await fetch('/api/admin/activer-abonnement', {
           method:  'POST',
@@ -207,7 +207,7 @@ function AbonnementContent() {
             <p className="text-xs text-[#3D3D3D]/60 mt-1">Sans engagement · Résiliable à tout moment</p>
           </>
         )}
-        {isAdmin && (
+        {estAdmin && (
           <p className="inline-block mt-2 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">
             🔑 Mode admin — activation sans paiement
           </p>
