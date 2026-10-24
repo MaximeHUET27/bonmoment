@@ -362,7 +362,7 @@ export default function BonDisplay({ reservation, offre, commerce, commerceId, p
             <p className="text-base font-black text-red-500">Trop tard — bon expiré</p>
           ) : (
             <>
-              <p className={`text-2xl font-black tabular-nums tracking-tight ${timerRed ? 'text-red-500' : 'text-[#0A0A0A]'}`}>
+              <p suppressHydrationWarning className={`text-2xl font-black tabular-nums tracking-tight ${timerRed ? 'text-red-500' : 'text-[#0A0A0A]'}`}>
                 {String(timeLeft.h).padStart(2, '0')}h {String(timeLeft.m).padStart(2, '0')}m {String(timeLeft.s).padStart(2, '0')}s
               </p>
               <p className="text-[11px] text-[#3D3D3D]/50 mt-1 font-medium">

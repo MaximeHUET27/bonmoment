@@ -1,9 +1,15 @@
 import { test, expect } from '@playwright/test'
+import { env } from './securite/helpers.js'
+
+// Ces verifications decrivent le comportement flag OFF : sans objet quand la
+// fonctionnalite Mairie/Asso est activee (NEXT_PUBLIC_MAIRIE_ASSO_ENABLED=true).
+const FLAG_ON = env('NEXT_PUBLIC_MAIRIE_ASSO_ENABLED') === 'true'
 
 // Tests de non-régression UI Lot 4B
 // Vérifient que les composants Lot 4B sont absents quand le flag est OFF
 
 test.describe('Lot 4B — flag OFF : pages légales inchangées', () => {
+  test.skip(FLAG_ON, 'flag Mairie/Asso active')
   test('la page CGV ne contient pas "Mairie / Association" avec flag OFF', async ({ page }) => {
     await page.goto('/cgv')
     const section = page.locator('text=Cas particulier des comptes Mairie / Association')
@@ -24,6 +30,7 @@ test.describe('Lot 4B — flag OFF : pages légales inchangées', () => {
 })
 
 test.describe('Lot 4B — flag OFF : FAQ et chatbot inchangés', () => {
+  test.skip(FLAG_ON, 'flag Mairie/Asso active')
   test('la page FAQ ne contient pas "Associations et mairies" avec flag OFF', async ({ page }) => {
     await page.goto('/aide')
     const cat = page.locator('text=Associations et mairies')

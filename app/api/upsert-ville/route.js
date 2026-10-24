@@ -17,6 +17,18 @@ export async function POST(request) {
   const nom  = body.nom?.trim()
   if (!nom) return NextResponse.json({ error: 'Nom requis' }, { status: 400 })
 
+  /* Vérifie si la ville existe déjà (case-insensitive) */
+  const { data: existing } = await admin
+    .from('villes')
+    .select('id, active, latitude, longitude')
+    .ilike('nom', nom)
+    .maybeSingle()
+
+  /* Ville déjà complète : rien à faire, inutile d'appeler geo.api (souvent lente/indisponible) */
+  if (existing?.active && existing.latitude && existing.longitude) {
+    return NextResponse.json({ success: true })
+  }
+
   /* Récupère code INSEE + département + coordonnées via geo.api.gouv.fr */
   let code_insee  = null
   let departement = null
@@ -37,18 +49,12 @@ export async function POST(request) {
     /* geo.api indisponible → sera null */
   }
 
-  /* code_insee est NOT NULL en BDD — on ne peut pas insérer sans lui */
-  if (!code_insee) {
+  /* code_insee est NOT NULL en BDD — on ne peut pas insérer une NOUVELLE ville sans lui.
+     Une ville existante peut en revanche être réactivée même si geo.api est indisponible. */
+  if (!code_insee && !existing) {
     console.error('[upsert-ville] code_insee introuvable pour:', nom)
     return NextResponse.json({ error: 'code_insee introuvable' }, { status: 422 })
   }
-
-  /* Vérifie si la ville existe déjà (case-insensitive) */
-  const { data: existing } = await admin
-    .from('villes')
-    .select('id, active, latitude, longitude')
-    .ilike('nom', nom)
-    .maybeSingle()
 
   if (!existing) {
     /* Nouvelle ville → INSERT */

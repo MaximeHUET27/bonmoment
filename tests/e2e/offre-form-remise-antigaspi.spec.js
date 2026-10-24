@@ -12,7 +12,7 @@ const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000'
 
 /* ── Helpers ────────────────────────────────────────────────────────────── */
 
-async function goToVille(page, ville = 'annecy') {
+async function goToVille(page, ville = 'conches-en-ouche') {
   await page.goto(`${BASE_URL}/ville/${ville}`)
   await page.waitForLoadState('networkidle')
 }

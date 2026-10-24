@@ -210,3 +210,12 @@ test('upsert-ville : refuse sans session', async ({ request }) => {
   const sans = await request.post('/api/upsert-ville', { data: { nom: 'Rouen' } })
   expect(sans.status()).toBe(401)
 })
+
+test('upsert-ville : ville deja complete -> succes immediat, sans dependre de geo.api', async ({ browser }) => {
+  const ctx = await ouvrirAvec(browser, sessCom)
+  const t0 = Date.now()
+  const res = await ctx.request.post('/api/upsert-ville', { data: { nom: TEST_VILLE } })
+  expect(res.status(), await res.text()).toBe(200)
+  expect(Date.now() - t0).toBeLessThan(3500)
+  await ctx.close()
+})
