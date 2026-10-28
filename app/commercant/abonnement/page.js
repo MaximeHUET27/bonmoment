@@ -18,9 +18,10 @@ const FEATURES = [
   { label: 'Avis Google automatiques',                   inclus: ['essentiel', 'pro'] },
   { label: 'Rapport mensuel',                            inclus: ['essentiel', 'pro'] },
   { label: 'Carte de fidélité unique et dématérialisée', inclus: ['pro'] },
+  { label: 'Cagnotte de parrainage',                     inclus: ['basic', 'essentiel', 'pro'] },
 ]
 
-// Ordre d'affichage : Pro (référence), puis Essentiel, puis Basic (gratuit)
+// Ordre d'affichage : Basic (gratuit, carte à part), puis Pro, puis Essentiel
 const PLANS = [
   { key: 'pro',       nom: 'Pro',       prix: 49, populaire: true  },
   { key: 'essentiel', nom: 'Essentiel', prix: 29, populaire: false },
@@ -300,15 +301,31 @@ function AbonnementContent() {
           )}
         </div>
 
-        {/* ── Cartes paliers — row sur desktop, colonne sur mobile ── */}
-        <div className="flex flex-col md:flex-row md:justify-center gap-4 md:gap-5 md:items-stretch">
+        {/* ── Cartes paliers — défilement horizontal (gauche → droite) sur mobile, rangée sur desktop ── */}
+        <p className="md:hidden text-center text-[11px] text-[#3D3D3D]/50 -mb-2">← Fais défiler pour comparer les offres →</p>
+        <div className="flex flex-row gap-4 md:gap-5 items-stretch overflow-x-auto snap-x snap-mandatory -mx-4 px-4 pt-4 pb-3 md:mx-0 md:px-0 md:overflow-visible md:justify-center [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {/* Offre gratuite Basic — attribuée automatiquement, jamais achetable */}
+          <div className="relative bg-[#FAFAFA] rounded-3xl px-5 py-6 flex flex-col gap-3 border-2 border-[#F0F0F0] snap-center shrink-0 w-[82%] max-w-[320px] md:w-[300px] md:max-w-[300px]">
+            <div>
+              <p className="text-lg font-black text-[#0A0A0A]">Basic</p>
+              <p className="text-2xl font-black text-[#0A0A0A] mt-0.5 leading-none">
+                0€<span className="text-sm font-semibold text-[#3D3D3D]/60">/mois</span>
+              </p>
+            </div>
+            <ListeFeatures palier="basic" />
+            <p className="text-[11px] font-semibold text-[#3D3D3D]/60">Gratuit, sans carte bancaire ni engagement</p>
+            <div className="w-full font-black text-sm py-3.5 rounded-2xl min-h-[48px] flex items-center justify-center bg-[#F0F0F0] text-[#3D3D3D]/60 select-none">
+              {estBasic(commerce?.palier) ? 'Ton offre actuelle' : 'Offre gratuite'}
+            </div>
+          </div>
+
           {PLANS.map(plan => {
             const isDisabled = !cgvAccepted || choosing !== null
             const essaiOffert = !commerce?.stripe_customer_id && !commerce?.stripe_subscription_id
             return (
               <div
                 key={plan.key}
-                className={`relative bg-white rounded-3xl px-5 py-6 flex flex-col gap-3 border-2 transition-all md:w-[300px] md:max-w-[300px] ${
+                className={`relative bg-white rounded-3xl px-5 py-6 flex flex-col gap-3 border-2 transition-all snap-center shrink-0 w-[82%] max-w-[320px] md:w-[300px] md:max-w-[300px] ${
                   plan.populaire
                     ? 'border-[#FF6B00] shadow-lg shadow-orange-100 md:scale-[1.03]'
                     : 'border-[#F0F0F0]'
@@ -367,21 +384,6 @@ function AbonnementContent() {
               </div>
             )
           })}
-
-          {/* Offre gratuite Basic — attribuée automatiquement, jamais achetable */}
-          <div className="relative bg-[#FAFAFA] rounded-3xl px-5 py-6 flex flex-col gap-3 border-2 border-[#F0F0F0] md:w-[300px] md:max-w-[300px]">
-            <div>
-              <p className="text-lg font-black text-[#0A0A0A]">Basic</p>
-              <p className="text-2xl font-black text-[#0A0A0A] mt-0.5 leading-none">
-                0€<span className="text-sm font-semibold text-[#3D3D3D]/60">/mois</span>
-              </p>
-            </div>
-            <ListeFeatures palier="basic" />
-            <p className="text-[11px] font-semibold text-[#3D3D3D]/60">Gratuit, sans carte bancaire ni engagement</p>
-            <div className="w-full font-black text-sm py-3.5 rounded-2xl min-h-[48px] flex items-center justify-center bg-[#F0F0F0] text-[#3D3D3D]/60 select-none">
-              {estBasic(commerce?.palier) ? 'Ton offre actuelle' : 'Offre gratuite'}
-            </div>
-          </div>
         </div>
 
         {!cgvAccepted && (
