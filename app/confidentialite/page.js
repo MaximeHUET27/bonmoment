@@ -156,7 +156,7 @@ export default function Confidentialite() {
                   ["Factures Stripe", "10 ans — obligation comptable légale"],
                   ["Logs d'activité serveur", "12 mois — suppression automatique"],
                   ["Données supprimées à la demande", "Effacement sous 30 jours ouvrés"],
-                  ["Identifiant d'établissement pseudonymisé (prévention des abus de l'essai gratuit)", "24 mois"],
+                  ["Identifiant d'établissement pseudonymisé (prévention des abus de l'essai gratuit des paliers payants)", "24 mois"],
                 ].map(([donnee, duree], i, arr) => (
                   <tr key={i} className={i < arr.length - 1 ? 'border-b border-[#F5F5F5]' : ''}>
                     <td className="px-4 py-2.5">{donnee}</td>
@@ -336,7 +336,7 @@ export default function Confidentialite() {
         <div>
           <SectionTitle num="11">Mise à jour de la politique</SectionTitle>
           <p className="mt-3">
-            La présente politique de confidentialité a été mise à jour le Avril 2026. Toute modification substantielle vous sera notifiée par email et/ou via un bandeau d&apos;information sur la plateforme.
+            La présente politique de confidentialité a été mise à jour en octobre 2026. Toute modification substantielle vous sera notifiée par email et/ou via un bandeau d&apos;information sur la plateforme.
           </p>
         </div>
 

@@ -677,7 +677,7 @@ export const NODES = {
   'c-ab-1': {
     type: 'answer',
     question: "Comment fonctionne le parrainage ?",
-    response: `Le parrainage BONMOMENT te permet de gagner des mois offerts !\n\n🎁 Génère un **code de parrainage** depuis ton Dashboard (max 3 par mois)\n📤 Partage-le à un autre commerçant qui souhaite rejoindre BONMOMENT\n✅ Quand il s'inscrit avec ton code, vous bénéficiez tous les deux d'un **avantage fidélité**\n\nLes codes sont valables **3 mois** après génération.`,
+    response: `Le parrainage BONMOMENT te fait gagner des remises sur tes mensualités Essentiel ou Pro !\n\n🎁 Génère un **code de parrainage** depuis ton Dashboard (max 3 par mois)\n📤 Partage-le à un autre commerçant qui souhaite rejoindre BONMOMENT\n✅ Quand il souscrit un palier payant avec ton code, vous bénéficiez tous les deux d'une **remise** (10 € Essentiel, 15 € Pro)\n\nLes codes sont valables **3 mois** après génération.`,
     actions: [
       { label: '🎁 Générer un code', type: 'redirect', path: '/commercant/dashboard' },
     ],

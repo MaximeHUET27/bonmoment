@@ -269,14 +269,14 @@ export default function DashboardPage() {
             <p className="text-white font-bold text-[11px] sm:text-[13px] leading-tight">
               {commerce.stripe_customer_id
                 ? '⚠️ Ton abonnement est inactif — Renouvelle pour publier de nouvelles offres'
-                : <>🔒 Pour publier des offres, choisis ton abonnement — 1<sup>er</sup> mois offert !</>
+                : '⏳ Activation de ton offre gratuite Basic en cours — rafraîchis la page dans un instant'
               }
             </p>
             <Link
               href={`/commercant/abonnement?commerce_id=${commerce.id}`}
               className="shrink-0 bg-white text-[#FF6B00] font-black text-xs px-3 py-2 rounded-lg hover:bg-[#FFF0E0] transition-colors whitespace-nowrap"
             >
-              {commerce.stripe_customer_id ? 'Renouveler →' : 'Choisir mon palier →'}
+              {commerce.stripe_customer_id ? 'Renouveler →' : 'Voir les offres →'}
             </Link>
           </div>
         )}
@@ -672,30 +672,42 @@ function StatsVerrouillees({ commerce }) {
         <span className="text-[10px] font-bold uppercase tracking-wide text-[#3D3D3D]/60 bg-[#F5F5F5] px-2 py-1 rounded-full">🔒 Essentiel &amp; Pro</span>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 grayscale opacity-50 select-none" aria-hidden="true">
-        {tuiles.map(t => (
-          <div key={t.label} className="rounded-2xl px-3 py-4 border border-[#F0F0F0] bg-[#FAFAFA] flex flex-col gap-0.5">
-            <p className="text-2xl font-black leading-none text-[#3D3D3D]">—</p>
-            <p className="text-[11px] text-gray-400 leading-tight mt-1">{t.emoji} {t.label}</p>
+      <div className="relative">
+        {/* Tuiles grisées en arrière-plan */}
+        <div className="flex flex-col gap-3 grayscale opacity-40 select-none pointer-events-none" aria-hidden="true">
+          <div className="grid grid-cols-3 gap-3">
+            {tuiles.map(t => (
+              <div key={t.label} className="rounded-2xl px-3 py-4 border border-[#F0F0F0] bg-[#FAFAFA] flex flex-col gap-0.5">
+                <p className="text-2xl font-black leading-none text-[#3D3D3D]">—</p>
+                <p className="text-[11px] text-gray-400 leading-tight mt-1">{t.emoji} {t.label}</p>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+          <div className="rounded-2xl border border-[#F0F0F0] bg-[#FAFAFA] px-3 py-3 flex flex-col gap-1.5">
+            {[70, 45, 85, 30, 60].map((w, i) => (
+              <div key={i} className="h-2.5 rounded-full bg-[#D0D0D0]" style={{ width: `${w}%` }} />
+            ))}
+          </div>
+        </div>
 
-      <div className="bg-[#FFF0E0] border border-[#FFD0A0] rounded-2xl px-4 py-4 flex flex-col gap-2">
-        <p className="text-sm font-bold text-[#0A0A0A]">
-          🔒 Statistiques en temps réel et avis Google automatiques
-        </p>
-        <p className="text-xs text-[#3D3D3D]/80 leading-relaxed">
-          Suis tes bons réservés et utilisés en direct, découvre tes jours et heures de pointe,
-          et récolte automatiquement des avis Google après chaque passage client.
-          Disponible avec les offres Essentiel et Pro.
-        </p>
-        <Link
-          href={lienOffres}
-          className="self-start mt-1 bg-[#FF6B00] hover:bg-[#CC5500] text-white text-xs font-black px-4 py-2.5 rounded-xl transition-colors min-h-[44px] flex items-center"
-        >
-          Voir les offres →
-        </Link>
+        {/* Message par-dessus les tuiles */}
+        <div className="absolute inset-0 flex items-center justify-center p-2">
+          <div className="bg-white/95 backdrop-blur-sm border border-[#FFD0A0] rounded-2xl shadow-lg px-4 py-4 flex flex-col items-center text-center gap-2 max-w-sm">
+            <p className="text-sm font-bold text-[#0A0A0A]">
+              🔒 Statistiques en temps réel et avis Google automatiques
+            </p>
+            <p className="text-xs text-[#3D3D3D]/80 leading-relaxed">
+              Suis tes bons en direct, découvre tes heures de pointe et récolte des avis Google après chaque passage client.
+              Disponible avec Essentiel et Pro.
+            </p>
+            <Link
+              href={lienOffres}
+              className="mt-1 bg-[#FF6B00] hover:bg-[#CC5500] text-white text-xs font-black px-4 py-2.5 rounded-xl transition-colors min-h-[44px] flex items-center"
+            >
+              Voir les offres →
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -1202,7 +1214,7 @@ function ParrainageSection({ commerce, supabase }) {
   async function partagerCode(code) {
     try {
       await navigator.share({
-        text: `Rejoins BONMOMENT et booste ton commerce ! 🚀 1er mois offert + remise parrainage avec mon code : ${code}. Inscription : bonmoment.app/commercant/inscription`,
+        text: `Rejoins BONMOMENT gratuitement et booste ton commerce ! 🚀 Avec mon code ${code} : 1er mois offert + remise parrainage sur les offres Essentiel et Pro. Inscription : bonmoment.app/commercant/inscription`,
       })
     } catch {}
   }

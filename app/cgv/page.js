@@ -92,7 +92,7 @@ export default function CGV() {
 
           <SubTitle className="mt-6">3.3 Période d&apos;essai gratuite des paliers payants</SubTitle>
           <p className="mt-2">
-            Le premier mois d&apos;abonnement est offert sur le palier choisi par le commerçant lors de son inscription. L&apos;enregistrement d&apos;un moyen de paiement valide est requis pour activer cette période. Aucun prélèvement n&apos;est effectué durant cette période.
+            Le premier mois d&apos;abonnement est offert sur le palier payant (Essentiel ou Pro) choisi par le commerçant lors de sa première souscription. L&apos;offre Basic, elle, reste gratuite sans limite de durée. L&apos;enregistrement d&apos;un moyen de paiement valide est requis pour activer cette période. Aucun prélèvement n&apos;est effectué durant cette période.
           </p>
           <p className="mt-2">
             Cette période d&apos;essai est limitée à un seul mois offert par établissement, accordé une seule fois. À cette fin, un identifiant pseudonymisé de l&apos;établissement est conservé, y compris après suppression du compte, afin d&apos;empêcher l&apos;octroi répété de la période gratuite (voir notre{' '}
@@ -237,7 +237,7 @@ export default function CGV() {
         <div>
           <SectionTitle num="10">Droit de rétractation</SectionTitle>
           <p className="mt-3">
-            Conformément à l&apos;article L.221-28 du Code de la consommation, le droit de rétractation ne s&apos;applique pas aux prestations de services pleinement exécutées avant la fin du délai de rétractation. Toutefois, BONMOMENT offre une période d&apos;essai gratuite d&apos;un mois permettant d&apos;évaluer le service sans engagement financier.
+            Conformément à l&apos;article L.221-28 du Code de la consommation, le droit de rétractation ne s&apos;applique pas aux prestations de services pleinement exécutées avant la fin du délai de rétractation. Toutefois, BONMOMENT propose une offre gratuite Basic sans limite de durée, ainsi qu&apos;une période d&apos;essai gratuite d&apos;un mois sur les paliers payants, permettant d&apos;évaluer le service sans engagement financier.
           </p>
         </div>
 

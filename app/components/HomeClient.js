@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import AuthButton from './AuthButton'
+import CommercantCTA from './CommercantCTA'
 import VilleSearchOverlay from './VilleSearchOverlay'
 import OffreCard, { getCategorieFiltre } from '@/app/ville/[slug]/OffreCard'
 import SkeletonCard from './SkeletonCard'
@@ -121,6 +122,11 @@ export default function HomeClient({ villes, offres }) {
 
   return (
     <div className="flex flex-col min-h-screen">
+
+      {/* Bouton commerçant fixe en haut à gauche (masqué pour les comptes commerçants) */}
+      <div className="fixed top-4 left-4 z-40">
+        <CommercantCTA />
+      </div>
 
       {/* AuthButton fixe en haut à droite */}
       <div className="fixed top-4 right-4 z-40 bg-white rounded-full shadow-sm">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense, Fragment } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -8,39 +8,26 @@ import { useAuth } from '@/app/context/AuthContext'
 import { isAdmin } from '@/lib/isAdmin'
 import { estBasic } from '@/lib/paliers'
 
-const FEATURES_COMMUNES = [
-  'Bons illimités',
-  'Statistiques en temps réel',
-  'Avis Google automatiques',
-  'Rapport mensuel',
+/* Grille de fonctionnalités commune, construite à partir de l'offre Pro :
+ * chaque carte affiche les MÊMES lignes dans le même ordre ; ce qui n'est pas
+ * inclus est barré avec un cadenas. */
+const FEATURES = [
+  { label: { basic: '1 offre/mois', essentiel: '8 offres/mois', pro: 'Offres illimitées' }, inclus: ['basic', 'essentiel', 'pro'] },
+  { label: 'Bons illimités',                             inclus: ['basic', 'essentiel', 'pro'] },
+  { label: 'Statistiques en temps réel',                 inclus: ['essentiel', 'pro'] },
+  { label: 'Avis Google automatiques',                   inclus: ['essentiel', 'pro'] },
+  { label: 'Rapport mensuel',                            inclus: ['essentiel', 'pro'] },
+  { label: 'Carte de fidélité unique et dématérialisée', inclus: ['pro'] },
 ]
 
+// Ordre d'affichage : Pro (référence), puis Essentiel, puis Basic (gratuit)
 const PLANS = [
-  {
-    key:      'essentiel',
-    nom:      'Essentiel',
-    prix:     29,
-    populaire: false,
-    features: ['8 offres/mois', ...FEATURES_COMMUNES],
-  },
-  {
-    key:      'pro',
-    nom:      'Pro',
-    prix:     49,
-    populaire: true,
-    features: ['Offres illimitées', ...FEATURES_COMMUNES],
-    fidelite: true,
-  },
+  { key: 'pro',       nom: 'Pro',       prix: 49, populaire: true  },
+  { key: 'essentiel', nom: 'Essentiel', prix: 29, populaire: false },
 ]
 
 const REMISES = { essentiel: 10, pro: 15 }
 
-/* Offre gratuite attribuée automatiquement à l'inscription — non achetable */
-const PLAN_BASIC = {
-  nom:      'Basic',
-  inclus:   ['1 offre/mois', 'Bons illimités', 'QR code vitrine', 'Validation des bons en caisse'],
-  grises:   ['Statistiques en temps réel', 'Avis Google automatiques'],
-}
 
 function AbonnementContent() {
   const { user, loading, supabase } = useAuth()
@@ -315,50 +302,24 @@ function AbonnementContent() {
 
         {/* ── Cartes paliers — row sur desktop, colonne sur mobile ── */}
         <div className="flex flex-col md:flex-row md:justify-center gap-4 md:gap-5 md:items-stretch">
-          {/* Offre gratuite Basic — informative, jamais achetable */}
-          <div className="relative bg-[#FAFAFA] rounded-3xl px-5 py-6 flex flex-col gap-3 border-2 border-[#F0F0F0] md:w-[280px] md:max-w-[280px]">
-            <div>
-              <p className="text-lg font-black text-[#0A0A0A]">{PLAN_BASIC.nom}</p>
-              <p className="text-2xl font-black text-[#0A0A0A] mt-0.5 leading-none">
-                0€<span className="text-sm font-semibold text-[#3D3D3D]/60">/mois</span>
-              </p>
-            </div>
-            <ul className="flex flex-col gap-1.5 text-xs text-[#3D3D3D] flex-1">
-              {PLAN_BASIC.inclus.map(f => (
-                <li key={f} className="flex items-center gap-2">
-                  <span className="text-[#FF6B00] font-bold shrink-0">✓</span>{f}
-                </li>
-              ))}
-              {PLAN_BASIC.grises.map(f => (
-                <li key={f} className="flex items-center gap-2 text-[#3D3D3D]/40 line-through decoration-[#3D3D3D]/30">
-                  <span className="shrink-0 no-underline" aria-hidden="true">🔒</span>{f}
-                </li>
-              ))}
-            </ul>
-            <div className="w-full font-black text-sm py-3.5 rounded-2xl min-h-[48px] flex items-center justify-center bg-[#F0F0F0] text-[#3D3D3D]/60 select-none">
-              {estBasic(commerce?.palier) ? 'Ton offre actuelle' : 'Offre gratuite'}
-            </div>
-          </div>
-
           {PLANS.map(plan => {
             const isDisabled = !cgvAccepted || choosing !== null
+            const essaiOffert = !commerce?.stripe_customer_id && !commerce?.stripe_subscription_id
             return (
               <div
                 key={plan.key}
-                className={`relative bg-white rounded-3xl px-5 py-6 flex flex-col gap-3 border-2 transition-all md:w-[360px] md:max-w-[360px] ${
+                className={`relative bg-white rounded-3xl px-5 py-6 flex flex-col gap-3 border-2 transition-all md:w-[300px] md:max-w-[300px] ${
                   plan.populaire
                     ? 'border-[#FF6B00] shadow-lg shadow-orange-100 md:scale-[1.03]'
                     : 'border-[#F0F0F0]'
                 }`}
               >
-                {/* Badge populaire */}
                 {plan.populaire && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#FF6B00] text-white text-[10px] font-black px-3 py-1 rounded-full whitespace-nowrap">
                     ⭐ Populaire
                   </div>
                 )}
 
-                {/* En-tête */}
                 <div>
                   <p className={`text-lg font-black ${plan.populaire ? 'text-[#FF6B00]' : 'text-[#0A0A0A]'}`}>
                     {plan.nom}
@@ -381,36 +342,10 @@ function AbonnementContent() {
                   )}
                 </div>
 
-                {/* Caractéristiques */}
-                <ul className="flex flex-col gap-1.5 text-xs text-[#3D3D3D] flex-1">
-                  {plan.features.map((f, i) => {
-                    if (i === 0 && plan.fidelite) {
-                      return (
-                        <Fragment key={f}>
-                          <li className="flex items-center gap-2">
-                            <span className="text-[#FF6B00] font-bold shrink-0">✓</span>
-                            {f}
-                          </li>
-                          <li className="bg-orange-50 px-2 py-1.5 rounded-md font-bold text-[#3D3D3D]">
-                            🎯 Carte de fidélité unique et dématérialisée
-                          </li>
-                        </Fragment>
-                      )
-                    }
-                    return (
-                      <li key={f} className="flex items-center gap-2">
-                        <span className="text-[#FF6B00] font-bold shrink-0">✓</span>
-                        {f}
-                      </li>
-                    )
-                  })}
-                  {!commerce?.stripe_customer_id && !commerce?.stripe_subscription_id && (
-                    <li className="flex items-center gap-2">
-                      <span className="text-[#FF6B00] font-bold shrink-0">✓</span>
-                      1<sup>er</sup> mois offert
-                    </li>
-                  )}
-                </ul>
+                <ListeFeatures palier={plan.key} />
+                <p className="text-[11px] font-semibold text-[#FF6B00]">
+                  {essaiOffert ? <>1<sup>er</sup> mois offert, puis {plan.prix}€/mois</> : 'Sans engagement'}
+                </p>
 
                 {/* Bouton — style piloté par React, pas par CSS :disabled */}
                 <button
@@ -432,6 +367,21 @@ function AbonnementContent() {
               </div>
             )
           })}
+
+          {/* Offre gratuite Basic — attribuée automatiquement, jamais achetable */}
+          <div className="relative bg-[#FAFAFA] rounded-3xl px-5 py-6 flex flex-col gap-3 border-2 border-[#F0F0F0] md:w-[300px] md:max-w-[300px]">
+            <div>
+              <p className="text-lg font-black text-[#0A0A0A]">Basic</p>
+              <p className="text-2xl font-black text-[#0A0A0A] mt-0.5 leading-none">
+                0€<span className="text-sm font-semibold text-[#3D3D3D]/60">/mois</span>
+              </p>
+            </div>
+            <ListeFeatures palier="basic" />
+            <p className="text-[11px] font-semibold text-[#3D3D3D]/60">Gratuit, sans carte bancaire ni engagement</p>
+            <div className="w-full font-black text-sm py-3.5 rounded-2xl min-h-[48px] flex items-center justify-center bg-[#F0F0F0] text-[#3D3D3D]/60 select-none">
+              {estBasic(commerce?.palier) ? 'Ton offre actuelle' : 'Offre gratuite'}
+            </div>
+          </div>
         </div>
 
         {!cgvAccepted && (
@@ -462,6 +412,29 @@ function AbonnementContent() {
 
       </section>
     </main>
+  )
+}
+
+/* Liste des fonctionnalités d'une carte — mêmes lignes pour toutes les offres */
+function ListeFeatures({ palier }) {
+  return (
+    <ul className="flex flex-col gap-1.5 text-xs text-[#3D3D3D] flex-1">
+      {FEATURES.map(f => {
+        const texte = typeof f.label === 'string' ? f.label : f.label[palier]
+        const ok    = f.inclus.includes(palier)
+        return ok ? (
+          <li key={texte} className="flex items-center gap-2">
+            <span className="text-[#FF6B00] font-bold shrink-0 w-4 text-center">✓</span>
+            {texte}
+          </li>
+        ) : (
+          <li key={texte} className="flex items-center gap-2 text-[#3D3D3D]/40">
+            <span className="shrink-0 w-4 text-center" aria-label="Non inclus">🔒</span>
+            <span className="line-through decoration-[#3D3D3D]/30">{texte}</span>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 

@@ -39,7 +39,7 @@ export default function RegistreCNIL() {
               <Tr label="Adresse" value="7 rue du Chesne, 27190 Nogent-le-Sec" />
               <Tr label="Email DPO / Contact RGPD" value={<a href="mailto:contact@bonmoment.app" className="text-[#FF6B00] hover:text-[#CC5500]">contact@bonmoment.app</a>} />
               <Tr label="Date de création du registre" value="Mars 2026" />
-              <Tr label="Dernière mise à jour" value="Mars 2026" last />
+              <Tr label="Dernière mise à jour" value="Octobre 2026" last />
             </tbody>
           </table>
         </div>
@@ -65,7 +65,7 @@ export default function RegistreCNIL() {
             ["Base légale", "Exécution du contrat (Art. 6.1.b RGPD)"],
             ["Catégories de personnes", "Commerçants inscrits sur la plateforme"],
             ["Données traitées", "Email, nom du commerce, adresse, Place ID Google, photo du commerce, historique des offres publiées, photos des offres publiées (optionnelles, stockées sur Supabase Storage — région EU)"],
-            ["Destinataires", "Supabase — Vercel — Stripe (paiement) — Brevo (emails) — Google Places API"],
+            ["Destinataires", "Supabase — Vercel — Stripe (paiement, paliers payants uniquement — l'offre gratuite Basic ne collecte aucune donnée de paiement) — Brevo (emails) — Google Places API"],
             ["Transferts hors UE", "Vercel Inc. (USA) — Stripe Inc. (USA) — Google LLC (USA) — CCT Commission Européenne"],
             ["Durée de conservation", "Durée de la relation contractuelle + 3 mois après résiliation"],
             ["Mesures de sécurité", "HTTPS/TLS, OAuth (Google/Facebook/Apple/Microsoft), RLS Supabase, aucun mot de passe stocké"],
@@ -94,7 +94,7 @@ export default function RegistreCNIL() {
             ["Catégories de personnes", "Commerçants ayant souscrit un abonnement payant"],
             ["Données traitées", "Email, nom, adresse de facturation, données d'abonnement (palier, date, montant). Les données bancaires sont traitées exclusivement par Stripe et jamais stockées par BONMOMENT"],
             ["Destinataires", "Stripe Inc. (traitement paiements — PCI-DSS Level 1) — Expert-comptable si applicable"],
-            ["Transferts hors UE", "Stripe Inc. (USA) — CCT Commission Européenne — Stripe est certifié Privacy Shield"],
+            ["Transferts hors UE", "Stripe Inc. (USA) — CCT Commission Européenne — Stripe adhère au Data Privacy Framework UE–États-Unis"],
             ["Durée de conservation", "10 ans — obligation comptable légale (Article L.123-22 du Code de commerce)"],
             ["Mesures de sécurité", "Données bancaires non stockées par BONMOMENT — Stripe certifié PCI-DSS Level 1"],
           ]} />

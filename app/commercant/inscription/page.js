@@ -360,7 +360,7 @@ export default function InscriptionCommercant() {
               Rejoins BONMOMENT
             </h1>
             <p className="text-sm text-[#3D3D3D]/60 mt-1">
-              Premier mois offert · Sans engagement · 3 minutes
+              Gratuit · Sans carte bancaire · 3 minutes
             </p>
           </div>
         </header>
@@ -596,7 +596,7 @@ export default function InscriptionCommercant() {
               </button>
 
               <p className="text-center text-[10px] text-[#3D3D3D]/40 mt-3 leading-relaxed">
-                Premier mois offert, sans frais. En cliquant, tu acceptes nos{' '}
+                Offre Basic gratuite, sans carte bancaire. En cliquant, tu acceptes nos{' '}
                 <Link href="/cgv" target="_blank" className="underline hover:text-[#FF6B00]">CGV</Link>.
               </p>
             </div>

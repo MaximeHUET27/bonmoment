@@ -265,6 +265,8 @@ export async function GET(request) {
     .select('id, nom, owner_id')
     .eq('abonnement_actif', true)
     .eq('rapport_mensuel_actif', true)
+    // Rapport mensuel (statistiques) : paliers payants uniquement — pas l'offre gratuite Basic
+    .in('palier', ['essentiel', 'pro'])
 
   if (testMode && testCommerceId) {
     query = query.eq('id', testCommerceId)
