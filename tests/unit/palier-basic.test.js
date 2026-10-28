@@ -75,3 +75,25 @@ describe("Checkout Stripe — Basic n'est pas achetable", () => {
     expect(checkout).not.toMatch(/basic\s*:/)
   })
 })
+
+describe('Sécurité — quota vérifié en base (trigger)', () => {
+  const sql = lire('sql/quota_offres_trigger.sql')
+
+  it('mêmes quotas que lib/paliers.js', () => {
+    expect(sql).toMatch(/WHEN 'pro'\s+THEN NULL/)
+    expect(sql).toMatch(/WHEN 'essentiel' THEN 8/)
+    expect(sql).toMatch(/ELSE 1/)
+    expect(quotaOffres('essentiel')).toBe(8)
+    expect(quotaOffres('basic')).toBe(1)
+  })
+
+  it('trigger BEFORE INSERT, verrou par commerce, fonction non appelable par les clients', () => {
+    expect(sql).toMatch(/BEFORE INSERT ON public\.offres/)
+    expect(sql).toMatch(/pg_advisory_xact_lock/)
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.verifier_quota_offres\(\) FROM PUBLIC, anon, authenticated/)
+  })
+
+  it("l'API traduit le refus du trigger en 403", () => {
+    expect(lire('app/api/offres/route.js')).toMatch(/QUOTA_OFFRES_ATTEINT[\s\S]{0,200}status: 403/)
+  })
+})

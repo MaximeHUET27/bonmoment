@@ -100,6 +100,10 @@ export async function POST(request) {
   }).select('id').single()
 
   if (insertErr) {
+    // Quota vérifié aussi en base (trigger trg_verifier_quota_offres) : cas de requêtes concurrentes
+    if (insertErr.message?.includes('QUOTA_OFFRES_ATTEINT')) {
+      return NextResponse.json({ error: "Quota d'offres atteint pour ce mois." }, { status: 403 })
+    }
     console.error('Erreur insertion offre:', insertErr.message)
     return NextResponse.json({ error: insertErr.message }, { status: 500 })
   }
