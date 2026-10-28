@@ -18,7 +18,7 @@ export default function CGV() {
         <h1 className="text-2xl sm:text-3xl font-black text-[#0A0A0A]">Conditions Générales de Vente</h1>
         <p className="text-xs text-[#3D3D3D]/60 mt-1">Commerçants — Mise à jour : octobre 2026</p>
         <p className="text-xs text-[#3D3D3D]/50 mt-3 max-w-xl mx-auto leading-relaxed">
-          Les présentes Conditions Générales de Vente (CGV) constituent, conformément à l&apos;article L.441-1 du Code de commerce, le socle unique de la relation commerciale entre BONMOMENT et tout commerçant souscripteur d&apos;un abonnement payant. Toute commande implique l&apos;acceptation sans réserve des présentes CGV.
+          Les présentes Conditions Générales de Vente (CGV) constituent, conformément à l&apos;article L.441-1 du Code de commerce, le socle unique de la relation commerciale entre BONMOMENT et tout commerçant inscrit sur la plateforme, qu&apos;il bénéficie de l&apos;offre gratuite Basic ou d&apos;un abonnement payant. Toute commande implique l&apos;acceptation sans réserve des présentes CGV.
         </p>
       </header>
 
