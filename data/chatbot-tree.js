@@ -171,7 +171,7 @@ const TREE = {
 
   'c-resilier': {
     user: 'Comment résilier ?',
-    bot: "Sans engagement !\n⚙️ Mon commerce → Abonnement → Résilier\nPrend effet fin du mois en cours.\n💡 Tu peux aussi choisir Pause 1 mois !",
+    bot: "Sans engagement !\n⚙️ Mon commerce → Abonnement → Résilier\nPrend effet fin du mois en cours, puis tu repasses sur l'offre gratuite Basic.\n💡 Tu peux aussi choisir Pause 1 mois !",
     buttons: [
       { label: 'OK ! 😊', next: 'merci-fin' },
     ],

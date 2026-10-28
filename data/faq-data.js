@@ -141,7 +141,15 @@ const FAQ = [
     questions: [
       {
         q: 'Combien coûte BONMOMENT ?',
-        r: "Rien pour commencer : l'offre Basic est gratuite, sans carte bancaire (1 offre/mois, bons illimités). Pour aller plus loin : Essentiel 29 €/mois (8 offres/mois) ou Pro 49 €/mois (offres illimitées + carte de fidélité), avec statistiques en temps réel et avis Google automatiques, 1er mois offert. Bons illimités sur toutes les formules. Prix nets, TVA non applicable (art. 293 B du CGI).",
+        r: "Rien pour commencer : l'offre Basic est gratuite, sans carte bancaire et sans limite de durée (1 offre/mois, bons illimités, cagnotte de parrainage). Pour aller plus loin : Essentiel 29 €/mois (8 offres/mois) ou Pro 49 €/mois (offres illimitées + carte de fidélité), avec statistiques en temps réel, avis Google automatiques et rapport mensuel. Le 1er mois est offert sur Essentiel et Pro. Bons illimités sur toutes les formules. Prix nets, TVA non applicable (art. 293 B du CGI).",
+      },
+      {
+        q: "Comment rejoindre BONMOMENT en tant que commerçant ?",
+        r: "Clique sur « Commerçant ? Rejoins-nous gratuitement » en haut de l'accueil (ou « Rejoins BONMOMENT » en bas de chaque page), connecte-toi et retrouve ton commerce via Google. En 3 minutes tu es inscrit sur l'offre gratuite Basic et tu peux publier ta première offre.",
+      },
+      {
+        q: "Qu'est-ce que l'offre Basic ?",
+        r: "C'est l'offre gratuite attribuée automatiquement à chaque commerçant inscrit : 1 offre par mois, bons illimités, QR code vitrine, validation des bons et cagnotte de parrainage. Les statistiques en temps réel, les avis Google automatiques et le rapport mensuel sont visibles dans ton espace mais réservés à Essentiel et Pro. Le quota non utilisé ne se reporte pas.",
       },
       {
         q: 'Puis-je ajouter une photo à mon offre ?',
@@ -173,23 +181,23 @@ const FAQ = [
       },
       {
         q: 'Comment résilier ?',
-        r: "Mon commerce → Abonnement → Résilier. Prend effet fin du mois en cours. Sans engagement et sans frais.",
+        r: "Mon commerce → Abonnement → Gérer → Résilier. Prend effet fin du mois en cours, sans engagement ni frais. Tu repasses ensuite automatiquement sur l'offre gratuite Basic : ton commerce reste visible. En Basic, il n'y a rien à résilier ; pour quitter BONMOMENT, supprime ton commerce depuis ton espace.",
       },
       {
         q: 'Comment parrainer ?',
-        r: "Mon commerce → Parrainage → partage ton code. Quand ton filleul souscrit, il reçoit une remise sur sa première facture (10 € en Essentiel, 15 € en Pro) et tu reçois le même montant sur ta cagnotte de parrainage. Maximum 3 parrainages par mois.",
+        r: "Mon commerce → Parrainage → partage ton code. Quand ton filleul souscrit, il reçoit une remise sur sa première facture (10 € en Essentiel, 15 € en Pro) et tu reçois le même montant sur ta cagnotte de parrainage. Maximum 3 parrainages par mois. Le parrainage est disponible sur toutes les offres, Basic comprise.",
       },
       {
         q: 'Comment voir mes statistiques ?',
-        r: "Dashboard → section Statistiques. Tu vois les bons réservés, utilisés, le taux d'utilisation, les nouveaux clients touchés et les créneaux horaires les plus actifs.",
+        r: "Avec Essentiel et Pro : Dashboard → section Statistiques. Tu vois en temps réel les bons réservés, utilisés, le taux d'utilisation, les nouveaux clients touchés et les créneaux horaires les plus actifs, et tu reçois un rapport chaque mois. En Basic, la section est visible mais grisée.",
       },
       {
         q: 'Comment fonctionnent les avis Google ?',
-        r: "Quand un client utilise son bon chez toi, il est invité à laisser un avis sur ta fiche Google Business. Plus tu publies d'offres, plus tu génères de passages en boutique et donc d'avis.",
+        r: "Avec Essentiel et Pro, quand un client utilise son bon chez toi, il est invité à laisser un avis sur ta fiche Google Business. Plus tu publies d'offres, plus tu génères de passages en boutique et donc d'avis.",
       },
       {
         q: 'Comment changer de palier ?',
-        r: "Mon commerce → Abonnement → Changer de formule. Le changement est pris en compte au prochain cycle de facturation. Tu peux monter ou descendre en palier à tout moment.",
+        r: "Mon commerce → Abonnement → Changer (ou « Passer à la vitesse supérieure » si tu es en Basic). Tu choisis Essentiel ou Pro, avec 1er mois offert à la première souscription. Entre Essentiel et Pro, le changement est pris en compte au prochain cycle de facturation.",
       },
       {
         q: 'Comment imprimer mon QR code vitrine ?',
@@ -208,7 +216,7 @@ const FAQ = [
     questions: [
       {
         q: "La carte fidélité est-elle incluse dans mon abonnement ?",
-        r: "Elle est incluse dans le palier Pro uniquement. Le palier Essentiel te donne accès aux offres mais pas au système de fidélité. Tu peux passer au Pro à tout moment depuis ton dashboard.",
+        r: "Elle est incluse dans le palier Pro uniquement. Les offres Basic et Essentiel donnent accès aux offres mais pas au système de fidélité. Tu peux passer au Pro à tout moment depuis ton dashboard.",
       },
       {
         q: "Comment je configure mon programme fidélité ?",

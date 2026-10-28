@@ -710,7 +710,7 @@ export const NODES = {
   'c-ab-5': {
     type: 'answer',
     question: "Comment résilier ou mettre en pause ?",
-    response: `Tu gères tout ça directement depuis ton dashboard :\n\n**Résilier :** Mon commerce → Abonnement → Résilier\n→ La résiliation prend effet à la **fin du mois en cours**. Tu restes actif jusqu'à cette date, sans frais supplémentaires.\n\n**Mettre en pause :** Mon commerce → Abonnement → Mettre en pause\n→ Ton compte est suspendu temporairement. Tes données et stats sont conservées.\n\nPas d'engagement, pas de pénalité. 👍`,
+    response: `Tu gères tout ça directement depuis ton dashboard :\n\n**Résilier :** Mon commerce → Abonnement → Résilier\n→ La résiliation prend effet à la **fin du mois en cours**. Tu restes actif jusqu'à cette date, sans frais supplémentaires, puis tu repasses automatiquement sur l'offre gratuite **Basic** (1 offre/mois).\n\n**Mettre en pause :** Mon commerce → Abonnement → Mettre en pause\n→ Ton compte est suspendu temporairement. Tes données et stats sont conservées.\n\nPas d'engagement, pas de pénalité. 👍`,
     actions: [
       { label: '📊 Gérer mon abonnement', type: 'redirect', path: '/commercant/dashboard' },
     ],
