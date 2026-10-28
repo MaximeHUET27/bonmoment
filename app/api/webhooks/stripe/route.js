@@ -116,9 +116,11 @@ export async function POST(request) {
         const commerce_id = sub.metadata?.commerce_id
         if (!commerce_id) break
 
+        // Fin d'un palier payant → retour automatique sur l'offre gratuite Basic
+        // (le commerce reste visible et peut publier 1 offre/mois)
         await supabaseAdmin.from('commerces').update({
-          abonnement_actif:       false,
-          palier:                 null,
+          abonnement_actif:       true,
+          palier:                 'basic',
           stripe_subscription_id: null,
           resiliation_prevue:     false,
           date_fin_abonnement:    null,

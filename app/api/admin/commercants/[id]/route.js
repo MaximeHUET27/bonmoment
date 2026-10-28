@@ -179,8 +179,9 @@ export async function POST(request, { params }) {
     await admin.from('commerces').update({
       est_ambassadeur:      false,
       date_fin_ambassadeur: null,
-      abonnement_actif:     false,
-      palier:               null,
+      // Fin du compte fondateur → retour sur l'offre gratuite Basic
+      abonnement_actif:     true,
+      palier:               'basic',
     }).eq('id', id)
     return NextResponse.json({ success: true })
   }

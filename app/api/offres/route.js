@@ -4,8 +4,7 @@ import { NextResponse } from 'next/server'
 import { after } from 'next/server'
 import { rateLimit } from '@/lib/rate-limit'
 import { sendPushToMany } from '@/lib/push'
-
-const QUOTA_PAR_PALIER = { essentiel: 8, pro: null }
+import { quotaOffres } from '@/lib/paliers'
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -64,8 +63,7 @@ export async function POST(request) {
   }
 
   /* ── Vérification quota ──────────────────────────────────────────────── */
-  const palier    = commerce.palier || 'essentiel'
-  const limite    = QUOTA_PAR_PALIER[palier] ?? 8
+  const limite    = quotaOffres(commerce.palier)
   const debutMois = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
 
   if (limite !== null) {

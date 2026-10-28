@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/app/context/AuthContext'
 import ReviewOverlay from './ReviewOverlay'
+import { aAvisGoogle } from '@/lib/paliers'
 
 export default function ReviewPolling() {
   const { user, supabase } = useAuth()
@@ -45,7 +46,7 @@ export default function ReviewPolling() {
       // 1. Bon reservee : activer le polling temps réel
       const { data: reserveeData } = await supabase
         .from('reservations')
-        .select('id, offres!inner(commerces!inner(id, nom, place_id))')
+        .select('id, offres!inner(commerces!inner(id, nom, place_id, palier))')
         .eq('user_id', user.id)
         .eq('statut', 'reservee')
         .order('created_at', { ascending: false })
@@ -55,7 +56,7 @@ export default function ReviewPolling() {
         const r = reserveeData[0]
         const commerce = r.offres?.commerces
         const placeId = commerce?.place_id
-        if (placeId && !placeId.startsWith('test_') && !sessionStorage.getItem(`avis_demande_${commerce.id}`)) {
+        if (placeId && !placeId.startsWith('test_') && aAvisGoogle(commerce.palier) && !sessionStorage.getItem(`avis_demande_${commerce.id}`)) {
           startPolling(r.id, commerce)
         }
       }
@@ -64,13 +65,13 @@ export default function ReviewPolling() {
       const [{ data: utiliseeData }, { data: cartesData }] = await Promise.all([
         supabase
           .from('reservations')
-          .select('id, created_at, offres!inner(commerces!inner(id, nom, place_id))')
+          .select('id, created_at, offres!inner(commerces!inner(id, nom, place_id, palier))')
           .eq('user_id', user.id)
           .eq('statut', 'utilisee')
           .order('created_at', { ascending: false }),
         supabase
           .from('cartes_fidelite')
-          .select('commerce_id, derniere_activite, commerces!inner(id, nom, place_id)')
+          .select('commerce_id, derniere_activite, commerces!inner(id, nom, place_id, palier)')
           .eq('user_id', user.id),
       ])
 
@@ -114,6 +115,8 @@ export default function ReviewPolling() {
       // 5. Filtrage et sélection du candidat le plus récent non encore noté
       const candidates = [...candidatesMap.values()].filter(({ commerce }) => {
         if (!commerce.place_id || commerce.place_id.startsWith('test_')) return false
+        // Avis Google automatiques : réservés aux offres Essentiel et Pro
+        if (!aAvisGoogle(commerce.palier)) return false
         if (reviewedCommerces.has(commerce.id)) return false
         if (sessionStorage.getItem(`avis_demande_${commerce.id}`)) return false
         return true

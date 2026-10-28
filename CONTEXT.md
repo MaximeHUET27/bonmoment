@@ -29,9 +29,11 @@ Mobile-first, zones tactiles min 44px, contraste min 4.5:1
 Modèle économique
 
 Client : 100% gratuit
-Commerçant : Découverte 29€ HT/mois (4 offres), Essentiel 49€ HT/mois (8 offres), Pro 79€ HT/mois (16 offres). Bons illimités.
-Premier mois offert avec CB enregistrée
-Parrainage : code unique permanent par commerçant, remise selon palier filleul (Découverte 10€, Essentiel 15€, Pro 20€) pour parrain ET filleul. Max 3/mois. Code valable 3 mois puis auto-régénéré.
+Commerçant (source unique : lib/paliers.js) :
+- Basic : GRATUIT, attribué automatiquement à l'inscription (POST /api/commercant/activer-basic, service_role) et au retour après résiliation d'un palier payant (webhook customer.subscription.deleted). 1 offre/mois, bons illimités. Stats temps réel + avis Google automatiques GRISÉS (upsell vers /commercant/abonnement).
+- Essentiel : 29€/mois (8 offres) — Pro : 49€/mois (offres illimitées + fidélité). TVA non applicable art. 293 B.
+Premier mois offert avec CB enregistrée (paliers payants)
+Parrainage : remise selon palier filleul (Essentiel 10€, Pro 15€), cagnotte parrain. Max 3/mois. Code valable 3 mois.
 
 Types d'offres (prédéfinis)
 pourcentage, montant_fixe, montant, cadeau, produit_offert, service_offert, concours, atelier, fidelite, offert, anti_gaspi
@@ -323,7 +325,7 @@ CÔTÉ COMMERÇANT :
 - Code parrainage unique au format BMxxxxxx, validité 3 mois, auto-régénéré
 - Validation code parrainage à l'inscription (remise parrain + filleul)
 - Premier mois gratuit avec CB enregistrée
-- Création d'offres avec vérification quota selon palier (4/8/16 offres/mois)
+- Création d'offres avec vérification quota selon palier (Basic 1 / Essentiel 8 / Pro illimité — quotaOffres() de lib/paliers.js)
 - Types offres : pourcentage, montant_fixe, montant, cadeau, produit_offert, service_offert, concours, atelier, fidelite, offert, anti_gaspi (11 types — CHECK constraint BDD aligné)
 - Remise %/€ fusionnée en un seul type "Remise" dans le formulaire (switch interne pourcentage/montant_fixe)
 - Type Anti-gaspi : formulaire, badges, filtres habitant (🥗), FAQ, chatbot

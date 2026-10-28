@@ -23,6 +23,8 @@ export async function POST() {
     .select('id')
     .eq('owner_id', user.id)
     .eq('abonnement_actif', true)
+    // L'offre gratuite Basic n'est pas un abonnement : elle ne bloque pas la suppression
+    .or('palier.is.null,palier.neq.basic')
 
   if (commercesActifs && commercesActifs.length > 0) {
     return Response.json(

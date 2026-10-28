@@ -16,7 +16,7 @@ export default function CGV() {
         </Link>
         <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00] mb-1">bonmoment.app</p>
         <h1 className="text-2xl sm:text-3xl font-black text-[#0A0A0A]">Conditions Générales de Vente</h1>
-        <p className="text-xs text-[#3D3D3D]/60 mt-1">Commerçants — Mars 2026</p>
+        <p className="text-xs text-[#3D3D3D]/60 mt-1">Commerçants — Mise à jour : octobre 2026</p>
         <p className="text-xs text-[#3D3D3D]/50 mt-3 max-w-xl mx-auto leading-relaxed">
           Les présentes Conditions Générales de Vente (CGV) constituent, conformément à l&apos;article L.441-1 du Code de commerce, le socle unique de la relation commerciale entre BONMOMENT et tout commerçant souscripteur d&apos;un abonnement payant. Toute commande implique l&apos;acceptation sans réserve des présentes CGV.
         </p>
@@ -61,6 +61,10 @@ export default function CGV() {
               </thead>
               <tbody>
                 <tr className="border-b border-[#F5F5F5]">
+                  <td className="px-4 py-3 font-semibold text-[#0A0A0A]">Basic</td>
+                  <td className="px-4 py-3">Gratuit — 1 offre/mois — Bons illimités — Statistiques en temps réel et avis Google automatiques non inclus</td>
+                </tr>
+                <tr className="border-b border-[#F5F5F5]">
                   <td className="px-4 py-3 font-semibold text-[#0A0A0A]">Essentiel</td>
                   <td className="px-4 py-3">29 €/mois — 8 offres/mois — Bons illimités</td>
                 </tr>
@@ -78,7 +82,15 @@ export default function CGV() {
             TVA non applicable, article 293 B du CGI.
           </p>
 
-          <SubTitle className="mt-6">3.2 Période d&apos;essai gratuite</SubTitle>
+          <SubTitle className="mt-6">3.2 Offre gratuite Basic</SubTitle>
+          <p className="mt-2">
+            Tout commerçant inscrit bénéficie automatiquement et sans frais de l&apos;offre Basic, sans enregistrement de moyen de paiement et sans engagement. Elle permet la publication d&apos;une offre par mois calendaire, avec un nombre de bons illimité. Les statistiques en temps réel et la collecte automatique d&apos;avis Google sont réservées aux paliers payants ; elles restent visibles dans l&apos;espace commerçant à titre indicatif mais ne sont pas actives. Le quota non utilisé d&apos;un mois n&apos;est pas reporté.
+          </p>
+          <p className="mt-2">
+            L&apos;offre Basic n&apos;étant pas un abonnement payant, les articles 4 (paiement) et 5.2 (pause et résiliation) ne s&apos;y appliquent pas. Le commerçant peut à tout moment souscrire un palier payant depuis son espace, ou supprimer son commerce. BONMOMENT se réserve le droit de faire évoluer le contenu de l&apos;offre Basic moyennant une information préalable des commerçants concernés par email avec un préavis de 30 jours.
+          </p>
+
+          <SubTitle className="mt-6">3.3 Période d&apos;essai gratuite des paliers payants</SubTitle>
           <p className="mt-2">
             Le premier mois d&apos;abonnement est offert sur le palier choisi par le commerçant lors de son inscription. L&apos;enregistrement d&apos;un moyen de paiement valide est requis pour activer cette période. Aucun prélèvement n&apos;est effectué durant cette période.
           </p>
@@ -106,7 +118,7 @@ export default function CGV() {
 
           {process.env.NEXT_PUBLIC_MAIRIE_ASSO_ENABLED === 'true' && (
             <>
-              <SubTitle className="mt-6">3.3 Cas particulier des comptes Mairie / Association</SubTitle>
+              <SubTitle className="mt-6">3.4 Cas particulier des comptes Mairie / Association</SubTitle>
               <p className="mt-2">
                 BONMOMENT propose un type de compte spécifique destiné aux mairies et associations souhaitant animer un réseau de commerçants partenaires. Ce compte permet de constituer un réseau d&apos;adhérents, de publier des offres collectives et d&apos;accéder à des statistiques agrégées sur l&apos;ensemble des membres.
               </p>
@@ -150,6 +162,9 @@ export default function CGV() {
           <SubTitle className="mt-4">5.2 Résiliation par le commerçant</SubTitle>
           <p className="mt-2">
             Le commerçant peut résilier son abonnement à tout moment depuis son espace « Mon commerce ». La résiliation prend effet à la fin du mois en cours. Aucun remboursement partiel n&apos;est accordé pour la période déjà payée.
+          </p>
+          <p className="mt-2">
+            À la fin de l&apos;abonnement payant, le commerce bascule automatiquement et sans frais sur l&apos;offre gratuite Basic (article 3.2) : il reste visible sur la plateforme et conserve son historique, dans les limites de cette offre.
           </p>
           <p className="mt-2">
             Avant la confirmation de résiliation, un bilan complet de l&apos;abonnement est présenté (bons utilisés, offres publiées, CA estimé généré).
@@ -265,7 +280,7 @@ export default function CGV() {
         </div>
 
         <p className="text-xs text-[#3D3D3D]/40 text-center pt-4 border-t border-[#F5F5F5]">
-          Document établi le Mars 2026 — bonmoment.app — Manon LISSE — Conforme Code de la consommation et Code de commerce français
+          Document établi en mars 2026, mis à jour en octobre 2026 — bonmoment.app — Manon LISSE — Conforme Code de la consommation et Code de commerce français
         </p>
 
       </section>

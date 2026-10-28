@@ -141,7 +141,7 @@ const FAQ = [
     questions: [
       {
         q: 'Combien coûte BONMOMENT ?',
-        r: "Essentiel 29 €/mois (8 offres/mois) ou Pro 49 €/mois (offres illimitées + carte de fidélité). Bons illimités sur les deux paliers. Prix nets, TVA non applicable (art. 293 B du CGI).",
+        r: "Rien pour commencer : l'offre Basic est gratuite, sans carte bancaire (1 offre/mois, bons illimités). Pour aller plus loin : Essentiel 29 €/mois (8 offres/mois) ou Pro 49 €/mois (offres illimitées + carte de fidélité), avec statistiques en temps réel et avis Google automatiques, 1er mois offert. Bons illimités sur toutes les formules. Prix nets, TVA non applicable (art. 293 B du CGI).",
       },
       {
         q: 'Puis-je ajouter une photo à mon offre ?',

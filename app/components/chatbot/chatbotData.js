@@ -439,7 +439,7 @@ export const NODES = {
   'c-off-2': {
     type: 'answer',
     question: "Combien d'offres il me reste ce mois ?",
-    response: `Le quota mensuel est visible dans ton **Dashboard → Ton abonnement**.\n\nTu y vois :\n- Ton palier actuel (Essentiel / Pro)\n- Le nombre d'offres publiées ce mois\n- Le nombre de créations restantes (illimité en Pro)\n- La date de renouvellement du quota 📅`,
+    response: `Le quota mensuel est visible dans ton **Dashboard → Ton abonnement**.\n\nTu y vois :\n- Ton offre actuelle (Basic / Essentiel / Pro)\n- Le nombre d'offres publiées ce mois\n- Le nombre de créations restantes (1/mois en Basic, 8 en Essentiel, illimité en Pro)\n- La date de renouvellement du quota 📅`,
     actions: [
       { label: '📊 Mon dashboard', type: 'redirect', path: '/commercant/dashboard' },
     ],
@@ -599,7 +599,7 @@ export const NODES = {
   'c-sta-1': {
     type: 'answer',
     question: "Où voir mes statistiques ?",
-    response: `Toutes tes stats sont dans ton **Dashboard BONMOMENT**.\n\nTu y retrouves :\n📊 Bons réservés et utilisés ce mois\n👥 Nouveaux clients touchés\n📈 Tendances par jour de la semaine et heure de la journée\n⭐ Taux d'utilisation de tes offres`,
+    response: `Toutes tes stats sont dans ton **Dashboard BONMOMENT** (statistiques en temps réel incluses dans Essentiel et Pro).\n\nTu y retrouves :\n📊 Bons réservés et utilisés ce mois\n👥 Nouveaux clients touchés\n📈 Tendances par jour de la semaine et heure de la journée\n⭐ Taux d'utilisation de tes offres`,
     actions: [
       { label: '📊 Mon dashboard', type: 'redirect', path: '/commercant/dashboard' },
     ],
@@ -614,7 +614,7 @@ export const NODES = {
   'c-sta-3': {
     type: 'answer',
     question: "Avis Google et rapport mensuel ?",
-    response: `**Avis Google** 🌟\nChaque client qui utilise un bon est invité à laisser un avis sur ta fiche Google Business. Plus tu publies d'offres, plus tu génères de passages en boutique — et donc plus d'avis organiques.\n\nTu peux voir le nombre d'avis reçus ce mois dans ton **Dashboard → Statistiques**.\n\n**Rapport mensuel** 📋\nChaque 1er du mois, tu reçois par email un résumé complet du mois écoulé : bons réservés/utilisés, nouveaux clients, taux d'utilisation et évolution vs le mois précédent.`,
+    response: `**Avis Google** 🌟\nAvec Essentiel et Pro, chaque client qui utilise un bon est invité à laisser un avis sur ta fiche Google Business. Plus tu publies d'offres, plus tu génères de passages en boutique — et donc plus d'avis organiques.\n\nTu peux voir le nombre d'avis reçus ce mois dans ton **Dashboard → Statistiques**.\n\n**Rapport mensuel** 📋\nChaque 1er du mois, tu reçois par email un résumé complet du mois écoulé : bons réservés/utilisés, nouveaux clients, taux d'utilisation et évolution vs le mois précédent.`,
     actions: [
       { label: '📊 Voir mes stats', type: 'redirect', path: '/commercant/dashboard' },
     ],
@@ -695,7 +695,7 @@ export const NODES = {
   'c-ab-3': {
     type: 'answer',
     question: "Comment changer de palier ?",
-    response: `Tu peux changer de formule directement depuis ton dashboard :\n\n1. Va dans **Mon commerce → Abonnement**\n2. Clique sur **Changer de formule**\n3. Sélectionne le nouveau palier (Essentiel / Pro)\n4. Confirme — le changement est effectif au **prochain cycle de facturation**\n\nAucune interruption de service. Tu peux monter ou descendre librement. 🔄`,
+    response: `Tu peux changer de formule directement depuis ton dashboard :\n\n1. Va dans **Mon commerce → Abonnement**\n2. Clique sur **Changer de formule**\n3. Sélectionne le nouveau palier (Essentiel / Pro)\n4. Confirme — le changement est effectif au **prochain cycle de facturation**\n\nAucune interruption de service. Tu peux monter ou descendre librement. Si tu résilies un palier payant, tu repasses automatiquement sur l'offre gratuite **Basic**. 🔄`,
     actions: [
       { label: '📊 Mon abonnement', type: 'redirect', path: '/commercant/dashboard' },
     ],
@@ -704,7 +704,7 @@ export const NODES = {
   'c-ab-4': {
     type: 'answer',
     question: "Quels sont les tarifs ?",
-    response: `BONMOMENT propose 2 formules :\n\n⭐ **Essentiel** — 29 €/mois\n→ 8 offres par mois\n\n🚀 **Pro** — 49 €/mois\n→ Offres illimitées + Carte de fidélité unique et dématérialisée\n\nTous les paliers incluent : validation QR, statistiques, QR code vitrine et parrainage. 💼\n\n_Prix nets — TVA non applicable, article 293 B du CGI._`,
+    response: `BONMOMENT propose 3 formules :\n\n🌱 **Basic** — gratuit, sans carte bancaire\n→ 1 offre par mois, bons illimités\n\n⭐ **Essentiel** — 29 €/mois\n→ 8 offres par mois + statistiques en temps réel + avis Google automatiques\n\n🚀 **Pro** — 49 €/mois\n→ Offres illimitées + statistiques + avis Google + Carte de fidélité unique et dématérialisée\n\nToutes les formules incluent : validation QR, QR code vitrine et parrainage. 1er mois offert sur Essentiel et Pro. 💼\n\n_Prix nets — TVA non applicable, article 293 B du CGI._`,
   },
 
   'c-ab-5': {

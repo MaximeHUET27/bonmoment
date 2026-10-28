@@ -4,9 +4,11 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useToast } from '@/app/components/Toast'
 import { isMairieAssoEnabled } from '@/lib/featureFlags'
 
-const PALIER_PRIX  = { essentiel: 29, pro: 49 }
-const PALIER_LABEL = { essentiel: 'Essentiel', pro: 'Pro' }
-const PALIER_COLOR = { essentiel: '#FF6B00', pro: '#CC5500' }
+const PALIER_PRIX  = { basic: 0, essentiel: 29, pro: 49 }
+const PALIER_LABEL = { basic: 'Basic', essentiel: 'Essentiel', pro: 'Pro' }
+const PALIER_COLOR = { basic: '#9CA3AF', essentiel: '#FF6B00', pro: '#CC5500' }
+// Paliers proposés dans la modale « Changer palier » (payants uniquement — Basic = gratuit automatique)
+const PALIERS_MODIFIABLES = ['essentiel', 'pro']
 
 function fmt(n) { return n?.toLocaleString('fr-FR') ?? '—' }
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR') : '—' }
@@ -182,7 +184,7 @@ function FicheCommercant({ id, onClose, onRefresh }) {
               ? <button onClick={() => setModal('deactivate')} className="px-3 py-1.5 text-xs font-bold bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 transition-colors">Désactiver</button>
               : <button onClick={() => doAction('activate')} disabled={acting} className="px-3 py-1.5 text-xs font-bold bg-green-50 text-green-700 border border-green-200 rounded-xl hover:bg-green-100 transition-colors">Réactiver</button>
             }
-            <button onClick={() => { setPalierSelect(c.palier || 'essentiel'); setModal('palier') }} className="px-3 py-1.5 text-xs font-bold bg-[#FFF0E0] text-[#FF6B00] border border-[#FFD0A0] rounded-xl hover:bg-[#FFE0C0] transition-colors">Changer palier</button>
+            <button onClick={() => { setPalierSelect(PALIERS_MODIFIABLES.includes(c.palier) ? c.palier : 'essentiel'); setModal('palier') }} className="px-3 py-1.5 text-xs font-bold bg-[#FFF0E0] text-[#FF6B00] border border-[#FFD0A0] rounded-xl hover:bg-[#FFE0C0] transition-colors">Changer palier</button>
             <button onClick={() => setModal('essai')} className="px-3 py-1.5 text-xs font-bold bg-[#F5F5F5] text-[#0A0A0A] border border-[#E0E0E0] rounded-xl hover:bg-[#E8E8E8] transition-colors">Prolonger essai</button>
             <button
               onClick={() => {
@@ -213,7 +215,7 @@ function FicheCommercant({ id, onClose, onRefresh }) {
               ['Téléphone',     c.telephone],
               ['Note Google',   c.note_google],
               ['Palier',        PALIER_LABEL[c.palier] || c.palier],
-              ['MRR individuel',PALIER_PRIX[c.palier || 'essentiel'] + ' €'],
+              ['MRR individuel',(PALIER_PRIX[c.palier] ?? 0) + ' €'],
               ['Inscription',       fmtDate(c.created_at)],
               ['Fin essai',         fmtDate(c.date_fin_essai)],
               ['Stripe customer',   c.stripe_customer_id],
@@ -336,7 +338,7 @@ function FicheCommercant({ id, onClose, onRefresh }) {
       <Modal open={modal === 'palier'} onClose={() => setModal(null)} title="Changer de palier">
         <select value={palierSelect} onChange={e => setPalierSelect(e.target.value)}
           className="w-full border-2 border-[#E0E0E0] rounded-xl px-3 py-2.5 text-sm focus:border-[#FF6B00] focus:outline-none">
-          {Object.entries(PALIER_LABEL).map(([k, v]) => <option key={k} value={k}>{v} — {PALIER_PRIX[k]}€/mois</option>)}
+          {PALIERS_MODIFIABLES.map(k => <option key={k} value={k}>{PALIER_LABEL[k]} — {PALIER_PRIX[k]}€/mois</option>)}
         </select>
         <div className="flex gap-2">
           <button onClick={() => setModal(null)} className="flex-1 border border-[#E0E0E0] py-2.5 rounded-xl text-sm font-semibold">Annuler</button>
@@ -490,7 +492,7 @@ export default function AdminCommercants() {
         />
         {[
           { key: 'ville',  val: ville,  opts: [['', 'Toutes villes']] },
-          { key: 'palier', val: palier, opts: [['', 'Tous paliers'], ['essentiel', 'Essentiel'], ['pro', 'Pro']] },
+          { key: 'palier', val: palier, opts: [['', 'Tous paliers'], ['basic', 'Basic'], ['essentiel', 'Essentiel'], ['pro', 'Pro']] },
           { key: 'statut', val: statut, opts: [['', 'Tous statuts'], ['actif', 'Actif'], ['inactif', 'Inactif']] },
           ...(isMairieAssoEnabled() ? [{ key: 'typeCompte', val: typeCompte, opts: [['', 'Tous types'], ['commerce', 'Commerce'], ['mairie_asso', 'Mairie/Asso']] }] : []),
         ].map(({ key, val, opts }) => (
@@ -541,7 +543,7 @@ export default function AdminCommercants() {
                 <td className="px-4 py-3 text-center font-semibold">{c.nb_bons_utilises ?? '—'}</td>
                 <td className="px-4 py-3 text-[#3D3D3D]/60 text-xs">{fmtDate(c.created_at)}</td>
                 <td className="px-4 py-3 font-bold text-[#FF6B00]">
-                  {c.abonnement_actif ? (PALIER_PRIX[c.palier || 'essentiel'] || 29) + ' €' : '—'}
+                  {c.abonnement_actif && c.palier ? (PALIER_PRIX[c.palier] ?? 0) + ' €' : '—'}
                 </td>
               </tr>
             ))}

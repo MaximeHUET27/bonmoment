@@ -122,6 +122,7 @@ export async function GET() {
 
   /* ── KPIs opérationnels ── */
   const nonAbonnes           = comm.filter(c => c.abonnement_actif && !c.palier).length
+  const basicActifs          = comm.filter(c => c.abonnement_actif && c.palier === 'basic').length
   const mairieAssoActifs     = comm.filter(c => c.abonnement_actif && c.categorie_bonmoment === 'mairie_asso').length
   const ambassadeursActifs   = comm.filter(c => c.est_ambassadeur && c.abonnement_actif).length
   const resiliationsPrev = comm.filter(c => c.resiliation_prevue).length
@@ -226,6 +227,7 @@ export async function GET() {
       taux_util:   tauxUtil,   taux_util_evol: evol(tauxUtil, tauxUtilPre),
       villes_actives: villesActives,
       non_abonnes:         nonAbonnes,
+      basic_actifs:        basicActifs,
       ambassadeurs_actifs: ambassadeursActifs,
       resiliations_prev:   resiliationsPrev,
       bons_reserves_mois:  bonsReservesMois,

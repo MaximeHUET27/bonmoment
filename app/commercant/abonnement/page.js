@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/app/context/AuthContext'
 import { isAdmin } from '@/lib/isAdmin'
+import { estBasic } from '@/lib/paliers'
 
 const FEATURES_COMMUNES = [
   'Bons illimités',
@@ -33,6 +34,13 @@ const PLANS = [
 ]
 
 const REMISES = { essentiel: 10, pro: 15 }
+
+/* Offre gratuite attribuée automatiquement à l'inscription — non achetable */
+const PLAN_BASIC = {
+  nom:      'Basic',
+  inclus:   ['1 offre/mois', 'Bons illimités', 'QR code vitrine', 'Validation des bons en caisse'],
+  grises:   ['Statistiques en temps réel', 'Avis Google automatiques'],
+}
 
 function AbonnementContent() {
   const { user, loading, supabase } = useAuth()
@@ -198,7 +206,9 @@ function AbonnementContent() {
         <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B00] mb-1">Espace commerçant</p>
         {commerce && !commerce.stripe_customer_id && !commerce.stripe_subscription_id ? (
           <>
-            <h1 className="text-2xl font-black text-[#0A0A0A]">Choisis ton abonnement — 1<sup>er</sup> mois offert !</h1>
+            <h1 className="text-2xl font-black text-[#0A0A0A]">
+              {estBasic(commerce.palier) ? 'Passe à la vitesse supérieure' : 'Choisis ton abonnement'} — 1<sup>er</sup> mois offert !
+            </h1>
             <p className="text-xs text-[#3D3D3D]/60 mt-1">Sans engagement · Résiliable à tout moment</p>
           </>
         ) : (
@@ -305,6 +315,31 @@ function AbonnementContent() {
 
         {/* ── Cartes paliers — row sur desktop, colonne sur mobile ── */}
         <div className="flex flex-col md:flex-row md:justify-center gap-4 md:gap-5 md:items-stretch">
+          {/* Offre gratuite Basic — informative, jamais achetable */}
+          <div className="relative bg-[#FAFAFA] rounded-3xl px-5 py-6 flex flex-col gap-3 border-2 border-[#F0F0F0] md:w-[280px] md:max-w-[280px]">
+            <div>
+              <p className="text-lg font-black text-[#0A0A0A]">{PLAN_BASIC.nom}</p>
+              <p className="text-2xl font-black text-[#0A0A0A] mt-0.5 leading-none">
+                0€<span className="text-sm font-semibold text-[#3D3D3D]/60">/mois</span>
+              </p>
+            </div>
+            <ul className="flex flex-col gap-1.5 text-xs text-[#3D3D3D] flex-1">
+              {PLAN_BASIC.inclus.map(f => (
+                <li key={f} className="flex items-center gap-2">
+                  <span className="text-[#FF6B00] font-bold shrink-0">✓</span>{f}
+                </li>
+              ))}
+              {PLAN_BASIC.grises.map(f => (
+                <li key={f} className="flex items-center gap-2 text-[#3D3D3D]/40 line-through decoration-[#3D3D3D]/30">
+                  <span className="shrink-0 no-underline" aria-hidden="true">🔒</span>{f}
+                </li>
+              ))}
+            </ul>
+            <div className="w-full font-black text-sm py-3.5 rounded-2xl min-h-[48px] flex items-center justify-center bg-[#F0F0F0] text-[#3D3D3D]/60 select-none">
+              {estBasic(commerce?.palier) ? 'Ton offre actuelle' : 'Offre gratuite'}
+            </div>
+          </div>
+
           {PLANS.map(plan => {
             const isDisabled = !cgvAccepted || choosing !== null
             return (

@@ -1,6 +1,7 @@
 import { stripe } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { estBasic } from '@/lib/paliers'
 
 export const runtime = 'nodejs'
 
@@ -31,6 +32,11 @@ export async function POST(request) {
 
   if (!commerce || (!commerce.abonnement_actif && !commerce.palier)) {
     return Response.json({ error: 'Aucun abonnement actif' }, { status: 404 })
+  }
+
+  // Offre gratuite Basic : aucun abonnement à suspendre ni résilier
+  if (estBasic(commerce.palier) && !commerce.stripe_subscription_id) {
+    return Response.json({ error: "L'offre Basic est gratuite : il n'y a rien à résilier" }, { status: 400 })
   }
 
   const subId = commerce.stripe_subscription_id  // peut être null (activation admin)

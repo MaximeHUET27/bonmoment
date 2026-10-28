@@ -12,6 +12,7 @@ import { triggerConfetti } from '@/lib/confetti'
 import PartagerOffreButton from '@/app/components/PartagerOffreButton'
 import { compressImage } from '@/lib/imageCompress'
 import { useToast } from '@/app/components/Toast'
+import { quotaOffres, nomPalier, estBasic } from '@/lib/paliers'
 
 const TUT_KEY = 'bonmoment_tutoriel'
 function readTutState() {
@@ -53,7 +54,6 @@ const JOURS = [
   { id: 'dimanche', label: 'D' },
 ]
 
-const QUOTA_PAR_PALIER = { essentiel: 8, pro: null }
 
 /* ── Helpers ────────────────────────────────────────────────────────────── */
 
@@ -99,7 +99,7 @@ function NouvelleOffrePageInner() {
   const [commerce,      setCommerce]      = useState(null)
   const [fetching,      setFetching]      = useState(true)
   const [quotaAtteint,  setQuotaAtteint]  = useState(false)
-  const [quotaInfo,     setQuotaInfo]     = useState({ used: 0, limite: 8, palier: 'essentiel' })
+  const [quotaInfo,     setQuotaInfo]     = useState({ used: 0, limite: 1, palier: 'basic' })
 
   /* ── Modal première offre ── */
   const [showFirstModal,  setShowFirstModal]  = useState(false)
@@ -166,13 +166,13 @@ function NouvelleOffrePageInner() {
 
       if (!data) { router.replace('/'); return }
 
-      // Sécurité : pas d'abonnement Stripe actif → retour page abonnement
-      if (!data.palier) { router.replace(`/commercant/abonnement?commerce_id=${data.id}`); return }
+      // Commerce encore sans palier → le dashboard l'active sur l'offre gratuite Basic
+      if (!data.palier) { router.replace(`/commercant/dashboard?commerce=${data.id}`); return }
 
       setCommerce(data)
 
-      const palier    = data.palier || 'essentiel'
-      const limite    = QUOTA_PAR_PALIER[palier] ?? 8
+      const palier    = data.palier
+      const limite    = quotaOffres(palier)
       const debutMois = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
 
       const [{ count: used }, { count: total }] = await Promise.all([
@@ -522,9 +522,9 @@ function NouvelleOffrePageInner() {
               Tu as utilisé toutes tes offres du mois.
             </p>
             <p className="text-xs text-amber-700">
-              Palier actuel : <strong>{quotaInfo.palier}</strong> ({quotaInfo.limite} offres/mois).{' '}
-              <Link href="/commercant/abonnement" className="underline font-semibold hover:text-[#FF6B00]">
-                Gérer mon abonnement →
+              Offre actuelle : <strong>{nomPalier(quotaInfo.palier)}</strong> ({quotaInfo.limite} offre{quotaInfo.limite > 1 ? 's' : ''}/mois).{' '}
+              <Link href={`/commercant/abonnement?commerce_id=${commerce?.id ?? ''}`} className="underline font-semibold hover:text-[#FF6B00]">
+                {estBasic(quotaInfo.palier) ? 'Publier plus d\u2019offres avec Essentiel ou Pro →' : 'Gérer mon abonnement →'}
               </Link>
             </p>
           </div>

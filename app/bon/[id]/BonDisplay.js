@@ -11,6 +11,7 @@ import { formatFenetreOffre } from '@/lib/offreStatus'
 import { getFullOffreTitle } from '@/lib/offreTitle'
 import CommerceInfoCard from '@/app/components/CommerceInfoCard'
 import { useAuth } from '@/app/context/AuthContext'
+import { aAvisGoogle } from '@/lib/paliers'
 
 const QRCodeSVG = dynamic(
   () => import('qrcode.react').then(m => m.QRCodeSVG),
@@ -285,6 +286,9 @@ export default function BonDisplay({ reservation, offre, commerce, commerceId, p
             supabase.from('feedbacks_commerce').select('id').eq('user_id', user.id).eq('commerce_id', commerceId).limit(1),
           ])
           if ((avis?.length ?? 0) + (fb?.length ?? 0) > 0) return
+          // Avis Google automatiques : réservés aux offres Essentiel et Pro
+          const { data: com } = await supabase.from('commerces').select('palier').eq('id', commerceId).maybeSingle()
+          if (!aAvisGoogle(com?.palier)) return
           setTimeout(() => {
             if (!stopped) setShowReview(true)
           }, 2000)

@@ -155,7 +155,7 @@ const TREE = {
 
   'c-tarifs': {
     user: 'Paliers et tarifs',
-    bot: "📋 Essentiel : 29€/mois — 8 offres/mois\nPro : 49€/mois — Offres illimitées + carte de fidélité\n\nBons illimités sur les deux paliers.\n💶 Prix nets — TVA non applicable, art. 293 B du CGI.",
+    bot: "📋 Basic : gratuit — 1 offre/mois\nEssentiel : 29€/mois — 8 offres/mois + stats en temps réel + avis Google\nPro : 49€/mois — Offres illimitées + stats + avis Google + carte de fidélité\n\nBons illimités sur toutes les formules.\n💶 Prix nets — TVA non applicable, art. 293 B du CGI.",
     buttons: [
       { label: 'Merci ! 😊', next: 'merci-fin' },
     ],

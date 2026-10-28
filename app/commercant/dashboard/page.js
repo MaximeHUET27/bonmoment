@@ -14,6 +14,7 @@ import DeleteCommerceButton from '@/app/commercant/[id]/DeleteCommerceButton'
 import DashboardFideliteSection from '@/app/components/fidelite/DashboardFideliteSection'
 import { getOffreTitle } from '@/lib/offreTitle'
 import { formatFenetreOffre } from '@/lib/offreStatus'
+import { PALIERS as PALIERS_REF, estBasic, aStatsTempsReel } from '@/lib/paliers'
 import dynamic from 'next/dynamic'
 import { isMairieAssoEnabled } from '@/lib/featureFlags'
 import GestionAdherents from '@/app/components/mairie-asso/GestionAdherents'
@@ -72,7 +73,23 @@ export default function DashboardPage() {
         data = fallback.data
       }
 
-      const list = data || []
+      let list = data || []
+
+      // Rattrapage : commerce encore sans palier (inscription antérieure, échec réseau,
+      // ancien ambassadeur…) → passage sur l'offre gratuite Basic côté serveur.
+      const sansPalier = list.filter(c => c.palier === null && !c.stripe_subscription_id)
+      if (sansPalier.length) {
+        const actives = await Promise.all(sansPalier.map(c =>
+          fetch('/api/commercant/activer-basic', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ commerce_id: c.id }),
+          }).then(r => r.ok ? r.json() : null).catch(() => null)
+        ))
+        const ok = new Set(sansPalier.filter((_, i) => actives[i]?.active).map(c => c.id))
+        if (ok.size) list = list.map(c => ok.has(c.id) ? { ...c, palier: 'basic', abonnement_actif: true } : c)
+      }
+
       setAllCommerces(list)
       if (commerceId) {
         setCommerce(list.find(c => c.id === commerceId) || list[0] || null)
@@ -388,7 +405,9 @@ export default function DashboardPage() {
 
         {/* 4. TES STATISTIQUES ────────────────────────────────────────────── */}
         {commerce && (
-          <StatsSection commerce={commerce} supabase={supabase} />
+          aStatsTempsReel(commerce.palier)
+            ? <StatsSection commerce={commerce} supabase={supabase} />
+            : <StatsVerrouillees commerce={commerce} />
         )}
 
         {/* STATS CUMULÉES ADHÉRENTS — flag ON, mairie_asso uniquement ─────── */}
@@ -525,12 +544,9 @@ function AbonnementSection({ commerce, offres }) {
       .catch(() => {})
   }, [commerce.stripe_subscription_id])
 
-  const PALIERS = {
-    essentiel: { nom: 'Essentiel', quota: 8,    prix: '29€/mois' },
-    pro:       { nom: 'Pro',       quota: null,  prix: '49€/mois' },
-  }
-
-  const palier = PALIERS[commerce.palier] || PALIERS['essentiel']
+  const ref    = PALIERS_REF[commerce.palier] || PALIERS_REF.basic
+  const palier = { nom: ref.nom, quota: ref.quota, prix: ref.prix === 0 ? 'Gratuit' : `${ref.prix}€/mois` }
+  const basic  = estBasic(commerce.palier)
   const now    = new Date()
 
   const debutMois    = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -568,6 +584,14 @@ function AbonnementSection({ commerce, offres }) {
           <p className="text-xl font-black text-[#FF6B00]">📦 {palier.nom}</p>
           <p className="text-xs text-[#3D3D3D]/60 mt-0.5">{palier.quota === null ? 'Offres illimitées' : `${palier.quota} offres/mois`} · {palier.prix}</p>
         </div>
+        {basic ? (
+          <Link
+            href={`/commercant/abonnement?commerce_id=${commerce.id}`}
+            className="text-xs font-bold text-white bg-[#FF6B00] px-3 py-1.5 rounded-full hover:bg-[#CC5500] transition-colors min-h-[36px] flex items-center whitespace-nowrap"
+          >
+            Passer à la vitesse supérieure →
+          </Link>
+        ) : (
         <div className="flex gap-2">
           <Link
             href={`/commercant/abonnement?commerce_id=${commerce.id}`}
@@ -582,6 +606,7 @@ function AbonnementSection({ commerce, offres }) {
             Gérer
           </Link>
         </div>
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -622,6 +647,56 @@ function AbonnementSection({ commerce, offres }) {
           <p className="text-[11px] text-[#3D3D3D]/40">🔄 Renouvellement le {renewalStr}</p>
         )
       )}
+    </div>
+  )
+}
+
+/* ── Statistiques verrouillées (offre Basic) ─────────────────────────────── */
+/* Fonctionnalités conservées mais grisées : aucune donnée n'est chargée,
+ * on montre ce que débloquent Essentiel et Pro. */
+
+function StatsVerrouillees({ commerce }) {
+  const lienOffres = `/commercant/abonnement?commerce_id=${commerce.id}`
+  const tuiles = [
+    { emoji: '🎟️', label: 'Bons réservés' },
+    { emoji: '✅', label: 'Bons utilisés' },
+    { emoji: '📊', label: "Taux d'utilisation" },
+    { emoji: '👥', label: 'Nouveaux clients' },
+    { emoji: '📈', label: 'Tendance du mois' },
+    { emoji: '⭐', label: 'Avis Google générés', avis: true },
+  ]
+  return (
+    <div className="bg-white rounded-3xl px-6 py-6 flex flex-col gap-4 shadow-sm">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-black text-[#0A0A0A] uppercase tracking-wide">Tes statistiques</h2>
+        <span className="text-[10px] font-bold uppercase tracking-wide text-[#3D3D3D]/60 bg-[#F5F5F5] px-2 py-1 rounded-full">🔒 Essentiel &amp; Pro</span>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3 grayscale opacity-50 select-none" aria-hidden="true">
+        {tuiles.map(t => (
+          <div key={t.label} className="rounded-2xl px-3 py-4 border border-[#F0F0F0] bg-[#FAFAFA] flex flex-col gap-0.5">
+            <p className="text-2xl font-black leading-none text-[#3D3D3D]">—</p>
+            <p className="text-[11px] text-gray-400 leading-tight mt-1">{t.emoji} {t.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-[#FFF0E0] border border-[#FFD0A0] rounded-2xl px-4 py-4 flex flex-col gap-2">
+        <p className="text-sm font-bold text-[#0A0A0A]">
+          🔒 Statistiques en temps réel et avis Google automatiques
+        </p>
+        <p className="text-xs text-[#3D3D3D]/80 leading-relaxed">
+          Suis tes bons réservés et utilisés en direct, découvre tes jours et heures de pointe,
+          et récolte automatiquement des avis Google après chaque passage client.
+          Disponible avec les offres Essentiel et Pro.
+        </p>
+        <Link
+          href={lienOffres}
+          className="self-start mt-1 bg-[#FF6B00] hover:bg-[#CC5500] text-white text-xs font-black px-4 py-2.5 rounded-xl transition-colors min-h-[44px] flex items-center"
+        >
+          Voir les offres →
+        </Link>
+      </div>
     </div>
   )
 }

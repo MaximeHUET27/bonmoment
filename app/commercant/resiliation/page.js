@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/app/context/AuthContext'
+import { estBasic } from '@/lib/paliers'
 
 function ResiliationContent() {
   const { user, loading, supabase } = useAuth()
@@ -211,7 +212,8 @@ function ResiliationContent() {
   }
 
   /* ── L'utilisateur a un abonnement actif si abonnement_actif ET palier non null ── */
-  const hasAbonnement = commerce?.abonnement_actif === true && commerce?.palier != null
+  /* L'offre gratuite Basic n'est pas un abonnement : rien à mettre en pause ni à résilier */
+  const hasAbonnement = commerce?.abonnement_actif === true && commerce?.palier != null && !estBasic(commerce?.palier)
   /* La pause n'est disponible que pour les abonnements Stripe (pas admin-bypass) */
   const hasStripe     = Boolean(commerce?.stripe_subscription_id)
 
@@ -274,8 +276,14 @@ function ResiliationContent() {
         {/* ── Pas d'abonnement ── */}
         {!hasAbonnement && (
           <div className="bg-orange-50 border border-orange-200 rounded-3xl px-6 py-5 flex flex-col gap-3 text-center">
-            <p className="text-sm font-bold text-orange-800">Aucun abonnement actif</p>
-            <p className="text-xs text-orange-700/70">Tu n&apos;as pas encore souscrit à un abonnement BONMOMENT.</p>
+            <p className="text-sm font-bold text-orange-800">
+              {estBasic(commerce?.palier) && commerce?.abonnement_actif ? 'Tu es sur l’offre gratuite Basic' : 'Aucun abonnement actif'}
+            </p>
+            <p className="text-xs text-orange-700/70">
+              {estBasic(commerce?.palier) && commerce?.abonnement_actif
+                ? 'Elle est gratuite et sans engagement : il n’y a rien à résilier. Pour supprimer ton commerce, utilise le bouton dédié dans ton espace.'
+                : 'Tu n’as pas encore souscrit à un abonnement BONMOMENT.'}
+            </p>
             <Link
               href={`/commercant/abonnement?commerce_id=${commerce?.id}`}
               className="self-center bg-[#FF6B00] hover:bg-[#CC5500] text-white font-black text-sm px-6 py-3 rounded-2xl transition-colors"

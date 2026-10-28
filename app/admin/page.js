@@ -158,6 +158,8 @@ export default function AdminDashboard() {
             sub="fin de période programmée" />
           <KpiCard icon="🆓" label="Actifs sans palier"   value={fmt(kpis.non_abonnes)}
             sub="activés manuellement" />
+          <KpiCard icon="🌱" label="Commerçants Basic"   value={fmt(kpis.basic_actifs)}
+            sub="offre gratuite" />
         </div>
       </section>
 

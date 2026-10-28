@@ -8,6 +8,7 @@ import AdminFooterLink from "@/app/components/AdminFooterLink";
 import ChatbotWidget from "@/app/components/ChatbotWidget";
 import ReviewPolling from "@/app/components/ReviewPolling";
 import IOSInstallPrompt from "@/app/components/IOSInstallPrompt";
+import CommercantTopBanner from "@/app/components/CommercantTopBanner";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -44,6 +45,7 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <FavorisProvider>
           <ToastProvider>
+          <CommercantTopBanner />
           {children}
           <ReviewPolling />
           <ChatbotWidget />

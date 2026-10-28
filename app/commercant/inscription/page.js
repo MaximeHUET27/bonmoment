@@ -276,6 +276,20 @@ export default function InscriptionCommercant() {
       }).catch(err => console.error('upsert-ville:', err))
     }
 
+    // 3.8 Activation de l'offre gratuite Basic (serveur — colonnes facturation verrouillées côté client)
+    if (insertData?.id) {
+      try {
+        await fetch('/api/commercant/activer-basic', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ commerce_id: insertData.id }),
+        })
+      } catch (err) {
+        console.error('activer-basic:', err)
+        // rattrapé à l'ouverture du dashboard (palier encore NULL)
+      }
+    }
+
     // 3. Passage du user en rôle commerçant
     const { error: roleErr } = await supabase.from('users').update({ role: 'commercant' }).eq('id', user.id)
     if (roleErr) console.error('Role update:', roleErr.message)
