@@ -14,17 +14,17 @@ import { estBasic } from '@/lib/paliers'
 const FEATURES = [
   { label: { basic: '1 offre/mois', essentiel: '8 offres/mois', pro: 'Offres illimitées' }, inclus: ['basic', 'essentiel', 'pro'] },
   { label: 'Bons illimités',                             inclus: ['basic', 'essentiel', 'pro'] },
+  { label: 'Cagnotte de parrainage',                     inclus: ['basic', 'essentiel', 'pro'] },
   { label: 'Statistiques en temps réel',                 inclus: ['essentiel', 'pro'] },
   { label: 'Avis Google automatiques',                   inclus: ['essentiel', 'pro'] },
   { label: 'Rapport mensuel',                            inclus: ['essentiel', 'pro'] },
   { label: 'Carte de fidélité unique et dématérialisée', inclus: ['pro'] },
-  { label: 'Cagnotte de parrainage',                     inclus: ['basic', 'essentiel', 'pro'] },
 ]
 
-// Ordre d'affichage : Basic (gratuit, carte à part), puis Pro, puis Essentiel
+// Ordre d'affichage : Basic (gratuit, carte à part), puis Essentiel, puis Pro
 const PLANS = [
-  { key: 'pro',       nom: 'Pro',       prix: 49, populaire: true  },
   { key: 'essentiel', nom: 'Essentiel', prix: 29, populaire: false },
+  { key: 'pro',       nom: 'Pro',       prix: 49, populaire: true  },
 ]
 
 const REMISES = { essentiel: 10, pro: 15 }
